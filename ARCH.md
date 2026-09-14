@@ -42,6 +42,11 @@ create policy "orders_select_own_or_admin"
   on public.orders for select
   to authenticated
   using (auth.uid() = user_id or auth.jwt() ->> 'email' = 'admin@admin.com');
+
+-- RLS 정책과 별개로 테이블 권한(GRANT)이 없으면 전부 "permission denied"로 막힘.
+-- SQL 에디터로 테이블을 직접 만들 때는 Studio가 자동으로 해주는 이 GRANT를 수동으로 해줘야 함.
+grant select on public.orders to authenticated;
+grant select, insert on public.orders to service_role;
 ```
 
 - **INSERT 정책 없음** — 브라우저(anon/authenticated)에서 직접 주문 행을 만들 수 없음. 오직 Edge Function이 `service_role` 키로 삽입 (service_role은 RLS를 항상 무시함). 결제 승인 없이 "결제완료" 행을 위조하는 게 불가능한 구조.
@@ -65,6 +70,10 @@ Supabase Auth 설정에서 `mailer_autoconfirm = true`로 설정되어 있어, �
 - 토스 클라이언트키(공개, `index.html`에 하드코딩): `test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq`
 - 토스 시크릿키(비공개, Supabase secret으로만 존재): `TOSS_SECRET_KEY` — `supabase secrets set`으로 설정, 코드에는 없음
 - 위 두 키는 토스페이먼츠 공식 문서의 **공용 샘플 테스트키**. 실제 운영 전환 시 본인 명의로 발급받은 키로 교체 필요.
+
+### 결제창에서 카드번호 입력 시 주의
+
+토스페이먼츠는 **국내용 더미 테스트 카드번호를 제공하지 않는다** ([공식 안내](https://docs.tosspayments.com/blog/how-to-test-toss-payments)). 결제창이 카드번호 형식(체크섬 + 카드사 BIN)을 자체 검증하기 때문에 임의의 숫자는 "유효하지 않음"으로 거부된다. 테스트할 때는 **실제 본인 카드 정보(카드번호/유효기간/비밀번호 앞 2자리/생년월일)를 입력**하면 되고, 테스트 모드라 실제로는 돈이 빠져나가지 않는다.
 
 ## Edge Function: `confirm-payment`
 

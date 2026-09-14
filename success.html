@@ -37,8 +37,18 @@
       body: { paymentKey, orderId, amount, productName },
     });
 
-    if (error || data?.error) {
-      messageEl.textContent = `결제 승인에 실패했습니다: ${data?.error || error.message}`;
+    if (error) {
+      // Edge Function이 4xx/5xx로 응답하면 실제 에러 메시지는 error.context 응답 본문에 들어있음
+      let detail = error.message;
+      try {
+        const body = await error.context.json();
+        detail = body?.error || detail;
+      } catch (_) { /* 본문을 못 읽으면 기본 메시지 사용 */ }
+      messageEl.textContent = `결제 승인에 실패했습니다: ${detail}`;
+      return;
+    }
+    if (data?.error) {
+      messageEl.textContent = `결제 승인에 실패했습니다: ${data.error}`;
       return;
     }
 
