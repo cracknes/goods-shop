@@ -114,7 +114,7 @@ button.primary {
 }
 button.primary:hover { opacity: 0.9; }
 
-input {
+input, textarea {
   display: block;
   width: 100%;
   padding: 10px 12px;
@@ -122,7 +122,9 @@ input {
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
+  font-family: inherit;
 }
+textarea { resize: vertical; }
 
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
