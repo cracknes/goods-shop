@@ -21,7 +21,7 @@ a { color: var(--orange); }
 
 nav {
   display: flex;
-  gap: 16px;
+  justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
   background: var(--bg);
@@ -37,7 +37,17 @@ nav a, nav button {
   padding: 0;
   font-family: inherit;
 }
-nav .brand { font-weight: 700; color: var(--orange); margin-right: auto; }
+nav .brand { font-weight: 700; color: var(--orange); flex-shrink: 0; }
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+  margin-left: 16px;
+}
 nav .nav-cta {
   background: var(--orange);
   color: #fff;
@@ -160,13 +170,8 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
 /* 모바일 화면 */
 @media (max-width: 640px) {
   .wrap { padding: 16px; }
-  nav {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 10px;
-    padding: 12px 16px;
-  }
-  nav .brand { margin-right: 0; }
+  nav { padding: 12px 16px; }
+  .nav-links { gap: 10px; margin-left: 10px; }
   .shop-layout { flex-direction: column; gap: 16px; }
   .category-list {
     width: 100%;

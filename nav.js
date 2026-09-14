@@ -7,11 +7,13 @@ async function renderNav() {
 
   nav.innerHTML = `
     <a class="brand" href="index.html">노르덴돌프</a>
-    <a href="index.html">상품</a>
-    ${isAdmin ? "" : `<a href="contact.html" class="nav-cta">문의하기</a>`}
-    ${user && !isAdmin ? `<a href="orders.html">내 결제내역</a>` : ""}
-    ${isAdmin ? `<a href="admin.html">관리자</a>` : ""}
-    ${user ? `<button id="logout-btn">로그아웃(${user.email})</button>` : `<a href="login.html">로그인</a>`}
+    <div class="nav-links">
+      <a href="index.html">상품</a>
+      ${isAdmin ? "" : `<a href="contact.html" class="nav-cta">문의하기</a>`}
+      ${user && !isAdmin ? `<a href="orders.html">내 결제내역</a>` : ""}
+      ${isAdmin ? `<a href="admin.html">관리자</a>` : ""}
+      ${user ? `<button id="logout-btn">로그아웃(${user.email})</button>` : `<a href="login.html">로그인</a>`}
+    </div>
   `;
 
   const logoutBtn = document.getElementById("logout-btn");
