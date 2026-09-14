@@ -26,31 +26,29 @@
 <script>
   const TOSS_CLIENT_KEY = "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq"; // 토스 공용 샘플 테스트 클라이언트키
 
-  const WIKI = (filename) => `https://commons.wikimedia.org/wiki/Special:FilePath/${filename}?width=400`;
-
   const CATEGORIES = [
     {
       id: "cosmetics",
       name: "화장품",
       products: [
-        { id: "lipstick", name: "매트 립스틱", price: 18000, image: WIKI("Lapiz_labial.jpg") },
-        { id: "perfume", name: "시그니처 퍼퓸", price: 42000, image: WIKI("Perfume_Bottles.JPG") },
+        { id: "lipstick", name: "매트 립스틱", price: 18000, emoji: "💄", gradient: "linear-gradient(135deg, #ffd6e8, #ffb3d1)" },
+        { id: "perfume", name: "시그니처 퍼퓸", price: 42000, emoji: "🌸", gradient: "linear-gradient(135deg, #e3d9ff, #c6b3ff)" },
       ],
     },
     {
       id: "menswear",
       name: "남자 의류",
       products: [
-        { id: "denimjacket", name: "남성 데님 자켓", price: 89000, image: WIKI("Jean_jacket.jpg") },
-        { id: "mentshirt", name: "남성 긴팔 티셔츠", price: 35000, image: WIKI("Men's_long-sleeve_T-shirt.jpg") },
+        { id: "denimjacket", name: "남성 데님 자켓", price: 89000, emoji: "🧥", gradient: "linear-gradient(135deg, #cfe8ff, #a6d4ff)" },
+        { id: "mentshirt", name: "남성 긴팔 티셔츠", price: 35000, emoji: "👕", gradient: "linear-gradient(135deg, #d4f5e9, #a0e8cd)" },
       ],
     },
     {
       id: "womenswear",
       name: "여자 의류",
       products: [
-        { id: "blouse", name: "여성 블라우스", price: 45000, image: WIKI("Faux_wrap_style_blouse.jpg") },
-        { id: "suit", name: "여성 수트", price: 129000, image: WIKI("Women's_suit.jpeg") },
+        { id: "blouse", name: "여성 블라우스", price: 45000, emoji: "👚", gradient: "linear-gradient(135deg, #ffe8c2, #ffcf8c)" },
+        { id: "suit", name: "여성 수트", price: 129000, emoji: "👗", gradient: "linear-gradient(135deg, #ffd9d9, #ffb3b3)" },
       ],
     },
   ];
@@ -77,7 +75,7 @@
     const container = document.getElementById("products");
     container.innerHTML = category.products.map(p => `
       <div class="product-card">
-        <div class="thumb"><img src="${p.image}" alt="${p.name}" loading="lazy"></div>
+        <div class="thumb" style="background:${p.gradient}">${p.emoji}</div>
         <div class="body">
           <div class="name">${p.name}</div>
           <div class="price">${p.price.toLocaleString()}원</div>

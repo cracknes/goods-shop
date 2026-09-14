@@ -52,7 +52,7 @@ grant select, insert on public.orders to service_role;
 
 - **INSERT 정책 없음** — 브라우저(anon/authenticated)에서 직접 주문 행을 만들 수 없음. 오직 Edge Function이 `service_role` 키로 삽입 (service_role은 RLS를 항상 무시함). 결제 승인 없이 "결제완료" 행을 위조하는 게 불가능한 구조.
 - SELECT 정책 하나로 "내 결제내역"과 "관리자 전체 조회"를 둘 다 처리함 — 관리자 이메일이면 조건의 뒷부분이 참이 되어 전체 행이 보임.
-- 상품 정보는 테이블 없이 `index.html`의 `CATEGORIES` JS 배열(카테고리별 상품 목록)에 하드코딩 (요청받은 범위 밖의 상품 관리 기능은 만들지 않음). 상품 이미지는 Wikimedia Commons의 `Special:FilePath/<파일명>` 안정 경로를 직접 hotlink (CC 라이선스, 별도 이미지 호스팅 불필요).
+- 상품 정보는 테이블 없이 `index.html`의 `CATEGORIES` JS 배열(카테고리별 상품 목록)에 하드코딩 (요청받은 범위 밖의 상품 관리 기능은 만들지 않음). 상품 썸네일은 실제 사진 대신 카테고리별 파스텔 그라데이션 배경 + 이모지로 통일 — 모든 카드가 같은 크기/스타일로 보이도록 하기 위함 (실제 사진은 출처마다 배경/구도가 달라 카드마다 느낌이 들쭉날쭉했음).
 
 ## DB 스키마 (`public.inquiries`)
 
