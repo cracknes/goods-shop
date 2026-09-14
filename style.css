@@ -1,24 +1,23 @@
 :root {
-  --navy: #10204a;
-  --blue: #2455d6;
-  --bg: #ffffff;
-  --bg-soft: #f7f8fb;
-  --text: #1c2333;
-  --text-soft: #5b6172;
-  --border: #e6e8ef;
-  --danger: #d64545;
+  --orange: #f5701f;
+  --bg: #0a1229;
+  --bg-soft: #121f42;
+  --text: #eef1fb;
+  --text-soft: #98a2c4;
+  --border: #243158;
+  --danger: #ff6b6b;
 }
 * { box-sizing: border-box; }
 body {
   margin: 0;
   font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   color: var(--text);
-  background: linear-gradient(180deg, #eef1ff 0%, var(--bg-soft) 320px);
+  background: linear-gradient(180deg, #16234a 0%, var(--bg) 320px);
   line-height: 1.6;
 }
 .wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
 .wrap-wide { max-width: 1080px; }
-a { color: var(--blue); }
+a { color: var(--orange); }
 
 nav {
   display: flex;
@@ -38,9 +37,9 @@ nav a, nav button {
   padding: 0;
   font-family: inherit;
 }
-nav .brand { font-weight: 700; color: var(--navy); margin-right: auto; }
+nav .brand { font-weight: 700; color: var(--orange); margin-right: auto; }
 nav .nav-cta {
-  background: var(--blue);
+  background: var(--orange);
   color: #fff;
   padding: 8px 16px;
   border-radius: 999px;
@@ -69,13 +68,13 @@ nav .nav-cta:hover { opacity: 0.9; }
   cursor: pointer;
 }
 .category-list button:hover { background: var(--bg-soft); }
-.category-list button.active { background: var(--blue); color: #fff; font-weight: 600; }
+.category-list button.active { background: var(--orange); color: #fff; font-weight: 600; }
 .shop-content { flex: 1; min-width: 0; }
 
 h1 { font-size: 22px; }
 
 .card {
-  background: var(--bg);
+  background: var(--bg-soft);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px;
@@ -87,18 +86,18 @@ h1 { font-size: 22px; }
   gap: 20px;
 }
 .product-card {
-  background: var(--bg);
+  background: var(--bg-soft);
   border: 1px solid var(--border);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(16, 32, 74, 0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   display: flex;
   flex-direction: column;
 }
 .product-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(16, 32, 74, 0.1);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
 }
 .product-card .thumb {
   aspect-ratio: 1 / 1;
@@ -113,7 +112,7 @@ h1 { font-size: 22px; }
 .product-card button.primary { width: 100%; }
 
 button.primary {
-  background: var(--blue);
+  background: var(--orange);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -132,11 +131,14 @@ input, textarea {
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
+  background: var(--bg);
+  color: var(--text);
 }
+input::placeholder, textarea::placeholder { color: var(--text-soft); }
 textarea { resize: vertical; }
 
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
-.status-paid { color: var(--blue); font-weight: 600; }
+.status-paid { color: var(--orange); font-weight: 600; }
 .error { color: var(--danger); font-size: 14px; }
 .muted { color: var(--text-soft); font-size: 14px; }
