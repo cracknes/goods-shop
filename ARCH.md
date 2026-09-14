@@ -4,23 +4,33 @@
 
 ## 배포
 
-- **프론트엔드**: 이 저장소(`cracknes/goods-shop`)를 GitHub Pages로 배포. 주소: `https://cracknes.github.io/goods-shop/`
+- **프론트엔드**: 이 저장소(`cracknes/goods-shop`)를 GitHub Pages로 배포. 커스텀 도메인 `https://cracknes.cloud/` (기본 주소 `https://cracknes.github.io/goods-shop/`도 계속 동작함)
 - **백엔드**: Supabase 프로젝트 `tnvpedaymwozpinujmfk` (region: ap-northeast-1)
 - 정적 파일이라 빌드 단계 없음 — HTML/CSS/JS를 main 브랜치에 push하면 그대로 반영됨.
+- `cracknes.cloud`는 원래 다른 저장소(`claude-code-deploy`, 잔재미코딩 강의 랜딩페이지)가 쓰던 도메인인데, 이 프로젝트에 CNAME을 추가하면서 GitHub가 자동으로 그쪽 연결을 끊고 이쪽으로 옮겨왔음 (사용자가 의도적으로 선택함). 강의 랜딩페이지는 이제 `cracknes.github.io/claude-code-deploy/`에서만 열림. 네이버 서치어드바이저 인증 파일(`naver...html`)도 그래서 이 저장소 루트로 함께 옮겨옴.
 
 ## 페이지 목록
 
 | 파일 | 역할 |
 |---|---|
-| `index.html` | 카테고리(화장품/남자 의류/여자의류)별 상품 목록 + 구매(토스 결제 시작) |
+| `index.html` | 카테고리(화장품/남성 의류/여성 의류)별 상품 목록 + 구매(토스 결제 시작). 좌측에 카테고리 전용 탭(사이트 공통 상단 nav와는 별개) |
 | `login.html` | 회원가입 / 로그인 |
 | `success.html` | 토스 결제 성공 리다이렉트 대상 → Edge Function 호출해 승인 확정 |
 | `fail.html` | 토스 결제 실패/취소 리다이렉트 대상 |
-| `orders.html` | 내 결제내역 |
-| `admin.html` | 전체 결제내역 (admin@admin.com만) |
-| `contact.html` | 문의하기 (로그인 불필요, `inquiries` 테이블에 저장) |
+| `orders.html` | 내 결제내역 (일반 사용자용, 관리자는 상단 nav에 이 링크가 안 보임) |
+| `admin.html` | admin@admin.com 전용. 좌측 탭으로 "결제내역"/"문의내역" 전환, 문의내역 탭에서 답변 작성 가능 |
+| `contact.html` | 문의하기 (로그인 불필요, `inquiries` 테이블에 저장). 헤더에서 admin 로그인 시에는 이 링크가 안 보임 |
 | `supabase-client.js` | 공용 Supabase 클라이언트 초기화 (URL + publishable key, 공개돼도 안전) |
-| `nav.js` | 로그인 상태에 따라 상단 네비게이션 렌더링 |
+| `nav.js` | 상단 네비게이션. 로그인 상태 + admin 여부에 따라 보여줄 링크가 달라짐 (아래 "상단 네비게이션 규칙" 참고) |
+| `style.css` | 다크 네이비 배경 + 주황(`--orange`) 단일 포인트 컬러 테마. 모바일(640px 이하) 반응형 처리 포함 |
+
+## 상단 네비게이션 규칙 (`nav.js`)
+
+- 브랜드("노르덴돌프") 클릭 시 `index.html`로 이동
+- 비로그인: 상품, 문의하기, 로그인
+- 일반 로그인 사용자: 상품, 문의하기, 내 결제내역, 로그아웃 (관리자 링크 없음)
+- admin@admin.com 로그인: 상품, 내 결제내역·문의하기 링크 숨김, 관리자 링크만 보임, 로그아웃
+- 메뉴가 화면 폭보다 길어지면 **줄바꿈**으로 다음 줄에 배치 (가로 스크롤 방식은 항목이 잘려서 안 보이는 문제가 있어 되돌림). 각 메뉴 항목 자체는 `flex-shrink:0` + `white-space:nowrap`으로 텍스트가 항목 내부에서 줄바꿈되지 않도록 막아둠.
 
 ## DB 스키마 (`public.orders`)
 
@@ -129,3 +139,10 @@ Supabase Auth 설정에서 `mailer_autoconfirm = true`로 설정되어 있어, �
 
 - Node.js LTS 설치됨 (winget으로 설치). `npx supabase ...`로 CLI 실행 (전역 설치 안 함).
 - Supabase Management API 토큰: `../claude-landing/supabase-token.txt` (이 저장소 밖에 있고, git에 커밋 안 됨)
+
+## 다음에 이어서 작업할 때 참고 (열린 항목)
+
+- 토스페이먼츠 클라이언트/시크릿 키가 아직 **공용 샘플 테스트키**임. 본인 명의로 발급받은 테스트 키(또는 실서비스 전환 시 라이브 키)로 교체하려면: ①토스페이먼츠 개발자센터 가입 → 키 발급 → `index.html`의 `TOSS_CLIENT_KEY` 값 교체 + `npx supabase secrets set TOSS_SECRET_KEY=...` 다시 실행.
+- 관리자가 문의에 답변을 남겨도 **문의를 남긴 사람에게 알림이 가지 않음** (이메일 발송 기능 없음, 로그인 없이 이메일만 받는 구조라 계정 연결도 안 됨). 필요하면 이메일 발송 연동(예: Resend, Supabase의 SMTP 설정 등)을 추가로 구현해야 함.
+- 상품은 6종(카테고리당 2개) 하드코딩 상태. 실제 재고/가격을 관리자가 웹에서 수정하는 기능은 없음 (요청 시 별도 구현 필요).
+- 지금까지의 작업 이력(디자인 변경 히스토리, 발견했던 버그와 원인)은 git 커밋 로그(`git log`)에도 상세히 남아있음 — 특정 변경의 배경이 궁금하면 커밋 메시지를 참고.
