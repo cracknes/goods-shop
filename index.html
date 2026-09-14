@@ -8,10 +8,10 @@
 </head>
 <body>
 <nav id="nav"></nav>
-<div class="wrap">
+<div class="wrap wrap-wide">
   <h1>굿즈 목록</h1>
   <p class="muted">토스페이먼츠 테스트 모드로 결제됩니다. 실제로 돈이 나가지 않으니, 결제창에는 아무 번호가 아니라 실제 본인 카드 정보를 입력해 주세요.</p>
-  <div id="products"></div>
+  <div id="products" class="product-grid"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -22,20 +22,24 @@
   const TOSS_CLIENT_KEY = "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq"; // 토스 공용 샘플 테스트 클라이언트키
 
   const PRODUCTS = [
-    { id: "sticker", name: "굿즈 스티커팩", price: 5000, image: "" },
-    { id: "ecobag", name: "굿즈 에코백", price: 15000, image: "" },
-    { id: "mug", name: "굿즈 머그컵", price: 12000, image: "" },
+    { id: "sticker", name: "굿즈 스티커팩", price: 5000, emoji: "🌟", gradient: "linear-gradient(135deg, #ffd6e8, #ffb3d1)" },
+    { id: "ecobag", name: "굿즈 에코백", price: 15000, emoji: "👜", gradient: "linear-gradient(135deg, #d4f5e9, #a0e8cd)" },
+    { id: "mug", name: "굿즈 머그컵", price: 12000, emoji: "☕", gradient: "linear-gradient(135deg, #ffe8c2, #ffcf8c)" },
+    { id: "keyring", name: "굿즈 키링", price: 8000, emoji: "🔑", gradient: "linear-gradient(135deg, #cfe8ff, #a6d4ff)" },
+    { id: "notebook", name: "굿즈 노트", price: 7000, emoji: "📓", gradient: "linear-gradient(135deg, #e3d9ff, #c6b3ff)" },
+    { id: "tshirt", name: "굿즈 티셔츠", price: 25000, emoji: "👕", gradient: "linear-gradient(135deg, #ffd9d9, #ffb3b3)" },
   ];
 
   function renderProducts() {
     const container = document.getElementById("products");
     container.innerHTML = PRODUCTS.map(p => `
-      <div class="card product">
-        <div class="info">
-          <div>${p.name}</div>
+      <div class="product-card">
+        <div class="thumb" style="background:${p.gradient}">${p.emoji}</div>
+        <div class="body">
+          <div class="name">${p.name}</div>
           <div class="price">${p.price.toLocaleString()}원</div>
+          <button class="primary" data-id="${p.id}">구매하기</button>
         </div>
-        <button class="primary" data-id="${p.id}">구매하기</button>
       </div>
     `).join("");
 

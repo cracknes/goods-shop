@@ -13,10 +13,11 @@ body {
   margin: 0;
   font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   color: var(--text);
-  background: var(--bg-soft);
+  background: linear-gradient(180deg, #eef1ff 0%, var(--bg-soft) 320px);
   line-height: 1.6;
 }
 .wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
+.wrap-wide { max-width: 1080px; }
 a { color: var(--blue); }
 
 nav {
@@ -48,15 +49,36 @@ h1 { font-size: 22px; }
   padding: 20px;
   margin-bottom: 16px;
 }
-.product {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
 }
-.product img { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; background: var(--bg-soft); }
-.product .info { flex: 1; }
-.product .price { color: var(--text-soft); font-size: 14px; }
+.product-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(16, 32, 74, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+}
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(16, 32, 74, 0.1);
+}
+.product-card .thumb {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+}
+.product-card .body { padding: 16px; }
+.product-card .name { font-weight: 600; margin-bottom: 4px; }
+.product-card .price { color: var(--text-soft); font-size: 14px; margin-bottom: 12px; }
+.product-card button.primary { width: 100%; }
 
 button.primary {
   background: var(--blue);
