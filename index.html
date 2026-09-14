@@ -29,27 +29,35 @@
       id: "cosmetics",
       name: "화장품",
       products: [
-        { id: "lipstick", name: "매트 립스틱", price: 18000, emoji: "💄", gradient: "linear-gradient(135deg, #ffd6e8, #ffb3d1)" },
-        { id: "perfume", name: "시그니처 퍼퓸", price: 42000, emoji: "🌸", gradient: "linear-gradient(135deg, #e3d9ff, #c6b3ff)" },
+        { id: "lipstick", name: "매트 립스틱", price: 18000, gradient: "linear-gradient(135deg, #ffd6e8, #ffb3d1)" },
+        { id: "perfume", name: "시그니처 퍼퓸", price: 42000, gradient: "linear-gradient(135deg, #e3d9ff, #c6b3ff)" },
       ],
     },
     {
       id: "menswear",
       name: "남성 의류",
       products: [
-        { id: "denimjacket", name: "남성 데님 자켓", price: 89000, emoji: "👖", gradient: "linear-gradient(135deg, #cfe8ff, #a6d4ff)" },
-        { id: "mentshirt", name: "남성 긴팔 티셔츠", price: 35000, emoji: "👕", gradient: "linear-gradient(135deg, #d4f5e9, #a0e8cd)" },
+        { id: "denimjacket", name: "남성 데님 자켓", price: 89000, gradient: "linear-gradient(135deg, #cfe8ff, #a6d4ff)" },
+        { id: "mentshirt", name: "남성 긴팔 티셔츠", price: 35000, gradient: "linear-gradient(135deg, #d4f5e9, #a0e8cd)" },
       ],
     },
     {
       id: "womenswear",
       name: "여성 의류",
       products: [
-        { id: "blouse", name: "여성 블라우스", price: 45000, emoji: "👚", gradient: "linear-gradient(135deg, #ffe8c2, #ffcf8c)" },
-        { id: "suit", name: "여성 수트", price: 129000, emoji: "👗", gradient: "linear-gradient(135deg, #ffd9d9, #ffb3b3)" },
+        { id: "blouse", name: "여성 블라우스", price: 45000, gradient: "linear-gradient(135deg, #ffe8c2, #ffcf8c)" },
+        { id: "suit", name: "여성 수트", price: 129000, gradient: "linear-gradient(135deg, #ffd9d9, #ffb3b3)" },
       ],
     },
   ];
+
+  // 이모지는 기기/폰트마다 렌더링 크기가 달라서 SVG 아이콘 하나로 통일 (모든 기기에서 100% 동일한 크기)
+  const PRODUCT_ICON = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="rgba(10,18,41,0.55)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20.59 13.41 13 21a2 2 0 0 1-2.83 0L2 12.83V4a2 2 0 0 1 2-2h8.83a2 2 0 0 1 1.41.59l7.35 7.35a2 2 0 0 1 0 2.83Z"></path>
+      <circle cx="7.5" cy="7.5" r="1.5"></circle>
+    </svg>
+  `;
 
   let activeCategory = CATEGORIES[0].id;
 
@@ -73,7 +81,7 @@
     const container = document.getElementById("products");
     container.innerHTML = category.products.map(p => `
       <div class="product-card">
-        <div class="thumb" style="background:${p.gradient}">${p.emoji}</div>
+        <div class="thumb" style="background:${p.gradient}">${PRODUCT_ICON}</div>
         <div class="body">
           <div class="name">${p.name}</div>
           <div class="price">${p.price.toLocaleString()}원</div>
