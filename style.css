@@ -161,8 +161,10 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
     gap: 8px;
   }
   .category-list button { flex: 1 1 auto; text-align: center; }
-  .product-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+  .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .product-card .thumb { font-size: 40px; }
-  .product-card .body { padding: 12px; }
+  .product-card .body { padding: 12px 10px; }
+  .product-card .name { font-size: 13px; }
+  .product-card .price { font-size: 12px; }
   h1 { font-size: 19px; }
 }
