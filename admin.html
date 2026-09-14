@@ -29,12 +29,7 @@
       </div>
 
       <div class="card" id="inquiries-panel" hidden>
-        <table id="inquiries-table">
-          <thead>
-            <tr><th>이메일</th><th>제목</th><th>내용</th><th>접수일시</th></tr>
-          </thead>
-          <tbody id="inquiries-body"></tbody>
-        </table>
+        <div id="inquiries-list"></div>
         <p id="inquiries-empty" class="muted" hidden>문의 내역이 없습니다.</p>
       </div>
     </div>
@@ -90,14 +85,36 @@
       return;
     }
 
-    document.getElementById("inquiries-body").innerHTML = inquiries.map(i => `
-      <tr>
-        <td>${i.email}</td>
-        <td>${i.subject}</td>
-        <td>${i.message}</td>
-        <td>${new Date(i.created_at).toLocaleString()}</td>
-      </tr>
+    document.getElementById("inquiries-list").innerHTML = inquiries.map(i => `
+      <div class="inquiry-item" data-id="${i.id}">
+        <div class="inquiry-meta">${i.email} · ${i.subject} · ${new Date(i.created_at).toLocaleString()}</div>
+        <div class="inquiry-message">${i.message}</div>
+        ${i.reply ? `<div class="inquiry-reply-done"><strong>답변</strong> (${new Date(i.replied_at).toLocaleString()})<br>${i.reply}</div>` : ""}
+        <textarea class="reply-input" rows="3" placeholder="답변 내용">${i.reply ?? ""}</textarea>
+        <button class="primary reply-submit">${i.reply ? "답변 수정" : "답변 등록"}</button>
+        <p class="reply-status muted"></p>
+      </div>
     `).join("");
+
+    document.querySelectorAll(".inquiry-item").forEach(item => {
+      item.querySelector(".reply-submit").addEventListener("click", async () => {
+        const id = item.dataset.id;
+        const reply = item.querySelector(".reply-input").value;
+        const statusEl = item.querySelector(".reply-status");
+
+        if (!reply) {
+          statusEl.textContent = "답변 내용을 입력해 주세요.";
+          return;
+        }
+
+        const { error } = await supabaseClient
+          .from("inquiries")
+          .update({ reply, replied_at: new Date().toISOString() })
+          .eq("id", id);
+
+        statusEl.textContent = error ? "저장 실패: " + error.message : "답변이 저장되었습니다.";
+      });
+    });
   }
 
   async function loadAdmin() {

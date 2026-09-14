@@ -63,7 +63,9 @@ create table public.inquiries (
   email text not null,
   subject text not null,
   message text not null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  reply text,
+  replied_at timestamptz
 );
 
 alter table public.inquiries enable row level security;
@@ -73,11 +75,24 @@ create policy "inquiries_insert_anyone"
   to anon, authenticated
   with check (true);
 
+create policy "inquiries_select_admin"
+  on public.inquiries for select
+  to authenticated
+  using (auth.jwt() ->> 'email' = 'admin@admin.com');
+
+create policy "inquiries_update_admin"
+  on public.inquiries for update
+  to authenticated
+  using (auth.jwt() ->> 'email' = 'admin@admin.com')
+  with check (auth.jwt() ->> 'email' = 'admin@admin.com');
+
 grant insert on public.inquiries to anon, authenticated;
+grant select, update on public.inquiries to authenticated;
 ```
 
-- 로그인 없이 누구나 등록(INSERT)할 수 있지만, SELECT 권한/정책이 전혀 없어서 제출된 문의는 프론트엔드에서 조회 불가 (Supabase 대시보드나 Management API로만 확인 가능). 관리자 페이지에 문의 목록을 보여주는 기능은 요청받지 않아서 만들지 않음.
-- 프론트엔드에서 `.insert(...)` 호출 시 `.select()`를 체이닝하면 PostgREST가 삽입 후 행을 다시 읽으려고 해서 SELECT 권한 에러가 남 — `contact.html`은 `.select()` 없이 insert만 호출함.
+- 로그인 없이 누구나 등록(INSERT)할 수 있음. SELECT/UPDATE는 `admin@admin.com`만 가능 (관리자 페이지의 문의내역 탭 + 답변 등록 기능용). `website` 필드는 폼에서는 제거했지만 컬럼은 남겨둠 (기존 데이터 호환, 언제든 다시 노출 가능).
+- 프론트엔드에서 `.insert(...)` / `.update(...)` 호출 시 `.select()`를 체이닝하면 PostgREST가 처리 후 행을 다시 읽으려고 해서, 그 역할에 SELECT 권한이 없는 경우(anon의 insert) 에러가 남 — `contact.html`은 `.select()` 없이 insert만 호출함.
+- 관리자 답변은 `inquiries.reply` / `inquiries.replied_at` 컬럼에 저장 (별도 테이블 없이 1:1 관계라 컬럼으로 충분). 문의를 남긴 사람이 답변을 확인하는 화면은 없음 (로그인 없이 이메일만 남기는 구조라 계정과 연결할 방법이 없음) — 필요하면 이메일로 직접 답변을 보내는 별도 절차가 있어야 함.
 
 ## 회원가입 / 이메일 인증
 

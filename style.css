@@ -138,6 +138,19 @@ input, textarea {
 input::placeholder, textarea::placeholder { color: var(--text-soft); }
 textarea { resize: vertical; }
 
+.inquiry-item { padding: 16px 0; border-bottom: 1px solid var(--border); }
+.inquiry-item:last-child { border-bottom: none; }
+.inquiry-meta { font-size: 13px; color: var(--text-soft); margin-bottom: 6px; }
+.inquiry-message { margin-bottom: 12px; white-space: pre-wrap; }
+.inquiry-reply-done {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 .status-paid { color: var(--orange); font-weight: 600; }
