@@ -3,15 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>굿즈샵</title>
+<title>노르덴돌프</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <nav id="nav"></nav>
 <div class="wrap wrap-wide">
-  <h1>굿즈 목록</h1>
+  <h1>노르덴돌프</h1>
   <p class="muted">토스페이먼츠 테스트 모드로 결제됩니다. 실제로 돈이 나가지 않으니, 결제창에는 아무 번호가 아니라 실제 본인 카드 정보를 입력해 주세요.</p>
-  <div id="products" class="product-grid"></div>
+  <div class="shop-layout">
+    <div id="category-list" class="category-list"></div>
+    <div class="shop-content">
+      <div id="products" class="product-grid"></div>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -21,20 +26,58 @@
 <script>
   const TOSS_CLIENT_KEY = "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq"; // 토스 공용 샘플 테스트 클라이언트키
 
-  const PRODUCTS = [
-    { id: "sticker", name: "굿즈 스티커팩", price: 5000, emoji: "🌟", gradient: "linear-gradient(135deg, #ffd6e8, #ffb3d1)" },
-    { id: "ecobag", name: "굿즈 에코백", price: 15000, emoji: "👜", gradient: "linear-gradient(135deg, #d4f5e9, #a0e8cd)" },
-    { id: "mug", name: "굿즈 머그컵", price: 12000, emoji: "☕", gradient: "linear-gradient(135deg, #ffe8c2, #ffcf8c)" },
-    { id: "keyring", name: "굿즈 키링", price: 8000, emoji: "🔑", gradient: "linear-gradient(135deg, #cfe8ff, #a6d4ff)" },
-    { id: "notebook", name: "굿즈 노트", price: 7000, emoji: "📓", gradient: "linear-gradient(135deg, #e3d9ff, #c6b3ff)" },
-    { id: "tshirt", name: "굿즈 티셔츠", price: 25000, emoji: "👕", gradient: "linear-gradient(135deg, #ffd9d9, #ffb3b3)" },
+  const WIKI = (filename) => `https://commons.wikimedia.org/wiki/Special:FilePath/${filename}`;
+
+  const CATEGORIES = [
+    {
+      id: "cosmetics",
+      name: "화장품",
+      products: [
+        { id: "lipstick", name: "매트 립스틱", price: 18000, image: WIKI("Lipsticks.jpg") },
+        { id: "foundation", name: "커버 파운데이션", price: 32000, image: WIKI("Foundation_(cosmetics).jpg") },
+      ],
+    },
+    {
+      id: "menswear",
+      name: "남자 의류",
+      products: [
+        { id: "denimjacket", name: "남성 데님 자켓", price: 89000, image: WIKI("Denim_jacket.jpg") },
+        { id: "mentshirt", name: "남성 긴팔 티셔츠", price: 35000, image: WIKI("Men's_long-sleeve_T-shirt.jpg") },
+      ],
+    },
+    {
+      id: "womenswear",
+      name: "여자의류",
+      products: [
+        { id: "blouse", name: "여성 블라우스", price: 45000, image: WIKI("Blouse.jpg") },
+        { id: "suit", name: "여성 수트", price: 129000, image: WIKI("Women's_suit.jpeg") },
+      ],
+    },
   ];
 
+  let activeCategory = CATEGORIES[0].id;
+
+  function renderCategoryList() {
+    const list = document.getElementById("category-list");
+    list.innerHTML = CATEGORIES.map(c => `
+      <button data-cat="${c.id}" class="${c.id === activeCategory ? "active" : ""}">${c.name}</button>
+    `).join("");
+
+    list.querySelectorAll("button[data-cat]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        activeCategory = btn.dataset.cat;
+        renderCategoryList();
+        renderProducts();
+      });
+    });
+  }
+
   function renderProducts() {
+    const category = CATEGORIES.find(c => c.id === activeCategory);
     const container = document.getElementById("products");
-    container.innerHTML = PRODUCTS.map(p => `
+    container.innerHTML = category.products.map(p => `
       <div class="product-card">
-        <div class="thumb" style="background:${p.gradient}">${p.emoji}</div>
+        <div class="thumb"><img src="${p.image}" alt="${p.name}" loading="lazy"></div>
         <div class="body">
           <div class="name">${p.name}</div>
           <div class="price">${p.price.toLocaleString()}원</div>
@@ -56,7 +99,7 @@
       return;
     }
 
-    const product = PRODUCTS.find(p => p.id === productId);
+    const product = CATEGORIES.flatMap(c => c.products).find(p => p.id === productId);
     const orderId = `order_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     // 결제 승인 단계(success.html)에서 필요하니 잠깐 저장해둔다
     sessionStorage.setItem("pendingProductName", product.name);
@@ -71,6 +114,7 @@
     });
   }
 
+  renderCategoryList();
   renderProducts();
 </script>
 </body>

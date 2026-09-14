@@ -1,6 +1,6 @@
 # ARCH.md
 
-굿즈샵 프로젝트의 세부 구조. 핵심 요약은 `CLAUDE.md` 참고.
+노르덴돌프 프로젝트의 세부 구조. 핵심 요약은 `CLAUDE.md` 참고.
 
 ## 배포
 
@@ -12,7 +12,7 @@
 
 | 파일 | 역할 |
 |---|---|
-| `index.html` | 상품 목록 + 구매(토스 결제 시작) |
+| `index.html` | 카테고리(화장품/남자 의류/여자의류)별 상품 목록 + 구매(토스 결제 시작) |
 | `login.html` | 회원가입 / 로그인 |
 | `success.html` | 토스 결제 성공 리다이렉트 대상 → Edge Function 호출해 승인 확정 |
 | `fail.html` | 토스 결제 실패/취소 리다이렉트 대상 |
@@ -51,7 +51,7 @@ grant select, insert on public.orders to service_role;
 
 - **INSERT 정책 없음** — 브라우저(anon/authenticated)에서 직접 주문 행을 만들 수 없음. 오직 Edge Function이 `service_role` 키로 삽입 (service_role은 RLS를 항상 무시함). 결제 승인 없이 "결제완료" 행을 위조하는 게 불가능한 구조.
 - SELECT 정책 하나로 "내 결제내역"과 "관리자 전체 조회"를 둘 다 처리함 — 관리자 이메일이면 조건의 뒷부분이 참이 되어 전체 행이 보임.
-- 상품 정보는 테이블 없이 `index.html`의 JS 배열에 하드코딩 (요청받은 범위 밖의 상품 관리 기능은 만들지 않음).
+- 상품 정보는 테이블 없이 `index.html`의 `CATEGORIES` JS 배열(카테고리별 상품 목록)에 하드코딩 (요청받은 범위 밖의 상품 관리 기능은 만들지 않음). 상품 이미지는 Wikimedia Commons의 `Special:FilePath/<파일명>` 안정 경로를 직접 hotlink (CC 라이선스, 별도 이미지 호스팅 불필요).
 
 ## 회원가입 / 이메일 인증
 

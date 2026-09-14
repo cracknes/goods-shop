@@ -4,10 +4,9 @@ async function renderNav() {
   const { data: { user } } = await supabaseClient.auth.getUser();
 
   nav.innerHTML = `
-    <span class="brand">굿즈샵</span>
+    <span class="brand">노르덴돌프</span>
     <a href="index.html">상품</a>
     ${user ? `<a href="orders.html">내 결제내역</a><a href="admin.html">관리자</a>` : ""}
-    <span class="spacer"></span>
     ${user ? `<button id="logout-btn">로그아웃(${user.email})</button>` : `<a href="login.html">로그인</a>`}
   `;
 
