@@ -9,9 +9,24 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+// GitHub Pages(다른 도메인)에서 브라우저로 호출하므로 CORS 헤더가 없으면
+// 실제 결제 성공 후에도 브라우저가 요청 자체를 차단해버림 (curl 테스트로는 안 보임)
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function json(body: unknown, status = 200) {
+  return Response.json(body, { status, headers: corsHeaders });
+}
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
   if (req.method !== "POST") {
-    return Response.json({ error: "POST 요청만 허용됩니다." }, { status: 405 });
+    return json({ error: "POST 요청만 허용됩니다." }, 405);
   }
 
   // 요청을 보낸 사람이 로그인된 사용자인지 확인 (verify_jwt=true라서 여기 도달했다는 것 자체가
@@ -22,14 +37,14 @@ Deno.serve(async (req) => {
   });
   const { data: userData, error: userError } = await userClient.auth.getUser();
   if (userError || !userData?.user) {
-    return Response.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    return json({ error: "로그인이 필요합니다." }, 401);
   }
   const userId = userData.user.id;
   const userEmail = userData.user.email;
 
   const { paymentKey, orderId, amount, productName } = await req.json();
   if (!paymentKey || !orderId || !amount || !productName) {
-    return Response.json({ error: "필수 파라미터가 없습니다." }, { status: 400 });
+    return json({ error: "필수 파라미터가 없습니다." }, 400);
   }
 
   // 토스페이먼츠에 실제로 결제가 승인됐는지 확인 (시크릿키는 서버 쪽인 여기서만 사용)
@@ -44,7 +59,7 @@ Deno.serve(async (req) => {
   const tossData = await tossRes.json();
 
   if (!tossRes.ok) {
-    return Response.json({ error: "결제 승인 실패", detail: tossData }, { status: 400 });
+    return json({ error: "결제 승인 실패", detail: tossData }, 400);
   }
 
   // 결제가 실제로 확인된 경우에만, service_role 권한으로 orders에 기록 (RLS 우회)
@@ -64,8 +79,8 @@ Deno.serve(async (req) => {
     .single();
 
   if (insertError) {
-    return Response.json({ error: "주문 저장 실패", detail: insertError.message }, { status: 500 });
+    return json({ error: "주문 저장 실패", detail: insertError.message }, 500);
   }
 
-  return Response.json({ success: true, order });
+  return json({ success: true, order });
 });

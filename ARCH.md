@@ -80,6 +80,7 @@ Supabase Auth 설정에서 `mailer_autoconfirm = true`로 설정되어 있어, �
 - 경로: `supabase/functions/confirm-payment/index.ts`
 - 배포: `npx supabase functions deploy confirm-payment` (프로젝트 루트에서, `SUPABASE_ACCESS_TOKEN` 환경변수에 Supabase 개인 액세스 토큰 필요)
 - `verify_jwt = true` (`supabase/config.toml`) — 로그인하지 않은 요청은 Supabase 게이트웨이 단계에서 자동 거부됨.
+- GitHub Pages(다른 도메인)에서 브라우저로 호출하므로 **CORS 헤더를 직접 응답에 넣어야 함** — Supabase Edge Function은 CORS를 자동으로 처리해주지 않음. `OPTIONS` 프리플라이트 요청에 응답하고, 모든 응답에 `Access-Control-Allow-Origin` 등을 넣지 않으면 curl/서버 테스트는 통과해도 실제 브라우저에서는 요청 자체가 차단됨 (이 프로젝트에서 실제로 겪었던 버그).
 - 요청 바디: `{ paymentKey, orderId, amount, productName }`
 - 응답: 성공 시 `{ success: true, order: {...} }`, 실패 시 `{ error: "..." }`
 
