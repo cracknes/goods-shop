@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로그인 | 굿즈샵</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav id="nav"></nav>
+<div class="wrap">
+  <h1>로그인 / 회원가입</h1>
+
+  <div class="card">
+    <input id="email" type="email" placeholder="이메일">
+    <input id="password" type="password" placeholder="비밀번호 (6자 이상)">
+    <div style="display:flex; gap:8px;">
+      <button class="primary" id="login-btn">로그인</button>
+      <button class="primary" id="signup-btn">회원가입</button>
+    </div>
+    <p id="message" class="error"></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<script src="nav.js"></script>
+<script>
+  const messageEl = document.getElementById("message");
+
+  document.getElementById("signup-btn").addEventListener("click", async () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const { error } = await supabaseClient.auth.signUp({ email, password });
+    if (error) { messageEl.textContent = error.message; return; }
+    messageEl.textContent = "가입 완료! 이제 로그인해 주세요.";
+  });
+
+  document.getElementById("login-btn").addEventListener("click", async () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) { messageEl.textContent = error.message; return; }
+    location.href = "index.html";
+  });
+</script>
+</body>
+</html>

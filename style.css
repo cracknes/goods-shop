@@ -1,0 +1,86 @@
+:root {
+  --navy: #10204a;
+  --blue: #2455d6;
+  --bg: #ffffff;
+  --bg-soft: #f7f8fb;
+  --text: #1c2333;
+  --text-soft: #5b6172;
+  --border: #e6e8ef;
+  --danger: #d64545;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  color: var(--text);
+  background: var(--bg-soft);
+  line-height: 1.6;
+}
+.wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
+a { color: var(--blue); }
+
+nav {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 24px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+nav a, nav button {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+nav .brand { font-weight: 700; color: var(--navy); margin-right: auto; }
+
+h1 { font-size: 22px; }
+
+.card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.product {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.product img { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; background: var(--bg-soft); }
+.product .info { flex: 1; }
+.product .price { color: var(--text-soft); font-size: 14px; }
+
+button.primary {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+button.primary:hover { opacity: 0.9; }
+
+input {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+.status-paid { color: var(--blue); font-weight: 600; }
+.error { color: var(--danger); font-size: 14px; }
+.muted { color: var(--text-soft); font-size: 14px; }

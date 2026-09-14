@@ -1,0 +1,80 @@
+# ARCH.md
+
+굿즈샵 프로젝트의 세부 구조. 핵심 요약은 `CLAUDE.md` 참고.
+
+## 배포
+
+- **프론트엔드**: 이 저장소(`cracknes/goods-shop`)를 GitHub Pages로 배포. 주소: `https://cracknes.github.io/goods-shop/`
+- **백엔드**: Supabase 프로젝트 `tnvpedaymwozpinujmfk` (region: ap-northeast-1)
+- 정적 파일이라 빌드 단계 없음 — HTML/CSS/JS를 main 브랜치에 push하면 그대로 반영됨.
+
+## 페이지 목록
+
+| 파일 | 역할 |
+|---|---|
+| `index.html` | 상품 목록 + 구매(토스 결제 시작) |
+| `login.html` | 회원가입 / 로그인 |
+| `success.html` | 토스 결제 성공 리다이렉트 대상 → Edge Function 호출해 승인 확정 |
+| `fail.html` | 토스 결제 실패/취소 리다이렉트 대상 |
+| `orders.html` | 내 결제내역 |
+| `admin.html` | 전체 결제내역 (admin@admin.com만) |
+| `supabase-client.js` | 공용 Supabase 클라이언트 초기화 (URL + publishable key, 공개돼도 안전) |
+| `nav.js` | 로그인 상태에 따라 상단 네비게이션 렌더링 |
+
+## DB 스키마 (`public.orders`)
+
+```sql
+create table public.orders (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id),
+  user_email text,
+  product_name text not null,
+  amount integer not null,
+  toss_order_id text not null unique,
+  toss_payment_key text,
+  status text not null default 'pending',
+  created_at timestamptz not null default now()
+);
+
+alter table public.orders enable row level security;
+
+create policy "orders_select_own_or_admin"
+  on public.orders for select
+  to authenticated
+  using (auth.uid() = user_id or auth.jwt() ->> 'email' = 'admin@admin.com');
+```
+
+- **INSERT 정책 없음** — 브라우저(anon/authenticated)에서 직접 주문 행을 만들 수 없음. 오직 Edge Function이 `service_role` 키로 삽입 (service_role은 RLS를 항상 무시함). 결제 승인 없이 "결제완료" 행을 위조하는 게 불가능한 구조.
+- SELECT 정책 하나로 "내 결제내역"과 "관리자 전체 조회"를 둘 다 처리함 — 관리자 이메일이면 조건의 뒷부분이 참이 되어 전체 행이 보임.
+- 상품 정보는 테이블 없이 `index.html`의 JS 배열에 하드코딩 (요청받은 범위 밖의 상품 관리 기능은 만들지 않음).
+
+## 회원가입 / 이메일 인증
+
+Supabase Auth 설정에서 `mailer_autoconfirm = true`로 설정되어 있어, 가입 즉시 이메일 인증 없이 로그인 가능.
+(Management API `PATCH /v1/projects/{ref}/config/auth`로 설정함, 대시보드 수동 조작 아님)
+
+## 결제 흐름 (토스페이먼츠 테스트 모드, v1/payment 연동)
+
+1. `index.html`에서 "구매하기" 클릭 → 브라우저에서 `TossPayments(테스트클라이언트키).requestPayment('카드', {amount, orderId, orderName, successUrl, failUrl})` 호출.
+2. 토스 테스트 결제창에서 결제 → 성공 시 `successUrl?paymentKey=...&orderId=...&amount=...`로 리다이렉트.
+3. `success.html`이 그 파라미터를 그대로 Supabase Edge Function `confirm-payment`에 전달 (로그인 세션의 JWT가 자동으로 함께 전송됨, `supabaseClient.functions.invoke` 사용).
+4. Edge Function이 (a) 호출자가 로그인 상태인지 `auth.getUser()`로 확인, (b) 토스 시크릿키로 `POST https://api.tosspayments.com/v1/payments/confirm` 호출해 실제 결제 승인 확인, (c) 성공하면 `service_role` 권한으로 `orders`에 행 삽입.
+
+### 사용 중인 키 (전부 테스트 모드)
+
+- 토스 클라이언트키(공개, `index.html`에 하드코딩): `test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq`
+- 토스 시크릿키(비공개, Supabase secret으로만 존재): `TOSS_SECRET_KEY` — `supabase secrets set`으로 설정, 코드에는 없음
+- 위 두 키는 토스페이먼츠 공식 문서의 **공용 샘플 테스트키**. 실제 운영 전환 시 본인 명의로 발급받은 키로 교체 필요.
+
+## Edge Function: `confirm-payment`
+
+- 경로: `supabase/functions/confirm-payment/index.ts`
+- 배포: `npx supabase functions deploy confirm-payment` (프로젝트 루트에서, `SUPABASE_ACCESS_TOKEN` 환경변수에 Supabase 개인 액세스 토큰 필요)
+- `verify_jwt = true` (`supabase/config.toml`) — 로그인하지 않은 요청은 Supabase 게이트웨이 단계에서 자동 거부됨.
+- 요청 바디: `{ paymentKey, orderId, amount, productName }`
+- 응답: 성공 시 `{ success: true, order: {...} }`, 실패 시 `{ error: "..." }`
+
+## 로컬 개발 환경
+
+- Node.js LTS 설치됨 (winget으로 설치). `npx supabase ...`로 CLI 실행 (전역 설치 안 함).
+- Supabase Management API 토큰: `../claude-landing/supabase-token.txt` (이 저장소 밖에 있고, git에 커밋 안 됨)

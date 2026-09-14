@@ -1,0 +1,21 @@
+// 모든 페이지 공통 상단 네비게이션. 로그인 상태에 따라 보여줄 링크가 다름.
+async function renderNav() {
+  const nav = document.getElementById("nav");
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  nav.innerHTML = `
+    <span class="brand">굿즈샵</span>
+    <a href="index.html">상품</a>
+    ${user ? `<a href="orders.html">내 결제내역</a><a href="admin.html">관리자</a>` : ""}
+    ${user ? `<button id="logout-btn">로그아웃(${user.email})</button>` : `<a href="login.html">로그인</a>`}
+  `;
+
+  const logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      await supabaseClient.auth.signOut();
+      location.href = "index.html";
+    });
+  }
+}
+renderNav();

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>결제 처리 중 | 굿즈샵</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav id="nav"></nav>
+<div class="wrap">
+  <h1>결제 확인 중...</h1>
+  <div class="card">
+    <p id="message">토스페이먼츠에 결제 승인을 확인하고 있어요. 잠시만 기다려주세요.</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<script src="nav.js"></script>
+<script>
+  async function confirmPayment() {
+    const params = new URLSearchParams(location.search);
+    const paymentKey = params.get("paymentKey");
+    const orderId = params.get("orderId");
+    const amount = Number(params.get("amount"));
+    const productName = sessionStorage.getItem("pendingProductName") || "굿즈";
+
+    const messageEl = document.getElementById("message");
+
+    if (!paymentKey || !orderId || !amount) {
+      messageEl.textContent = "결제 정보가 없습니다.";
+      return;
+    }
+
+    const { data, error } = await supabaseClient.functions.invoke("confirm-payment", {
+      body: { paymentKey, orderId, amount, productName },
+    });
+
+    if (error || data?.error) {
+      messageEl.textContent = `결제 승인에 실패했습니다: ${data?.error || error.message}`;
+      return;
+    }
+
+    sessionStorage.removeItem("pendingProductName");
+    messageEl.innerHTML = `결제가 완료됐습니다! <a href="orders.html">내 결제내역 보러가기</a>`;
+  }
+
+  confirmPayment();
+</script>
+</body>
+</html>
