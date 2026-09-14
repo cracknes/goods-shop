@@ -14,7 +14,6 @@
 
   <div class="card">
     <h2 style="font-size:16px; margin-top:0;">문의 남기기</h2>
-    <input id="website" type="text" placeholder="웹사이트 (선택)">
     <input id="email" type="email" placeholder="답변받을 이메일" required>
     <input id="subject" type="text" placeholder="문의 제목" required>
     <textarea id="message" rows="8" maxlength="4000" placeholder="문의 내용 (최대 4,000자까지 입력할 수 있습니다)" required></textarea>
@@ -30,7 +29,6 @@
 <script src="nav.js"></script>
 <script>
   document.getElementById("submit-btn").addEventListener("click", async () => {
-    const website = document.getElementById("website").value;
     const email = document.getElementById("email").value;
     const subject = document.getElementById("subject").value;
     const message = document.getElementById("message").value;
@@ -41,7 +39,7 @@
       return;
     }
 
-    const { error } = await supabaseClient.from("inquiries").insert({ website, email, subject, message });
+    const { error } = await supabaseClient.from("inquiries").insert({ email, subject, message });
 
     if (error) {
       statusEl.textContent = "문의 접수에 실패했습니다: " + error.message;
@@ -49,7 +47,6 @@
     }
 
     statusEl.textContent = "문의가 접수되었습니다. 답변까지 조금만 기다려주세요.";
-    document.getElementById("website").value = "";
     document.getElementById("email").value = "";
     document.getElementById("subject").value = "";
     document.getElementById("message").value = "";

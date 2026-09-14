@@ -3,10 +3,12 @@ async function renderNav() {
   const nav = document.getElementById("nav");
   const { data: { user } } = await supabaseClient.auth.getUser();
 
+  const isAdmin = user?.email === "admin@admin.com";
+
   nav.innerHTML = `
     <span class="brand">노르덴돌프</span>
     <a href="index.html">상품</a>
-    <a href="contact.html" class="nav-cta">문의하기</a>
+    ${isAdmin ? "" : `<a href="contact.html" class="nav-cta">문의하기</a>`}
     ${user ? `<a href="orders.html">내 결제내역</a><a href="admin.html">관리자</a>` : ""}
     ${user ? `<button id="logout-btn">로그아웃(${user.email})</button>` : `<a href="login.html">로그인</a>`}
   `;
