@@ -13,7 +13,9 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 // 실제 결제 성공 후에도 브라우저가 요청 자체를 차단해버림 (curl 테스트로는 안 보임)
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, apikey, content-type",
+  // supabase-js가 자동으로 붙이는 x-client-info까지 포함해야 함 (안 넣으면 브라우저가
+  // preflight 단계에서 자체적으로 막아버려서 서버 로그에는 아무 흔적도 안 남음)
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
