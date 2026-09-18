@@ -60,9 +60,8 @@
       options: { data: { name, phone, gender } },
     });
     if (error) { messageEl.textContent = error.message; return; }
-    messageEl.classList.remove("error");
-    messageEl.classList.add("muted");
-    messageEl.textContent = "가입 완료! 이제 로그인해 주세요.";
+    alert("가입이 완료되었습니다. 로그인 화면으로 이동합니다.");
+    location.href = "login.html";
   });
 
   renderSocialButtons("social-buttons");
