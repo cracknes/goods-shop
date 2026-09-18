@@ -212,14 +212,13 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
   table { overflow-x: visible; }
   thead { display: none; }
   tr {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
-    margin-bottom: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
   }
-  tr:last-child { margin-bottom: 0; }
+  tr:last-child { border-bottom: none; }
   td {
-    padding: 6px 0;
+    width: 100%;
+    padding: 4px 0;
     border-bottom: none;
     white-space: normal;
     overflow-wrap: anywhere;
