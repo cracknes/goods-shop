@@ -197,7 +197,7 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
   .card { padding: 16px; }
   nav { padding: 12px 16px; }
   .nav-links { gap: 10px; margin-left: 10px; }
-  .shop-layout { flex-direction: column; gap: 16px; }
+  .shop-layout { flex-direction: column; align-items: stretch; gap: 16px; }
   .category-list {
     width: 100%;
     flex-direction: row;
@@ -205,6 +205,7 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
     gap: 8px;
   }
   .category-list button { flex: 1 1 auto; text-align: center; }
+  .shop-content { width: 100%; }
   .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .product-card .body { padding: 12px 10px; }
   .product-card .name { font-size: 13px; }
