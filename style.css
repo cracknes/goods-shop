@@ -219,19 +219,16 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
   }
   tr:last-child { margin-bottom: 0; }
   td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
     padding: 6px 0;
     border-bottom: none;
     white-space: normal;
-    text-align: right;
+    overflow-wrap: anywhere;
   }
   td::before {
     content: attr(data-label);
+    display: block;
     color: var(--text-soft);
     font-size: 12px;
-    text-align: left;
+    margin-bottom: 2px;
   }
 }
