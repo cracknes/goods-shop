@@ -85,6 +85,22 @@ nav .nav-cta:hover { opacity: 0.9; }
 .category-list button.active { background: var(--orange); color: #fff; font-weight: 600; }
 .shop-content { flex: 1; min-width: 0; }
 
+/* 페이지 내 탭 전환 (예: 문의하기 - 문의 접수하기 / 내 문의내역) */
+.tab-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+.tab-bar button {
+  flex: 1;
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--bg-soft);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+.tab-bar button.active { background: var(--orange); color: #fff; font-weight: 600; }
+
 h1 { font-size: 22px; }
 
 .card {

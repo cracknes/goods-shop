@@ -10,7 +10,7 @@ async function renderNav() {
     <div class="nav-links">
       <a href="index.html">상품</a>
       ${isAdmin ? "" : `<a href="contact.html" class="nav-cta">문의하기</a>`}
-      ${user && !isAdmin ? `<a href="orders.html">내 결제내역</a><a href="my-inquiries.html">내 문의내역</a>` : ""}
+      ${user && !isAdmin ? `<a href="orders.html">내 결제내역</a>` : ""}
       ${isAdmin ? `<a href="admin.html">관리자</a>` : ""}
       ${user ? `<button id="logout-btn">로그아웃(${user.email})</button>` : `<a href="login.html">로그인</a>`}
     </div>
