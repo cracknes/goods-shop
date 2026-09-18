@@ -80,9 +80,15 @@
       return;
     }
 
+    // 에러 없이도 실제 계정 정보(data.user.id)가 없는 애매한 응답이면 성공으로 취급하지 않음
+    if (!data.user || !data.user.id) {
+      messageEl.textContent = "가입 처리 중 문제가 발생했습니다. 다시 시도해 주세요.";
+      return;
+    }
+
     // Supabase는 보안상 이미 가입된 이메일이어도 에러 없이 "성공"처럼 응답할 때가 있음
     // (identities가 비어있으면 신규 계정이 아니라 기존 계정이라는 뜻)
-    if (data.user && data.user.identities && data.user.identities.length === 0) {
+    if (data.user.identities && data.user.identities.length === 0) {
       messageEl.textContent = "이미 가입된 이메일입니다. 로그인해 주세요.";
       return;
     }

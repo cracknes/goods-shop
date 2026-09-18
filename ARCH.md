@@ -106,6 +106,10 @@ grant select, update on public.inquiries to authenticated;
 - 프론트엔드에서 `.insert(...)` / `.update(...)` 호출 시 `.select()`를 체이닝하면 PostgREST가 처리 후 행을 다시 읽으려고 해서, 그 역할에 SELECT 권한이 없는 경우(anon의 insert) 에러가 남 — `contact.html`은 `.select()` 없이 insert만 호출함.
 - 관리자 답변은 `inquiries.reply` / `inquiries.replied_at` 컬럼에 저장 (별도 테이블 없이 1:1 관계라 컬럼으로 충분). 문의를 남긴 사람이 답변을 확인하는 화면은 없음 (로그인 없이 이메일만 남기는 구조라 계정과 연결할 방법이 없음) — 필요하면 이메일로 직접 답변을 보내는 별도 절차가 있어야 함.
 
+## 알려진 설정 이슈 (수정 완료)
+
+`site_url`이 프로젝트 생성 시 기본값인 `http://localhost:3000`으로 방치되어 있었음 → `https://cracknes.cloud`로 수정, `uri_allow_list`에 `https://cracknes.cloud/**`, `https://cracknes.github.io/goods-shop/**` 추가함. (Auth 로그의 `referer` 필드가 실제 접속 주소와 무관하게 `localhost:3000`으로 찍혀서 혼란을 줬던 원인. 소셜 로그인 redirect, 비밀번호 재설정 메일 링크 등에도 영향을 주는 설정이라 실서비스 도메인으로 맞춰둠.)
+
 ## 회원가입 / 이메일 인증
 
 Supabase Auth 설정에서 `mailer_autoconfirm = true`로 설정되어 있어, 가입 즉시 이메일 인증 없이 로그인 가능.
