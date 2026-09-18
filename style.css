@@ -1,11 +1,11 @@
 :root {
   --accent: #03c75a;
-  --bg: #0a1229;
-  --bg-soft: #121f42;
-  --text: #eef1fb;
-  --text-soft: #98a2c4;
-  --border: #243158;
-  --danger: #ff6b6b;
+  --bg: #ffffff;
+  --bg-soft: #f5f6f7;
+  --text: #1c1c1c;
+  --text-soft: #767676;
+  --border: #e5e5e5;
+  --danger: #dc3545;
 }
 * { box-sizing: border-box; }
 html { overflow-x: hidden; }
@@ -13,7 +13,7 @@ body {
   margin: 0;
   font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   color: var(--text);
-  background: linear-gradient(180deg, #16234a 0%, var(--bg) 320px);
+  background: var(--bg-soft);
   line-height: 1.6;
   overflow-x: hidden;
 }
