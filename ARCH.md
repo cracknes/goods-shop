@@ -115,6 +115,8 @@ grant select, update on public.inquiries to authenticated;
 Supabase Auth 설정에서 `mailer_autoconfirm = true`로 설정되어 있어, 가입 즉시 이메일 인증 없이 로그인 가능.
 (Management API `PATCH /v1/projects/{ref}/config/auth`로 설정함, 대시보드 수동 조작 아님)
 
+**중요**: `mailer_autoconfirm=true`라서 `auth.signUp()`이 성공하면 **그 즉시 로그인 세션도 함께 생성됨** (GoTrue 로그에 `immediate_login_after_signup: true`로 남음). 그래서 가입 성공 후 `login.html`로 보내서 다시 로그인을 요구하면 안 됨 — 이미 로그인된 상태에서 재입력한 비밀번호가 오타 등으로 다르면 "가입은 됐는데 로그인이 안 된다"는 혼란스러운 증상이 생김 (실제로 겪었던 문제). `signup.html`은 성공 시 바로 `index.html`로 이동함.
+
 이메일 회원가입 폼(`signup.html`)은 이름/전화번호/이메일/성별/비밀번호를 받음. 이메일/비밀번호만 실제 로그인 자격증명이고, 나머지(이름/전화번호/성별)는 별도 테이블 없이 `auth.signUp({ email, password, options: { data: { name, phone, gender } } })`으로 **`user_metadata`**에 저장함 (Supabase Auth가 기본 제공하는 부가 정보 저장 공간이라, 프로필 테이블을 따로 만들 필요가 없어서 이 방식을 씀). 나중에 이 값을 조회하려면 `supabaseClient.auth.getUser()`의 `user.user_metadata.name` 처럼 접근하면 됨.
 
 ## 네이버 / 카카오 간편인증

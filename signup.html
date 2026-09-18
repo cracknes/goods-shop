@@ -93,8 +93,9 @@
       return;
     }
 
-    alert("가입이 완료되었습니다. 로그인 화면으로 이동합니다.");
-    location.href = "login.html";
+    // 가입과 동시에 로그인 세션도 이미 생성됨 (mailer_autoconfirm) — 다시 로그인시킬 필요 없음
+    alert("가입이 완료되었습니다.");
+    location.href = "index.html";
   });
 
   renderSocialButtons("social-buttons");
