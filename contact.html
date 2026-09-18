@@ -13,7 +13,7 @@
 
   <div class="tab-bar">
     <button type="button" data-tab="write" class="active">문의 접수하기</button>
-    <button type="button" data-tab="mine">내 문의내역</button>
+    <button type="button" data-tab="mine">문의내역</button>
   </div>
 
   <div id="write-view">
@@ -107,12 +107,42 @@
   function showInquiryDetail(id) {
     const item = myInquiries.find(i => i.id === id);
     document.getElementById("inquiry-detail").innerHTML = `
-      <div class="inquiry-meta">${item.subject} · ${new Date(item.created_at).toLocaleString()}</div>
-      <div class="inquiry-message">${item.message}</div>
+      <div class="inquiry-meta">${new Date(item.created_at).toLocaleString()}</div>
+      <input id="edit-subject" type="text" value="${item.subject}">
+      <textarea id="edit-message" rows="6">${item.message}</textarea>
+      <button class="primary" id="edit-save-btn">수정 저장</button>
+      <p id="edit-status" class="muted"></p>
       ${item.reply
         ? `<div class="inquiry-reply-done"><strong>답변</strong> (${new Date(item.replied_at).toLocaleString()})<br>${item.reply}</div>`
         : `<p class="muted">아직 답변이 등록되지 않았습니다.</p>`}
     `;
+
+    document.getElementById("edit-save-btn").addEventListener("click", async () => {
+      const subject = document.getElementById("edit-subject").value;
+      const message = document.getElementById("edit-message").value;
+      const statusEl = document.getElementById("edit-status");
+
+      if (!subject || !message) {
+        statusEl.textContent = "제목과 내용을 입력해 주세요.";
+        return;
+      }
+
+      const { error } = await supabaseClient
+        .from("inquiries")
+        .update({ subject, message })
+        .eq("id", id);
+
+      if (error) {
+        statusEl.textContent = "수정 실패: " + error.message;
+        return;
+      }
+
+      item.subject = subject;
+      item.message = message;
+      statusEl.textContent = "수정되었습니다.";
+      renderMyInquiriesList();
+    });
+
     document.getElementById("list-card").hidden = true;
     document.getElementById("detail-card").hidden = false;
   }
@@ -140,7 +170,11 @@
     }
 
     myInquiries = data;
-    document.getElementById("inquiries-list").innerHTML = data.map(i => `
+    renderMyInquiriesList();
+  }
+
+  function renderMyInquiriesList() {
+    document.getElementById("inquiries-list").innerHTML = myInquiries.map(i => `
       <div class="inquiry-row" data-id="${i.id}">
         <div>
           <div>${i.subject}</div>

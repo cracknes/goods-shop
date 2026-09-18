@@ -93,20 +93,41 @@ create policy "inquiries_select_own_or_admin"
   to authenticated
   using (auth.uid() = user_id or auth.jwt() ->> 'email' = 'admin@admin.com');
 
-create policy "inquiries_update_admin"
+create policy "inquiries_update_own_or_admin"
   on public.inquiries for update
   to authenticated
-  using (auth.jwt() ->> 'email' = 'admin@admin.com')
-  with check (auth.jwt() ->> 'email' = 'admin@admin.com');
+  using (auth.uid() = user_id or auth.jwt() ->> 'email' = 'admin@admin.com')
+  with check (auth.uid() = user_id or auth.jwt() ->> 'email' = 'admin@admin.com');
+
+-- 본인은 subject/message를 수정할 수 있지만, reply/replied_at/email/user_id는
+-- (RLS의 with check만으로는 컬럼 단위 제한이 안 되므로) 트리거로 강제 보호함.
+-- admin이 아닌 사람이 이 컬럼들을 바꾸려 해도 트리거가 조용히 원래 값으로 되돌림.
+create or replace function public.inquiries_protect_reply()
+returns trigger language plpgsql security definer as $$
+begin
+  if auth.jwt() ->> 'email' is distinct from 'admin@admin.com' then
+    new.reply := old.reply;
+    new.replied_at := old.replied_at;
+    new.email := old.email;
+    new.user_id := old.user_id;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger inquiries_protect_reply_trigger
+  before update on public.inquiries
+  for each row execute function public.inquiries_protect_reply();
 
 grant insert on public.inquiries to anon, authenticated;
 grant select, update on public.inquiries to authenticated;
 ```
 
-- 로그인 없이 누구나 등록(INSERT)할 수 있음. `contact.html`은 제출 시 로그인 상태면 `user_id`를 같이 저장하고(비로그인이면 null), SELECT 정책이 orders 테이블과 동일한 패턴("본인 것 또는 admin이면 전체")이라 `contact.html`의 "내 문의내역" 탭에서 본인 문의만 조회됨. UPDATE(답변 등록)는 여전히 `admin@admin.com`만 가능. `website` 필드는 폼에서는 제거했지만 컬럼은 남겨둠 (기존 데이터 호환, 언제든 다시 노출 가능).
+- 로그인 없이 누구나 등록(INSERT)할 수 있음. `contact.html`은 제출 시 로그인 상태면 `user_id`를 같이 저장하고(비로그인이면 null), SELECT/UPDATE 정책이 orders 테이블과 동일한 패턴("본인 것 또는 admin이면 전체")이라 `contact.html`의 "문의내역" 탭에서 본인 문의만 조회·수정됨. `website` 필드는 폼에서는 제거했지만 컬럼은 남겨둠 (기존 데이터 호환, 언제든 다시 노출 가능).
+- 본인이 제목/내용을 수정할 수 있게 UPDATE 정책을 admin 전용에서 "본인 또는 admin"으로 넓혔음. 다만 그 UPDATE 요청에 `reply` 같은 필드가 같이 실려와도(실수든 악의든) `inquiries_protect_reply` 트리거가 admin이 아니면 그 값들을 무시하고 기존 값으로 고정시킴 — RLS의 `with check`는 행 단위 조건이라 "이 컬럼은 못 바꾸게" 같은 제한을 못 걸어서 트리거로 보강함. (직접 재현 테스트: 본인이 `reply`를 끼워 넣어 보내도 실제로는 안 바뀌는 것 확인함.)
 - `user_id` 컬럼을 나중에 추가해서, 그 전에 로그인 없이 남긴 문의는 `user_id`가 비어있었음 → 문의 당시 입력한 이메일이 실제 가입 이메일과 같으면 1회성으로 `update ... from auth.users where email 일치` 매칭해서 소급 연결함.
 - 프론트엔드에서 `.insert(...)` / `.update(...)` 호출 시 `.select()`를 체이닝하면 PostgREST가 처리 후 행을 다시 읽으려고 해서, 그 역할에 SELECT 권한이 없는 경우(anon의 insert) 에러가 남 — `contact.html`은 `.select()` 없이 insert만 호출함.
-- 관리자 답변은 `inquiries.reply` / `inquiries.replied_at` 컬럼에 저장 (별도 테이블 없이 1:1 관계라 컬럼으로 충분). 비로그인으로 남긴 문의(`user_id` null)는 본인이 나중에 조회할 방법이 없음 — 필요하면 이메일로 직접 답변을 보내는 별도 절차가 있어야 함.
+- 관리자 답변은 `inquiries.reply` / `inquiries.replied_at` 컬럼에 저장 (별도 테이블 없이 1:1 관계라 컬럼으로 충분). 비로그인으로 남긴 문의(`user_id` null)는 본인이 나중에 조회/수정할 방법이 없음 — 필요하면 이메일로 직접 답변을 보내는 별도 절차가 있어야 함.
 
 ## 알려진 설정 이슈 (수정 완료)
 
