@@ -185,6 +185,18 @@ textarea { resize: vertical; }
   font-size: 14px;
 }
 
+.inquiry-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.inquiry-row:last-child { border-bottom: none; }
+.inquiry-row:hover { opacity: 0.85; }
+
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 .status-paid { color: var(--orange); font-weight: 600; }

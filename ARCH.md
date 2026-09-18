@@ -20,8 +20,9 @@
 | `success.html` | 토스 결제 성공 리다이렉트 대상 → Edge Function 호출해 승인 확정 |
 | `fail.html` | 토스 결제 실패/취소 리다이렉트 대상 |
 | `orders.html` | 내 결제내역 (일반 사용자용, 관리자는 상단 nav에 이 링크가 안 보임) |
-| `admin.html` | admin@admin.com 전용. 좌측 탭으로 "결제내역"/"문의내역" 전환, 문의내역 탭에서 답변 작성 가능 |
-| `contact.html` | 문의하기 (로그인 불필요, `inquiries` 테이블에 저장). 헤더에서 admin 로그인 시에는 이 링크가 안 보임 |
+| `admin.html` | admin@admin.com 전용. 좌측 탭으로 "결제내역"/"문의내역" 전환, 문의내역은 목록 → 클릭 시 상세+답변 작성 화면으로 전환 |
+| `contact.html` | 문의하기 (로그인 불필요, `inquiries` 테이블에 저장; 로그인 상태면 `user_id`도 함께 저장돼서 `my-inquiries.html`에서 조회 가능). 헤더에서 admin 로그인 시에는 이 링크가 안 보임 |
+| `my-inquiries.html` | 내 문의내역 (로그인 필요). 목록 → 클릭 시 내용+답변 상세 화면 |
 | `supabase-client.js` | 공용 Supabase 클라이언트 초기화 (URL + publishable key, 공개돼도 안전) |
 | `nav.js` | 상단 네비게이션. 로그인 상태 + admin 여부에 따라 보여줄 링크가 달라짐 (아래 "상단 네비게이션 규칙" 참고) |
 | `style.css` | 다크 네이비 배경 + 주황(`--orange`) 단일 포인트 컬러 테마. 모바일(640px 이하) 반응형 처리 포함 |
@@ -30,7 +31,7 @@
 
 - 브랜드("노르덴돌프") 클릭 시 `index.html`로 이동
 - 비로그인: 상품, 문의하기, 로그인
-- 일반 로그인 사용자: 상품, 문의하기, 내 결제내역, 로그아웃 (관리자 링크 없음)
+- 일반 로그인 사용자: 상품, 문의하기, 내 결제내역, 내 문의내역, 로그아웃 (관리자 링크 없음)
 - admin@admin.com 로그인: 상품, 내 결제내역·문의하기 링크 숨김, 관리자 링크만 보임, 로그아웃
 - 메뉴가 화면 폭보다 길어지면 **줄바꿈**으로 다음 줄에 배치 (가로 스크롤 방식은 항목이 잘려서 안 보이는 문제가 있어 되돌림). 각 메뉴 항목 자체는 `flex-shrink:0` + `white-space:nowrap`으로 텍스트가 항목 내부에서 줄바꿈되지 않도록 막아둠.
 
@@ -77,7 +78,8 @@ create table public.inquiries (
   message text not null,
   created_at timestamptz not null default now(),
   reply text,
-  replied_at timestamptz
+  replied_at timestamptz,
+  user_id uuid references auth.users(id)
 );
 
 alter table public.inquiries enable row level security;
@@ -87,10 +89,10 @@ create policy "inquiries_insert_anyone"
   to anon, authenticated
   with check (true);
 
-create policy "inquiries_select_admin"
+create policy "inquiries_select_own_or_admin"
   on public.inquiries for select
   to authenticated
-  using (auth.jwt() ->> 'email' = 'admin@admin.com');
+  using (auth.uid() = user_id or auth.jwt() ->> 'email' = 'admin@admin.com');
 
 create policy "inquiries_update_admin"
   on public.inquiries for update
@@ -102,9 +104,9 @@ grant insert on public.inquiries to anon, authenticated;
 grant select, update on public.inquiries to authenticated;
 ```
 
-- 로그인 없이 누구나 등록(INSERT)할 수 있음. SELECT/UPDATE는 `admin@admin.com`만 가능 (관리자 페이지의 문의내역 탭 + 답변 등록 기능용). `website` 필드는 폼에서는 제거했지만 컬럼은 남겨둠 (기존 데이터 호환, 언제든 다시 노출 가능).
+- 로그인 없이 누구나 등록(INSERT)할 수 있음. `contact.html`은 제출 시 로그인 상태면 `user_id`를 같이 저장하고(비로그인이면 null), SELECT 정책이 orders 테이블과 동일한 패턴("본인 것 또는 admin이면 전체")이라 `my-inquiries.html`에서 본인 문의만 조회됨. UPDATE(답변 등록)는 여전히 `admin@admin.com`만 가능. `website` 필드는 폼에서는 제거했지만 컬럼은 남겨둠 (기존 데이터 호환, 언제든 다시 노출 가능).
 - 프론트엔드에서 `.insert(...)` / `.update(...)` 호출 시 `.select()`를 체이닝하면 PostgREST가 처리 후 행을 다시 읽으려고 해서, 그 역할에 SELECT 권한이 없는 경우(anon의 insert) 에러가 남 — `contact.html`은 `.select()` 없이 insert만 호출함.
-- 관리자 답변은 `inquiries.reply` / `inquiries.replied_at` 컬럼에 저장 (별도 테이블 없이 1:1 관계라 컬럼으로 충분). 문의를 남긴 사람이 답변을 확인하는 화면은 없음 (로그인 없이 이메일만 남기는 구조라 계정과 연결할 방법이 없음) — 필요하면 이메일로 직접 답변을 보내는 별도 절차가 있어야 함.
+- 관리자 답변은 `inquiries.reply` / `inquiries.replied_at` 컬럼에 저장 (별도 테이블 없이 1:1 관계라 컬럼으로 충분). 비로그인으로 남긴 문의(`user_id` null)는 본인이 나중에 조회할 방법이 없음 — 필요하면 이메일로 직접 답변을 보내는 별도 절차가 있어야 함.
 
 ## 알려진 설정 이슈 (수정 완료)
 

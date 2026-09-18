@@ -29,8 +29,14 @@
       </div>
 
       <div class="card" id="inquiries-panel" hidden>
-        <div id="inquiries-list"></div>
-        <p id="inquiries-empty" class="muted" hidden>문의 내역이 없습니다.</p>
+        <div id="inquiries-list-view">
+          <div id="inquiries-list"></div>
+          <p id="inquiries-empty" class="muted" hidden>문의 내역이 없습니다.</p>
+        </div>
+        <div id="inquiries-detail-view" hidden>
+          <button type="button" id="inquiries-back-btn" class="muted" style="background:none; border:none; cursor:pointer; padding:0; margin-bottom:12px;">&larr; 목록으로</button>
+          <div id="inquiry-detail-content"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -73,6 +79,72 @@
     `).join("");
   }
 
+  let allInquiries = [];
+
+  function showInquiriesList() {
+    document.getElementById("inquiries-list-view").hidden = false;
+    document.getElementById("inquiries-detail-view").hidden = true;
+  }
+
+  function showInquiryDetail(id) {
+    const item = allInquiries.find(i => i.id === id);
+    document.getElementById("inquiry-detail-content").innerHTML = `
+      <div class="inquiry-meta">${item.email} · ${item.subject} · ${new Date(item.created_at).toLocaleString()}</div>
+      <div class="inquiry-message">${item.message}</div>
+      ${item.reply ? `<div class="inquiry-reply-done"><strong>답변</strong> (${new Date(item.replied_at).toLocaleString()})<br>${item.reply}</div>` : ""}
+      <textarea id="reply-input" rows="3" placeholder="답변 내용">${item.reply ?? ""}</textarea>
+      <button class="primary" id="reply-submit">${item.reply ? "답변 수정" : "답변 등록"}</button>
+      <p id="reply-status" class="muted"></p>
+    `;
+
+    document.getElementById("reply-submit").addEventListener("click", async () => {
+      const reply = document.getElementById("reply-input").value;
+      const statusEl = document.getElementById("reply-status");
+
+      if (!reply) {
+        statusEl.textContent = "답변 내용을 입력해 주세요.";
+        return;
+      }
+
+      const replied_at = new Date().toISOString();
+      const { error } = await supabaseClient
+        .from("inquiries")
+        .update({ reply, replied_at })
+        .eq("id", id);
+
+      if (error) {
+        statusEl.textContent = "저장 실패: " + error.message;
+        return;
+      }
+
+      item.reply = reply;
+      item.replied_at = replied_at;
+      statusEl.textContent = "답변이 저장되었습니다.";
+      renderInquiriesList();
+    });
+
+    document.getElementById("inquiries-list-view").hidden = true;
+    document.getElementById("inquiries-detail-view").hidden = false;
+  }
+
+  function renderInquiriesList() {
+    document.getElementById("inquiries-list").innerHTML = allInquiries.map(i => `
+      <div class="inquiry-row" data-id="${i.id}">
+        <div>
+          <div>${i.email} · ${i.subject}</div>
+          <div class="inquiry-meta">${new Date(i.created_at).toLocaleString()}</div>
+        </div>
+        <span class="${i.reply ? "status-paid" : "muted"}">${i.reply ? "답변완료" : "답변대기"}</span>
+      </div>
+    `).join("");
+
+    document.querySelectorAll("#inquiries-list .inquiry-row").forEach(row => {
+      row.addEventListener("click", () => showInquiryDetail(row.dataset.id));
+    });
+  }
+
+  document.getElementById("inquiries-back-btn").addEventListener("click", showInquiriesList);
+
   async function loadInquiries() {
     const { data: inquiries, error } = await supabaseClient
       .from("inquiries")
@@ -85,36 +157,8 @@
       return;
     }
 
-    document.getElementById("inquiries-list").innerHTML = inquiries.map(i => `
-      <div class="inquiry-item" data-id="${i.id}">
-        <div class="inquiry-meta">${i.email} · ${i.subject} · ${new Date(i.created_at).toLocaleString()}</div>
-        <div class="inquiry-message">${i.message}</div>
-        ${i.reply ? `<div class="inquiry-reply-done"><strong>답변</strong> (${new Date(i.replied_at).toLocaleString()})<br>${i.reply}</div>` : ""}
-        <textarea class="reply-input" rows="3" placeholder="답변 내용">${i.reply ?? ""}</textarea>
-        <button class="primary reply-submit">${i.reply ? "답변 수정" : "답변 등록"}</button>
-        <p class="reply-status muted"></p>
-      </div>
-    `).join("");
-
-    document.querySelectorAll(".inquiry-item").forEach(item => {
-      item.querySelector(".reply-submit").addEventListener("click", async () => {
-        const id = item.dataset.id;
-        const reply = item.querySelector(".reply-input").value;
-        const statusEl = item.querySelector(".reply-status");
-
-        if (!reply) {
-          statusEl.textContent = "답변 내용을 입력해 주세요.";
-          return;
-        }
-
-        const { error } = await supabaseClient
-          .from("inquiries")
-          .update({ reply, replied_at: new Date().toISOString() })
-          .eq("id", id);
-
-        statusEl.textContent = error ? "저장 실패: " + error.message : "답변이 저장되었습니다.";
-      });
-    });
+    allInquiries = inquiries;
+    renderInquiriesList();
   }
 
   async function loadAdmin() {
