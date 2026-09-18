@@ -65,12 +65,28 @@
       return;
     }
 
-    const { error } = await supabaseClient.auth.signUp({
+    const { data, error } = await supabaseClient.auth.signUp({
       email,
       password,
       options: { data: { name, phone, gender } },
     });
-    if (error) { messageEl.textContent = error.message; return; }
+
+    if (error) {
+      if (error.code === "user_already_exists") {
+        messageEl.textContent = "이미 가입된 이메일입니다. 로그인해 주세요.";
+      } else {
+        messageEl.textContent = error.message;
+      }
+      return;
+    }
+
+    // Supabase는 보안상 이미 가입된 이메일이어도 에러 없이 "성공"처럼 응답할 때가 있음
+    // (identities가 비어있으면 신규 계정이 아니라 기존 계정이라는 뜻)
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      messageEl.textContent = "이미 가입된 이메일입니다. 로그인해 주세요.";
+      return;
+    }
+
     alert("가입이 완료되었습니다. 로그인 화면으로 이동합니다.");
     location.href = "login.html";
   });
