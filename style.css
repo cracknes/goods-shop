@@ -64,7 +64,7 @@ nav .nav-cta:hover { opacity: 0.9; }
 /* 상품 페이지 전용: 좌측 카테고리 메뉴 + 우측 상품 그리드 */
 .shop-layout { display: flex; gap: 32px; align-items: flex-start; }
 .category-list {
-  width: 180px;
+  width: 25%;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
