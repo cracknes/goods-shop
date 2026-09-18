@@ -8,7 +8,6 @@ async function renderNav() {
   nav.innerHTML = `
     <a class="brand" href="index.html">노르덴돌프</a>
     <div class="nav-links">
-      <a href="index.html">상품</a>
       ${isAdmin ? "" : `<a href="contact.html" class="nav-cta">문의하기</a>`}
       ${user && !isAdmin ? `<a href="orders.html">결제내역</a>` : ""}
       ${isAdmin ? `<a href="admin.html">관리자</a>` : ""}
