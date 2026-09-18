@@ -15,7 +15,7 @@
 |---|---|
 | `index.html` | 카테고리(화장품/남성 의류/여성 의류)별 상품 목록 + 구매(토스 결제 시작). 좌측에 카테고리 전용 탭(사이트 공통 상단 nav와는 별개) |
 | `login.html` | 로그인 (이메일/비밀번호 + 네이버/카카오 간편인증) |
-| `signup.html` | 회원가입 (이메일/비밀번호 + 네이버/카카오 간편인증) |
+| `signup.html` | 회원가입 (이름/전화번호/이메일/성별/비밀번호 + 네이버/카카오 간편인증) |
 | `social-auth.js` | 네이버/카카오 버튼 렌더링 + `signInWithOAuth` 호출 (login/signup 공용) |
 | `success.html` | 토스 결제 성공 리다이렉트 대상 → Edge Function 호출해 승인 확정 |
 | `fail.html` | 토스 결제 실패/취소 리다이렉트 대상 |
@@ -110,6 +110,8 @@ grant select, update on public.inquiries to authenticated;
 
 Supabase Auth 설정에서 `mailer_autoconfirm = true`로 설정되어 있어, 가입 즉시 이메일 인증 없이 로그인 가능.
 (Management API `PATCH /v1/projects/{ref}/config/auth`로 설정함, 대시보드 수동 조작 아님)
+
+이메일 회원가입 폼(`signup.html`)은 이름/전화번호/이메일/성별/비밀번호를 받음. 이메일/비밀번호만 실제 로그인 자격증명이고, 나머지(이름/전화번호/성별)는 별도 테이블 없이 `auth.signUp({ email, password, options: { data: { name, phone, gender } } })`으로 **`user_metadata`**에 저장함 (Supabase Auth가 기본 제공하는 부가 정보 저장 공간이라, 프로필 테이블을 따로 만들 필요가 없어서 이 방식을 씀). 나중에 이 값을 조회하려면 `supabaseClient.auth.getUser()`의 `user.user_metadata.name` 처럼 접근하면 됨.
 
 ## 네이버 / 카카오 간편인증
 

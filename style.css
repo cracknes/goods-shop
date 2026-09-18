@@ -153,7 +153,7 @@ button.primary:hover { opacity: 0.9; }
 .btn-naver { background: #03c75a; color: #fff; }
 .btn-naver:hover { opacity: 0.9; }
 
-input, textarea {
+input, textarea, select {
   display: block;
   width: 100%;
   padding: 10px 12px;
