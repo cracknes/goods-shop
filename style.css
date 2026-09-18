@@ -135,6 +135,22 @@ button.primary {
 }
 button.primary:hover { opacity: 0.9; }
 
+.social-buttons { display: flex; flex-direction: column; gap: 8px; }
+.social-buttons button {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-kakao { background: #fee500; color: #191600; }
+.btn-kakao:hover { opacity: 0.9; }
+.btn-naver { background: #03c75a; color: #fff; }
+.btn-naver:hover { opacity: 0.9; }
+
 input, textarea {
   display: block;
   width: 100%;

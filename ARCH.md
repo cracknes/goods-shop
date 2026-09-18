@@ -14,7 +14,9 @@
 | 파일 | 역할 |
 |---|---|
 | `index.html` | 카테고리(화장품/남성 의류/여성 의류)별 상품 목록 + 구매(토스 결제 시작). 좌측에 카테고리 전용 탭(사이트 공통 상단 nav와는 별개) |
-| `login.html` | 회원가입 / 로그인 |
+| `login.html` | 로그인 (이메일/비밀번호 + 네이버/카카오 간편인증) |
+| `signup.html` | 회원가입 (이메일/비밀번호 + 네이버/카카오 간편인증) |
+| `social-auth.js` | 네이버/카카오 버튼 렌더링 + `signInWithOAuth` 호출 (login/signup 공용) |
 | `success.html` | 토스 결제 성공 리다이렉트 대상 → Edge Function 호출해 승인 확정 |
 | `fail.html` | 토스 결제 실패/취소 리다이렉트 대상 |
 | `orders.html` | 내 결제내역 (일반 사용자용, 관리자는 상단 nav에 이 링크가 안 보임) |
@@ -109,6 +111,19 @@ grant select, update on public.inquiries to authenticated;
 Supabase Auth 설정에서 `mailer_autoconfirm = true`로 설정되어 있어, 가입 즉시 이메일 인증 없이 로그인 가능.
 (Management API `PATCH /v1/projects/{ref}/config/auth`로 설정함, 대시보드 수동 조작 아님)
 
+## 네이버 / 카카오 간편인증
+
+- **카카오**: Supabase가 기본 지원하는 provider (`provider: 'kakao'`). `config/auth`에서 `external_kakao_enabled=true`로 켜져 있고, `external_kakao_client_id`/`external_kakao_secret`는 지금 **플레이스홀더 값**(`REPLACE_WITH_KAKAO_REST_API_KEY` 등)이라 실제 카카오 키로 교체하기 전까지는 로그인 시도 시 에러가 남.
+- **네이버**: Supabase에 기본 provider가 없어서 ([공식 요청 스레드](https://github.com/orgs/supabase/discussions/35631), 아직 미지원), **Custom OAuth2 Provider** 기능으로 직접 등록함 (`custom_oauth_enabled=true`로 켬).
+  - identifier: `custom:naver`
+  - authorization_url/token_url/userinfo_url: 네이버 공식 OAuth2 엔드포인트 (`nid.naver.com`, `openapi.naver.com`) 그대로 사용
+  - client_id/client_secret: 지금 **플레이스홀더**, 네이버 개발자센터에서 앱 등록 후 발급받은 값으로 교체 필요
+  - `attribute_mapping`: 네이버 userinfo 응답이 `{ "response": { "id", "email", "name" } }`처럼 중첩돼 있어서(다른 provider들과 다른 비표준 구조) `provider_id: "response.id"`, `email: "response.email"`, `name: "response.name"`로 매핑해둠. **실제 키를 넣고 로그인 테스트를 해봐야 이 매핑이 정확히 맞는지 확인 가능** — Supabase의 custom provider 기능 자체가 비교적 최근에 나온 기능이라 문서/사례가 많지 않음.
+  - 등록/수정은 Management API가 아니라 프로젝트 자체의 Auth Admin API로 함: `POST/PUT {SUPABASE_URL}/auth/v1/admin/custom-providers[/custom:naver]` (헤더에 `apikey`+`Authorization`으로 **service_role 키** 필요, Management API 토큰과는 다름).
+- **콜백(리다이렉트) URL**: 네이버/카카오 개발자센터에 앱 등록할 때 아래 주소를 그대로 콜백 URL로 등록하면 됨 — 두 provider 공통으로 프로젝트당 하나:
+  `https://tnvpedaymwozpinujmfk.supabase.co/auth/v1/callback`
+- 프론트엔드: `login.html`/`signup.html`의 "카카오로 시작하기"/"네이버로 시작하기" 버튼 → `social-auth.js`의 `renderSocialButtons()`가 `supabaseClient.auth.signInWithOAuth({ provider, options: { redirectTo: '.../index.html' } })` 호출. 소셜 로그인은 로그인/회원가입이 하나의 동작이라(처음 누르면 자동 가입) 별도의 "소셜 회원가입" 로직은 없음.
+
 ## 결제 흐름 (토스페이먼츠 테스트 모드, v1/payment 연동)
 
 1. `index.html`에서 "구매하기" 클릭 → 브라우저에서 `TossPayments(테스트클라이언트키).requestPayment('카드', {amount, orderId, orderName, successUrl, failUrl})` 호출.
@@ -143,6 +158,7 @@ Supabase Auth 설정에서 `mailer_autoconfirm = true`로 설정되어 있어, �
 ## 다음에 이어서 작업할 때 참고 (열린 항목)
 
 - 토스페이먼츠 클라이언트/시크릿 키가 아직 **공용 샘플 테스트키**임. 본인 명의로 발급받은 테스트 키(또는 실서비스 전환 시 라이브 키)로 교체하려면: ①토스페이먼츠 개발자센터 가입 → 키 발급 → `index.html`의 `TOSS_CLIENT_KEY` 값 교체 + `npx supabase secrets set TOSS_SECRET_KEY=...` 다시 실행.
+- **카카오/네이버 간편인증도 아직 플레이스홀더 키**라 실제로는 동작 안 함. 실제 키를 받으면: 카카오는 `config/auth` PATCH로 `external_kakao_client_id`/`external_kakao_secret` 교체, 네이버는 `PUT /auth/v1/admin/custom-providers/custom:naver`로 `client_id`/`client_secret` 교체 (둘 다 위 "네이버/카카오 간편인증" 섹션 참고). 네이버는 처음 실제 로그인 테스트할 때 `attribute_mapping`이 제대로 맞는지도 같이 확인 필요.
 - 관리자가 문의에 답변을 남겨도 **문의를 남긴 사람에게 알림이 가지 않음** (이메일 발송 기능 없음, 로그인 없이 이메일만 받는 구조라 계정 연결도 안 됨). 필요하면 이메일 발송 연동(예: Resend, Supabase의 SMTP 설정 등)을 추가로 구현해야 함.
 - 상품은 6종(카테고리당 2개) 하드코딩 상태. 실제 재고/가격을 관리자가 웹에서 수정하는 기능은 없음 (요청 시 별도 구현 필요).
 - 지금까지의 작업 이력(디자인 변경 히스토리, 발견했던 버그와 원인)은 git 커밋 로그(`git log`)에도 상세히 남아있음 — 특정 변경의 배경이 궁금하면 커밋 메시지를 참고.
