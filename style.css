@@ -153,6 +153,10 @@ button.primary:hover { opacity: 0.9; }
 .btn-naver { background: #03c75a; color: #fff; }
 .btn-naver:hover { opacity: 0.9; }
 
+.email-row { display: flex; align-items: center; gap: 8px; }
+.email-row input, .email-row select { flex: 1; margin-bottom: 12px; min-width: 0; }
+.email-row span { color: var(--text-soft); }
+
 input, textarea, select {
   display: block;
   width: 100%;

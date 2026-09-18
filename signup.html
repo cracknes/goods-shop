@@ -20,7 +20,18 @@
   <div class="card">
     <input id="name" type="text" placeholder="이름">
     <input id="phone" type="tel" placeholder="전화번호 (예: 010-1234-5678)">
-    <input id="email" type="email" placeholder="이메일">
+    <div class="email-row">
+      <input id="email-local" type="text" placeholder="이메일 아이디">
+      <span>@</span>
+      <select id="email-domain">
+        <option value="naver.com">naver.com</option>
+        <option value="gmail.com">gmail.com</option>
+        <option value="kakao.com">kakao.com</option>
+        <option value="hanmail.net">hanmail.net</option>
+        <option value="custom">직접 입력</option>
+      </select>
+    </div>
+    <input id="email-custom-domain" type="text" placeholder="도메인 입력 (예: mycompany.com)" hidden>
     <select id="gender">
       <option value="">성별 선택</option>
       <option value="male">남성</option>
@@ -42,10 +53,17 @@
 <script>
   const messageEl = document.getElementById("message");
 
+  document.getElementById("email-domain").addEventListener("change", (e) => {
+    document.getElementById("email-custom-domain").hidden = e.target.value !== "custom";
+  });
+
   document.getElementById("signup-btn").addEventListener("click", async () => {
     const name = document.getElementById("name").value;
     const phone = document.getElementById("phone").value;
-    const email = document.getElementById("email").value;
+    const emailLocal = document.getElementById("email-local").value;
+    const domainSelect = document.getElementById("email-domain").value;
+    const emailDomain = domainSelect === "custom" ? document.getElementById("email-custom-domain").value : domainSelect;
+    const email = emailLocal && emailDomain ? `${emailLocal}@${emailDomain}` : "";
     const gender = document.getElementById("gender").value;
     const password = document.getElementById("password").value;
 
