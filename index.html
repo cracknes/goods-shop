@@ -123,9 +123,9 @@
     function checkAnswer() {
       if (input.value.trim() === word) {
         gameScore++;
-        feedback.textContent = "참 잘했어요! 🎉";
         gameIndex++;
-        setTimeout(renderHangulGame, 800);
+        alert("지후야 참 잘했어 ❤️");
+        renderHangulGame();
       } else {
         feedback.textContent = "다시 한번 써볼까요?";
       }
