@@ -103,9 +103,10 @@
 
   function renderHangulGame() {
     const container = document.getElementById("products");
+    container.style.display = "block"; // 상품 그리드(여러 칸) 대신 한 칸을 꽉 채우게
     const word = HANGUL_WORDS[gameIndex % HANGUL_WORDS.length];
     container.innerHTML = `
-      <div class="card" style="max-width:400px;">
+      <div class="card" style="width:100%;">
         <h2 style="margin-top:0;">한글 놀이 🎈</h2>
         <p class="muted">아래 글자를 똑같이 따라 입력해보세요!</p>
         <div style="font-size:40px; font-weight:700; text-align:center; margin:20px 0;">${word}</div>
@@ -138,6 +139,7 @@
   function renderProducts() {
     const category = CATEGORIES.find(c => c.id === activeCategory);
     const container = document.getElementById("products");
+    container.style.display = ""; // 한글놀이에서 바꿔둔 display를 grid로 복귀
     container.innerHTML = category.products.map(p => `
       <div class="product-card" data-id="${p.id}">
         <div class="thumb" style="background:${p.gradient}">${PRODUCT_ICON}</div>
