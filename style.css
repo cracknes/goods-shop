@@ -134,6 +134,48 @@ h1 { font-size: 22px; }
 .product-card .name { font-weight: 600; margin-bottom: 4px; }
 .product-card .price { color: var(--text-soft); font-size: 14px; margin-bottom: 12px; }
 .product-card button.primary { width: 100%; }
+.product-card { cursor: pointer; }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+.modal-box {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 360px;
+  position: relative;
+}
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-soft);
+}
+.modal-box .thumb {
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.modal-box .thumb svg { width: 35%; height: 35%; }
+.modal-box .name { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+.modal-box .price { color: var(--text-soft); margin-bottom: 16px; }
 
 button.primary {
   background: var(--accent);

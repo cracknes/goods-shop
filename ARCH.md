@@ -13,18 +13,18 @@
 
 | 파일 | 역할 |
 |---|---|
-| `index.html` | 카테고리(화장품/남성 의류/여성 의류)별 상품 목록 + 구매(토스 결제 시작). 좌측에 카테고리 전용 탭(사이트 공통 상단 nav와는 별개) |
+| `index.html` | 카테고리(화장품/남성 의류/여성 의류)별 상품 목록 + 마지막 탭 "한글놀이"(아이용 미니 게임, DB 연동 없음). 좌측에 카테고리 전용 탭(사이트 공통 상단 nav와는 별개). 상품 카드 클릭 시 상세 팝업이 뜨고, 팝업에 머문 시간을 `product_views`에 기록 (팝업 안의 구매하기 버튼에서 토스 결제 시작) |
 | `login.html` | 로그인 (이메일/비밀번호 + 네이버/카카오 간편인증) |
 | `signup.html` | 회원가입 (이름/전화번호/이메일/성별/비밀번호 + 네이버/카카오 간편인증) |
 | `social-auth.js` | 네이버/카카오 버튼 렌더링 + `signInWithOAuth` 호출 (login/signup 공용) |
 | `success.html` | 토스 결제 성공 리다이렉트 대상 → Edge Function 호출해 승인 확정 |
 | `fail.html` | 토스 결제 실패/취소 리다이렉트 대상 |
 | `orders.html` | 내 결제내역 (일반 사용자용, 관리자는 상단 nav에 이 링크가 안 보임) |
-| `admin.html` | admin@admin.com 전용. 좌측 탭으로 "결제내역"/"문의내역" 전환, 문의내역은 목록 → 클릭 시 상세+답변 작성 화면으로 전환 |
+| `admin.html` | admin@admin.com 전용. 좌측 탭 4개: 결제내역 / 문의내역(목록→클릭 시 상세+답변) / 로그인이력(`login_events` 전체 이력) / 상품통계(`product_views`을 상품별로 집계: 조회수·평균/총 조회시간) |
 | `contact.html` | 문의하기. 페이지 상단 탭으로 "문의 접수하기"(로그인 불필요)와 "내 문의내역"(로그인 필요, 목록→클릭 시 상세+답변) 전환. `inquiries` 테이블에 저장하며 로그인 상태면 `user_id`도 함께 저장. 헤더에서 admin 로그인 시에는 이 페이지 링크가 안 보임 |
 | `supabase-client.js` | 공용 Supabase 클라이언트 초기화 (URL + publishable key, 공개돼도 안전) |
 | `nav.js` | 상단 네비게이션. 로그인 상태 + admin 여부에 따라 보여줄 링크가 달라짐 (아래 "상단 네비게이션 규칙" 참고) |
-| `style.css` | 다크 네이비 배경 + 네이버 그린(`--accent`, `#03c75a`) 단일 포인트 컬러 테마 (처음엔 주황이었다가 변경됨). 모바일(640px 이하) 반응형 처리 포함 |
+| `style.css` | 밝은 화이트/라이트그레이 배경 + 네이버 그린(`--accent`, `#03c75a`) 단일 포인트 컬러 테마 (처음엔 다크 네이비+주황이었다가 사용자 요청으로 네이버 스타일로 변경됨 — 로고/문구는 그대로 두고 색상 톤만 참고). 모바일(640px 이하) 반응형 처리 포함 |
 
 ## 상단 네비게이션 규칙 (`nav.js`)
 
@@ -129,6 +129,43 @@ grant select, update on public.inquiries to authenticated;
 - `user_id` 컬럼을 나중에 추가해서, 그 전에 로그인 없이 남긴 문의는 `user_id`가 비어있었음 → 문의 당시 입력한 이메일이 실제 가입 이메일과 같으면 1회성으로 `update ... from auth.users where email 일치` 매칭해서 소급 연결함.
 - 프론트엔드에서 `.insert(...)` / `.update(...)` 호출 시 `.select()`를 체이닝하면 PostgREST가 처리 후 행을 다시 읽으려고 해서, 그 역할에 SELECT 권한이 없는 경우(anon의 insert) 에러가 남 — `contact.html`은 `.select()` 없이 insert만 호출함.
 - 관리자 답변은 `inquiries.reply` / `inquiries.replied_at` 컬럼에 저장 (별도 테이블 없이 1:1 관계라 컬럼으로 충분). 비로그인으로 남긴 문의(`user_id` null)는 본인이 나중에 조회/수정할 방법이 없음 — 필요하면 이메일로 직접 답변을 보내는 별도 절차가 있어야 함.
+
+## DB 스키마 (`public.login_events`, `public.product_views`) — 관리자 통계용
+
+```sql
+create table public.login_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id),
+  email text not null,
+  logged_in_at timestamptz not null default now()
+);
+alter table public.login_events enable row level security;
+create policy "login_events_insert_own" on public.login_events for insert to authenticated with check (auth.uid() = user_id);
+create policy "login_events_select_admin" on public.login_events for select to authenticated using (auth.jwt() ->> 'email' = 'admin@admin.com');
+grant insert on public.login_events to authenticated;
+grant select on public.login_events to authenticated;
+
+create table public.product_views (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id),
+  user_email text,
+  product_id text not null,
+  product_name text not null,
+  duration_seconds integer not null,
+  viewed_at timestamptz not null default now()
+);
+alter table public.product_views enable row level security;
+create policy "product_views_insert_anyone" on public.product_views for insert to anon, authenticated with check (true);
+create policy "product_views_select_admin" on public.product_views for select to authenticated using (auth.jwt() ->> 'email' = 'admin@admin.com');
+grant insert on public.product_views to anon, authenticated;
+grant select on public.product_views to authenticated;
+```
+
+- **로그인 이력**: `auth.audit_log_entries`(Supabase 내장 감사 로그)를 먼저 써보려 했으나 이 프로젝트에서는 비어있었음(호스팅 플랫폼이 감사 로그를 Postgres 테이블이 아니라 별도 분석 로그 스트림으로 보내는 것으로 보임 — 그 로그는 Management API 토큰으로만 조회 가능해서 브라우저 앱에 노출할 수 없음). 그래서 자체 테이블로 직접 기록함:
+  - `login.html` (`signInWithPassword` 성공 후), `signup.html` (가입=자동로그인 직후) 에서 각각 `recordLogin(user)` 호출 (`supabase-client.js`에 정의된 공용 함수).
+  - 소셜 로그인(네이버/카카오)은 리다이렉트 방식이라 로그인 성공 시점에 우리 코드가 실행 중이지 않음 → `social-auth.js`에서 `signInWithOAuth` 호출 직전에 `sessionStorage.oauthLoginPending = "1"`을 세팅해두고, 리다이렉트로 돌아온 뒤 모든 페이지에서 실행되는 `nav.js`가 이 플래그를 보고 있으면 그때 `recordLogin`을 호출 + 플래그 제거. 이렇게 하면 새로고침 등으로 세션이 복원되는 경우와 "진짜 새로 로그인한 경우"를 구분할 수 있음.
+- **상품 조회시간**: `index.html`에서 상품 카드를 클릭하면 별도 페이지가 아니라 팝업(모달)이 뜨고, 연 시각(`Date.now()`)을 저장해뒀다가 팝업을 닫을 때(닫기 버튼/배경 클릭/구매하기 클릭) 차이를 초 단위로 계산해 기록. 비로그인 사용자의 조회도 기록됨(`user_id` null). 탭을 닫거나 새로고침해서 팝업을 안 닫고 나가는 경우는 기록 안 됨(단순화를 위해 `beforeunload` 같은 처리는 넣지 않음).
+- 관리자 "상품통계" 탭은 별도 집계 쿼리 없이, `product_views`를 전부 불러온 뒤 프론트엔드에서 상품명 기준으로 group by 해서 조회수/평균/총 시간을 계산함 (데이터 양이 적은 데모 프로젝트라 이 정도로 충분).
 
 ## 알려진 설정 이슈 (수정 완료)
 

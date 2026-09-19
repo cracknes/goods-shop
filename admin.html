@@ -16,6 +16,8 @@
     <div class="category-list">
       <button data-tab="orders" class="active">결제내역</button>
       <button data-tab="inquiries">문의내역</button>
+      <button data-tab="logins">로그인이력</button>
+      <button data-tab="productstats">상품통계</button>
     </div>
     <div class="shop-content">
       <div class="card">
@@ -38,6 +40,26 @@
           <div id="inquiry-detail-content"></div>
         </div>
       </div>
+
+      <div class="card" id="logins-panel" hidden>
+        <table id="logins-table">
+          <thead>
+            <tr><th>사용자</th><th>로그인 시간</th></tr>
+          </thead>
+          <tbody id="logins-body"></tbody>
+        </table>
+        <p id="logins-empty" class="muted" hidden>로그인 이력이 없습니다.</p>
+      </div>
+
+      <div class="card" id="productstats-panel" hidden>
+        <table id="productstats-table">
+          <thead>
+            <tr><th>상품</th><th>조회 수</th><th>평균 조회시간</th><th>총 조회시간</th></tr>
+          </thead>
+          <tbody id="productstats-body"></tbody>
+        </table>
+        <p id="productstats-empty" class="muted" hidden>조회 기록이 없습니다.</p>
+      </div>
     </div>
   </div>
 </div>
@@ -54,6 +76,8 @@
     });
     document.getElementById("orders-table").closest(".card").hidden = tab !== "orders";
     document.getElementById("inquiries-panel").hidden = tab !== "inquiries";
+    document.getElementById("logins-panel").hidden = tab !== "logins";
+    document.getElementById("productstats-panel").hidden = tab !== "productstats";
   }
 
   async function loadOrders() {
@@ -161,6 +185,55 @@
     renderInquiriesList();
   }
 
+  async function loadLoginHistory() {
+    const { data: logins, error } = await supabaseClient
+      .from("login_events")
+      .select("*")
+      .order("logged_in_at", { ascending: false });
+
+    if (error || !logins.length) {
+      document.getElementById("logins-empty").hidden = false;
+      if (error) document.getElementById("logins-empty").textContent = "불러오기 실패: " + error.message;
+      return;
+    }
+
+    document.getElementById("logins-body").innerHTML = logins.map(l => `
+      <tr>
+        <td data-label="사용자">${l.email}</td>
+        <td data-label="로그인 시간">${new Date(l.logged_in_at).toLocaleString()}</td>
+      </tr>
+    `).join("");
+  }
+
+  async function loadProductStats() {
+    const { data: views, error } = await supabaseClient
+      .from("product_views")
+      .select("*");
+
+    if (error || !views.length) {
+      document.getElementById("productstats-empty").hidden = false;
+      if (error) document.getElementById("productstats-empty").textContent = "불러오기 실패: " + error.message;
+      return;
+    }
+
+    const byProduct = {};
+    views.forEach(v => {
+      if (!byProduct[v.product_name]) byProduct[v.product_name] = { count: 0, total: 0 };
+      byProduct[v.product_name].count += 1;
+      byProduct[v.product_name].total += v.duration_seconds;
+    });
+
+    const rows = Object.entries(byProduct).sort((a, b) => b[1].count - a[1].count);
+    document.getElementById("productstats-body").innerHTML = rows.map(([name, stat]) => `
+      <tr>
+        <td data-label="상품">${name}</td>
+        <td data-label="조회 수">${stat.count}회</td>
+        <td data-label="평균 조회시간">${Math.round(stat.total / stat.count)}초</td>
+        <td data-label="총 조회시간">${stat.total}초</td>
+      </tr>
+    `).join("");
+  }
+
   async function loadAdmin() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
@@ -181,6 +254,8 @@
 
     await loadOrders();
     await loadInquiries();
+    await loadLoginHistory();
+    await loadProductStats();
   }
 
   loadAdmin();

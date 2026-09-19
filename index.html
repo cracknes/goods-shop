@@ -74,22 +74,69 @@
     const list = document.getElementById("category-list");
     list.innerHTML = CATEGORIES.map(c => `
       <button data-cat="${c.id}" class="${c.id === activeCategory ? "active" : ""}">${c.name}</button>
-    `).join("");
+    `).join("") + `<button data-cat="game" class="${activeCategory === "game" ? "active" : ""}">한글놀이</button>`;
 
     list.querySelectorAll("button[data-cat]").forEach(btn => {
       btn.addEventListener("click", () => {
         activeCategory = btn.dataset.cat;
         renderCategoryList();
-        renderProducts();
+        renderMainContent();
       });
     });
+  }
+
+  function renderMainContent() {
+    if (activeCategory === "game") {
+      renderHangulGame();
+      return;
+    }
+    renderProducts();
+  }
+
+  // 아이용 한글 놀이: 화면에 뜬 단어를 실제 키보드(한글 IME)로 그대로 입력해서 맞히기
+  const HANGUL_WORDS = ["사과", "바나나", "나비", "우유", "고양이", "강아지", "학교", "나무", "하늘", "바다"];
+  let gameIndex = 0;
+  let gameScore = 0;
+
+  function renderHangulGame() {
+    const container = document.getElementById("products");
+    const word = HANGUL_WORDS[gameIndex % HANGUL_WORDS.length];
+    container.innerHTML = `
+      <div class="card" style="max-width:400px;">
+        <h2 style="margin-top:0;">한글 놀이 🎈</h2>
+        <p class="muted">아래 글자를 똑같이 따라 입력해보세요!</p>
+        <div style="font-size:40px; font-weight:700; text-align:center; margin:20px 0;">${word}</div>
+        <input id="game-input" type="text" placeholder="여기에 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
+        <button class="primary" id="game-check-btn" style="width:100%;">확인</button>
+        <p id="game-feedback" class="muted" style="text-align:center; font-size:16px;"></p>
+        <p class="muted" style="text-align:center;">맞춘 개수: ${gameScore}개</p>
+      </div>
+    `;
+
+    const input = document.getElementById("game-input");
+    const feedback = document.getElementById("game-feedback");
+
+    function checkAnswer() {
+      if (input.value.trim() === word) {
+        gameScore++;
+        feedback.textContent = "참 잘했어요! 🎉";
+        gameIndex++;
+        setTimeout(renderHangulGame, 800);
+      } else {
+        feedback.textContent = "다시 한번 써볼까요?";
+      }
+    }
+
+    document.getElementById("game-check-btn").addEventListener("click", checkAnswer);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") checkAnswer(); });
+    input.focus();
   }
 
   function renderProducts() {
     const category = CATEGORIES.find(c => c.id === activeCategory);
     const container = document.getElementById("products");
     container.innerHTML = category.products.map(p => `
-      <div class="product-card">
+      <div class="product-card" data-id="${p.id}">
         <div class="thumb" style="background:${p.gradient}">${PRODUCT_ICON}</div>
         <div class="body">
           <div class="name">${p.name}</div>
@@ -99,10 +146,61 @@
       </div>
     `).join("");
 
+    container.querySelectorAll(".product-card").forEach(card => {
+      card.addEventListener("click", () => openProductModal(card.dataset.id));
+    });
     container.querySelectorAll("button[data-id]").forEach(btn => {
-      btn.addEventListener("click", () => buy(btn.dataset.id));
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation(); // 카드 클릭(상세 팝업)으로 안 번지게
+        buy(btn.dataset.id);
+      });
     });
   }
+
+  // 상품 상세 팝업 + 머문 시간 기록
+  let viewingProduct = null;
+  let viewStartTime = null;
+
+  function openProductModal(productId) {
+    const product = CATEGORIES.flatMap(c => c.products).find(p => p.id === productId);
+    viewingProduct = product;
+    viewStartTime = Date.now();
+
+    document.getElementById("modal-content").innerHTML = `
+      <div class="thumb" style="background:${product.gradient}">${PRODUCT_ICON}</div>
+      <div class="name">${product.name}</div>
+      <div class="price">${product.price.toLocaleString()}원</div>
+      <button class="primary" id="modal-buy-btn" style="width:100%">구매하기</button>
+    `;
+    document.getElementById("modal-buy-btn").addEventListener("click", () => {
+      closeProductModal();
+      buy(product.id);
+    });
+
+    document.getElementById("product-modal").hidden = false;
+  }
+
+  async function closeProductModal() {
+    if (viewingProduct && viewStartTime) {
+      const durationSeconds = Math.round((Date.now() - viewStartTime) / 1000);
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      await supabaseClient.from("product_views").insert({
+        user_id: user ? user.id : null,
+        user_email: user ? user.email : null,
+        product_id: viewingProduct.id,
+        product_name: viewingProduct.name,
+        duration_seconds: durationSeconds,
+      });
+    }
+    viewingProduct = null;
+    viewStartTime = null;
+    document.getElementById("product-modal").hidden = true;
+  }
+
+  document.getElementById("modal-close").addEventListener("click", closeProductModal);
+  document.getElementById("product-modal").addEventListener("click", (e) => {
+    if (e.target.id === "product-modal") closeProductModal(); // 배경 클릭 시 닫기
+  });
 
   async function buy(productId) {
     const { data: { user } } = await supabaseClient.auth.getUser();
