@@ -3,10 +3,16 @@ async function renderNav() {
   const nav = document.getElementById("nav");
   const { data: { user } } = await supabaseClient.auth.getUser();
 
+  // 소셜 로그인(네이버/카카오)은 리다이렉트로 돌아온 이 시점에 처음 로그인이 확정되므로 여기서 기록
+  if (user && sessionStorage.getItem("oauthLoginPending") === "1") {
+    sessionStorage.removeItem("oauthLoginPending");
+    await recordLogin(user);
+  }
+
   const isAdmin = user?.email === "admin@admin.com";
 
   nav.innerHTML = `
-    <a class="brand" href="index.html">노르덴돌프</a>
+    <a class="brand" href="index.html">노르덴돌프 <span class="brand-sub">이지후</span></a>
     <div class="nav-links">
       ${user && !isAdmin ? `<a href="contact.html">문의하기</a>` : ""}
       ${user && !isAdmin ? `<a href="orders.html">결제내역</a>` : ""}

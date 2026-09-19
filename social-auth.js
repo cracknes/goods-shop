@@ -11,12 +11,14 @@ function renderSocialButtons(containerId) {
   const redirectTo = new URL("index.html", location.href).href;
 
   document.getElementById("kakao-btn").addEventListener("click", async () => {
+    sessionStorage.setItem("oauthLoginPending", "1");
     const { error } = await supabaseClient.auth.signInWithOAuth({ provider: "kakao", options: { redirectTo } });
-    if (error) alert("카카오 로그인 실패: " + error.message);
+    if (error) { sessionStorage.removeItem("oauthLoginPending"); alert("카카오 로그인 실패: " + error.message); }
   });
 
   document.getElementById("naver-btn").addEventListener("click", async () => {
+    sessionStorage.setItem("oauthLoginPending", "1");
     const { error } = await supabaseClient.auth.signInWithOAuth({ provider: "custom:naver", options: { redirectTo } });
-    if (error) alert("네이버 로그인 실패: " + error.message);
+    if (error) { sessionStorage.removeItem("oauthLoginPending"); alert("네이버 로그인 실패: " + error.message); }
   });
 }

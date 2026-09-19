@@ -35,13 +35,14 @@
   document.getElementById("login-btn").addEventListener("click", async () => {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
       messageEl.textContent = error.code === "invalid_credentials"
         ? "이메일 또는 비밀번호가 올바르지 않습니다."
         : error.message;
       return;
     }
+    await recordLogin(data.user);
     location.href = "index.html";
   });
 
