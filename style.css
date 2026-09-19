@@ -1,5 +1,5 @@
 :root {
-  --accent: #03c75a;
+  --accent: #6c63ff;
   --bg: #ffffff;
   --bg-soft: #f5f6f7;
   --text: #1c1c1c;
@@ -22,7 +22,7 @@ body {
 a { color: var(--accent); }
 
 .hero {
-  background: linear-gradient(135deg, var(--accent), #02a34c);
+  background: linear-gradient(135deg, var(--accent), #4b3fd6);
   color: #fff;
   padding: 48px 32px;
   border-radius: 28px;
