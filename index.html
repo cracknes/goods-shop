@@ -29,6 +29,13 @@
   </div>
 </div>
 
+<div id="celebrate-modal" class="modal-overlay" hidden>
+  <div class="modal-box celebrate-box">
+    <div class="celebrate-emoji">🎉❤️</div>
+    <div class="celebrate-text">지후야 참 잘했어!</div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://js.tosspayments.com/v1/payment"></script>
 <script src="supabase-client.js"></script>
@@ -101,6 +108,14 @@
   let gameIndex = 0;
   let gameScore = 0;
 
+  function showCelebration() {
+    document.getElementById("celebrate-modal").hidden = false;
+    setTimeout(() => {
+      document.getElementById("celebrate-modal").hidden = true;
+      renderHangulGame();
+    }, 1300);
+  }
+
   function renderHangulGame() {
     const container = document.getElementById("products");
     container.style.display = "block"; // 상품 그리드(여러 칸) 대신 한 칸을 꽉 채우게
@@ -124,8 +139,7 @@
       if (input.value.trim() === word) {
         gameScore++;
         gameIndex++;
-        alert("지후야 참 잘했어 ❤️");
-        renderHangulGame();
+        showCelebration();
       } else {
         feedback.textContent = "다시 한번 써볼까요?";
       }
