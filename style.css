@@ -24,11 +24,12 @@ a { color: var(--accent); }
 .hero {
   background: linear-gradient(135deg, var(--accent), #02a34c);
   color: #fff;
-  padding: 40px 0;
-  text-align: center;
+  padding: 48px 32px;
+  border-radius: 28px;
+  margin-bottom: 24px;
 }
-.hero h1 { color: #fff; margin: 0 0 8px; font-size: 28px; }
-.hero p { margin: 0; opacity: 0.9; }
+.hero h1 { color: #fff; margin: 0 0 8px; font-size: 30px; }
+.hero p { margin: 0; opacity: 0.9; font-size: 16px; }
 
 nav {
   display: flex;
@@ -42,6 +43,7 @@ nav a, nav button {
   color: var(--text);
   text-decoration: none;
   font-size: 14px;
+  font-weight: 600;
   background: none;
   border: none;
   cursor: pointer;
@@ -65,6 +67,7 @@ nav .brand .brand-sub { font-weight: 400; font-size: 12px; color: var(--text-sof
 
 /* 상품 페이지 전용: 좌측 카테고리 메뉴 + 우측 상품 그리드 */
 .shop-layout { display: flex; gap: 32px; align-items: flex-start; }
+.shop-layout[hidden] { display: none; }
 .category-list {
   width: 25%;
   flex-shrink: 0;
@@ -75,7 +78,7 @@ nav .brand .brand-sub { font-weight: 400; font-size: 12px; color: var(--text-sof
 .category-list button {
   text-align: left;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 999px;
   border: none;
   background: none;
   font-size: 14px;
@@ -93,7 +96,7 @@ nav .brand .brand-sub { font-weight: 400; font-size: 12px; color: var(--text-sof
   flex: 1;
   text-align: center;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 999px;
   border: none;
   background: var(--bg-soft);
   font-size: 14px;
@@ -103,12 +106,12 @@ nav .brand .brand-sub { font-weight: 400; font-size: 12px; color: var(--text-sof
 }
 .tab-bar button.active { background: var(--accent); color: #fff; font-weight: 600; }
 
-h1 { font-size: 22px; }
+h1 { font-size: 22px; font-weight: 800; }
 
 .card {
   background: var(--bg-soft);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 20px;
   padding: 20px;
   margin-bottom: 16px;
   overflow-x: auto;
@@ -121,7 +124,7 @@ h1 { font-size: 22px; }
 .product-card {
   background: var(--bg-soft);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -155,9 +158,10 @@ h1 { font-size: 22px; }
   padding: 16px;
   z-index: 100;
 }
+.modal-overlay[hidden] { display: none; }
 .modal-box {
   background: var(--bg);
-  border-radius: 12px;
+  border-radius: 24px;
   padding: 24px;
   width: 100%;
   max-width: 360px;
@@ -167,9 +171,12 @@ h1 { font-size: 22px; }
   position: absolute;
   top: 12px;
   right: 12px;
-  background: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-soft);
   border: none;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
   color: var(--text-soft);
@@ -190,9 +197,10 @@ button.primary {
   background: var(--accent);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
+  border-radius: 999px;
+  padding: 12px 20px;
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
 }
 button.primary:hover { opacity: 0.9; }
@@ -201,8 +209,8 @@ button.primary:hover { opacity: 0.9; }
 .social-buttons button {
   width: 100%;
   border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
+  border-radius: 999px;
+  padding: 12px 16px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -223,7 +231,7 @@ input, textarea, select {
   padding: 10px 12px;
   margin-bottom: 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 14px;
   font-size: 14px;
   font-family: inherit;
   background: var(--bg);
@@ -267,6 +275,8 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
 @media (max-width: 640px) {
   .wrap { padding: 16px; }
   .card { padding: 16px; }
+  .hero { padding: 28px 20px; border-radius: 20px; }
+  .hero h1 { font-size: 22px; }
   nav { padding: 12px 16px; }
   .nav-links { gap: 10px; margin-left: 10px; }
   .shop-layout { flex-direction: column; align-items: stretch; gap: 16px; }
