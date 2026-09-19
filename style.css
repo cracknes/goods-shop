@@ -21,6 +21,15 @@ body {
 .wrap-wide { max-width: 1080px; }
 a { color: var(--accent); }
 
+.hero {
+  background: linear-gradient(135deg, var(--accent), #02a34c);
+  color: #fff;
+  padding: 40px 0;
+  text-align: center;
+}
+.hero h1 { color: #fff; margin: 0 0 8px; font-size: 28px; }
+.hero p { margin: 0; opacity: 0.9; }
+
 nav {
   display: flex;
   justify-content: space-between;
