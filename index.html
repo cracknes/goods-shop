@@ -185,11 +185,11 @@
       return { a, b, op, answer: a * b };
     }
 
-    const randomOperand = () => Math.random() < 0.5
-      ? Math.floor(Math.random() * 9) + 1 // 1~9
-      : Math.floor(Math.random() * 90) + 10; // 10~99
-    let a = randomOperand();
-    let b = randomOperand();
+    // 항상 한 자리 하나 + 두 자리 하나로 조합 (둘 다 두 자리가 되지 않게)
+    const oneDigit = Math.floor(Math.random() * 9) + 1; // 1~9
+    const twoDigit = Math.floor(Math.random() * 90) + 10; // 10~99
+    let a = Math.random() < 0.5 ? oneDigit : twoDigit;
+    let b = a === oneDigit ? twoDigit : oneDigit;
     if (op === "-" && a < b) [a, b] = [b, a]; // 결과가 음수 안 되게
 
     const answer = op === "+" ? a + b : a - b;
