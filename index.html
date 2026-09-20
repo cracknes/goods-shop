@@ -235,7 +235,7 @@
     currentProblem = generateNumberProblem();
     container.innerHTML = `
       <div class="card" style="width:100%;">
-        <h2 style="margin-top:0;">숫자 놀이 🔢 <button type="button" id="number-hint-btn" class="primary" style="padding:4px 12px; font-size:14px;">?</button></h2>
+        <h2 style="margin-top:0;">숫자 놀이 🔢 <button type="button" id="number-hint-btn" class="hint-btn">?</button></h2>
         <p class="muted">문제를 계산해서 정답을 입력해보세요!</p>
         <div style="font-size:40px; font-weight:700; text-align:center; margin:20px 0;">${currentProblem.a} ${currentProblem.op} ${currentProblem.b} = ?</div>
         <input id="number-input" type="number" placeholder="정답을 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
