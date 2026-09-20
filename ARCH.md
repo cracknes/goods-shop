@@ -13,14 +13,14 @@
 
 | 파일 | 역할 |
 |---|---|
-| `index.html` | 카테고리(화장품/남성 의류/여성 의류)별 상품 목록 + 마지막 두 탭 "한글놀이"/"숫자놀이"(아이용 미니 게임, DB 연동 없음). 좌측에 카테고리 전용 탭(사이트 공통 상단 nav와는 별개). 상품은 하드코딩된 6종(`CATEGORIES`) + 관리자가 `admin.html`의 "상품추가" 탭에서 등록한 `products` 테이블 상품을 페이지 로드 시 불러와 합쳐서 보여줌. 상품 카드 클릭 시 상세 팝업이 뜨고, 팝업 안에 사진 슬라이드(최대 6장, 좌우 화살표/스와이프로 넘김)가 표시됨. 팝업에 머문 시간을 `product_views`에 기록 (팝업 안의 구매하기 버튼에서 토스 결제 시작) |
+| `index.html` | 카테고리(화장품/남성 의류/여성 의류)별 상품 목록 + 마지막 두 탭 "한글놀이"/"숫자놀이"(아이용 미니 게임, DB 연동 없음). 좌측에 카테고리 전용 탭(사이트 공통 상단 nav와는 별개). 상품은 전부 `products` 테이블에서 불러옴(`CATEGORIES`는 카테고리 틀만 갖고 있고 `loadDbProducts()`가 채움) — 관리자가 `admin.html`의 "상품추가" 탭에서 추가/수정/삭제. 상품 카드 클릭 시 상세 팝업이 뜨고, 팝업 안에 사진 슬라이드(최대 6장, 좌우 화살표/스와이프로 넘김)가 표시됨. 팝업에 머문 시간을 `product_views`에 기록 (팝업 안의 구매하기 버튼에서 토스 결제 시작) |
 | `login.html` | 로그인 (이메일/비밀번호 + 네이버/카카오 간편인증) |
 | `signup.html` | 회원가입 (이름/전화번호/이메일/성별/비밀번호 + 네이버/카카오 간편인증) |
 | `social-auth.js` | 네이버/카카오 버튼 렌더링 + `signInWithOAuth` 호출 (login/signup 공용) |
 | `success.html` | 토스 결제 성공 리다이렉트 대상 → Edge Function 호출해 승인 확정 |
 | `fail.html` | 토스 결제 실패/취소 리다이렉트 대상 |
 | `orders.html` | 내 결제내역 (일반 사용자용, 관리자는 상단 nav에 이 링크가 안 보임) |
-| `admin.html` | admin@admin.com 전용. 좌측 탭 5개: 결제내역 / 문의내역(목록→클릭 시 상세+답변) / 로그인이력(`login_events` 전체 이력) / 상품통계(`product_views`을 상품별로 집계: 조회수·평균/총 조회시간) / 상품추가(카테고리·상품명·가격·대표 사진(필수)·상세 사진(선택, 여러 장)을 입력해 `products` 테이블에 새 상품을 등록. 수정/삭제 기능은 없음 — 추가만 가능) |
+| `admin.html` | admin@admin.com 전용. 좌측 탭 5개: 결제내역 / 문의내역(목록→클릭 시 상세+답변) / 로그인이력(`login_events` 전체 이력) / 상품통계(`product_views`을 상품별로 집계: 조회수·평균/총 조회시간) / 상품추가(상품 목록→클릭 시 수정 화면. "+ 새 상품 추가"로 신규 등록. 카테고리·상품명·가격·대표 사진·상세 사진(최대 6장)을 입력/업로드하고 "상품 삭제" 버튼으로 삭제도 가능. `inquiries` 탭과 동일한 목록→상세 패턴) |
 | `contact.html` | 문의하기. 페이지 상단 탭으로 "문의 접수하기"(로그인 불필요)와 "내 문의내역"(로그인 필요, 목록→클릭 시 상세+답변) 전환. `inquiries` 테이블에 저장하며 로그인 상태면 `user_id`도 함께 저장. 헤더에서 admin 로그인 시에는 이 페이지 링크가 안 보임 |
 | `supabase-client.js` | 공용 Supabase 클라이언트 초기화 (URL + publishable key, 공개돼도 안전) |
 | `nav.js` | 상단 네비게이션. 로그인 상태 + admin 여부에 따라 보여줄 링크가 달라짐 (아래 "상단 네비게이션 규칙" 참고) |
@@ -65,7 +65,7 @@ grant select, insert on public.orders to service_role;
 
 - **INSERT 정책 없음** — 브라우저(anon/authenticated)에서 직접 주문 행을 만들 수 없음. 오직 Edge Function이 `service_role` 키로 삽입 (service_role은 RLS를 항상 무시함). 결제 승인 없이 "결제완료" 행을 위조하는 게 불가능한 구조.
 - SELECT 정책 하나로 "내 결제내역"과 "관리자 전체 조회"를 둘 다 처리함 — 관리자 이메일이면 조건의 뒷부분이 참이 되어 전체 행이 보임.
-- 상품 정보는 테이블 없이 `index.html`의 `CATEGORIES` JS 배열(카테고리별 상품 목록)에 하드코딩 (요청받은 범위 밖의 상품 관리 기능은 만들지 않음). 상품 썸네일은 카테고리별 파스텔 그라데이션 배경 + 공용 SVG 아이콘(`PRODUCT_ICON`)으로 통일. 처음엔 실제 사진(출처마다 배경/구도가 달라 카드마다 느낌이 들쭉날쭉했음) → 이모지(기기/폰트마다 렌더링 크기가 달라 특정 카테고리만 아이콘이 크거나 작게 보임) 순으로 시도했다가, 폰트에 의존하지 않는 인라인 SVG로 바꿔서 모든 기기에서 100% 동일한 크기가 보장되도록 함.
+- 상품 정보는 `public.products` 테이블에서 관리 (아래 "DB 스키마 (`public.products`)" 섹션 참고, `admin.html`의 "상품추가" 탭에서 추가/수정/삭제). 실제 사진이 없는 상품은 카테고리별 파스텔 그라데이션 배경 + 공용 SVG 아이콘(`PRODUCT_ICON`)으로 대체 표시. 처음엔 실제 사진(출처마다 배경/구도가 달라 카드마다 느낌이 들쭉날쭉했음) → 이모지(기기/폰트마다 렌더링 크기가 달라 특정 카테고리만 아이콘이 크거나 작게 보임) 순으로 시도했다가, 폰트에 의존하지 않는 인라인 SVG로 바꿔서 모든 기기에서 100% 동일한 크기가 보장되도록 함.
 
 ## DB 스키마 (`public.inquiries`)
 
@@ -130,7 +130,7 @@ grant select, update on public.inquiries to authenticated;
 - 프론트엔드에서 `.insert(...)` / `.update(...)` 호출 시 `.select()`를 체이닝하면 PostgREST가 처리 후 행을 다시 읽으려고 해서, 그 역할에 SELECT 권한이 없는 경우(anon의 insert) 에러가 남 — `contact.html`은 `.select()` 없이 insert만 호출함.
 - 관리자 답변은 `inquiries.reply` / `inquiries.replied_at` 컬럼에 저장 (별도 테이블 없이 1:1 관계라 컬럼으로 충분). 비로그인으로 남긴 문의(`user_id` null)는 본인이 나중에 조회/수정할 방법이 없음 — 필요하면 이메일로 직접 답변을 보내는 별도 절차가 있어야 함.
 
-## DB 스키마 (`public.products`) + Storage 버킷 (`product-images`) — 관리자 상품추가용
+## DB 스키마 (`public.products`) + Storage 버킷 (`product-images`) — 관리자 상품관리용
 
 ```sql
 create table public.products (
@@ -138,8 +138,9 @@ create table public.products (
   category_id text not null, -- 'cosmetics' | 'menswear' | 'womenswear' (index.html의 CATEGORIES id와 매칭)
   name text not null,
   price integer not null,
-  image_url text not null,           -- 대표(master) 사진
-  detail_image_urls text[] not null default '{}', -- 상세 사진 (최대 6장 권장, 강제는 아님)
+  image_url text,                    -- 대표(master) 사진 (처음 만든 데모 상품 6종은 null, gradient로 대체)
+  gradient text,                     -- image_url이 없을 때 쓰는 그라데이션 배경 (데모 상품용)
+  detail_image_urls text[] not null default '{}', -- 상세 사진 (최대 6장, admin.html에서 개수 제한)
   created_at timestamptz not null default now()
 );
 
@@ -147,9 +148,11 @@ alter table public.products enable row level security;
 
 create policy "products_select_anyone" on public.products for select to anon, authenticated using (true);
 create policy "products_insert_admin" on public.products for insert to authenticated with check (auth.jwt() ->> 'email' = 'admin@admin.com');
+create policy "products_update_admin" on public.products for update to authenticated using (auth.jwt() ->> 'email' = 'admin@admin.com') with check (auth.jwt() ->> 'email' = 'admin@admin.com');
+create policy "products_delete_admin" on public.products for delete to authenticated using (auth.jwt() ->> 'email' = 'admin@admin.com');
 
 grant select on public.products to anon, authenticated;
-grant insert on public.products to authenticated;
+grant insert, update, delete on public.products to authenticated;
 grant select, delete on public.products to service_role; -- 앱에서는 안 쓰지만, 다른 테이블과 일관성 + 유지보수용
 
 insert into storage.buckets (id, name, public) values ('product-images', 'product-images', true);
@@ -158,9 +161,10 @@ create policy "product_images_public_read" on storage.objects for select to anon
 create policy "product_images_admin_insert" on storage.objects for insert to authenticated with check (bucket_id = 'product-images' and auth.jwt() ->> 'email' = 'admin@admin.com');
 ```
 
-- **수정/삭제 정책 없음** — `admin.html`의 "상품추가" 탭은 추가만 지원하도록 요청받아서, 업데이트/삭제 UI와 정책을 만들지 않음. 잘못 등록한 상품을 고치려면 지금은 Supabase 대시보드에서 직접 행을 수정/삭제해야 함.
-- `product-images` 버킷은 `public: true`라서 업로드된 사진은 로그인 없이도 누구나 URL로 볼 수 있음 (쇼핑몰 상품 사진이라 문제 없음). 업로드(쓰기)는 admin@admin.com만 가능.
-- `index.html`은 페이지 로드 시 `products` 테이블 전체를 불러와 `category_id` 기준으로 하드코딩된 `CATEGORIES` 배열에 합쳐서 보여줌 (`loadDbProducts()`). 대표 사진(`image_url`)이 있으면 그라데이션 대신 실제 `<img>`로 렌더링하고, 상세 사진(`detail_image_urls`)이 있으면 상세 팝업 갤러리에서 그 사진들을(없으면 대표 사진 1장을) 보여줌.
+- 원래 `index.html`에 하드코딩돼 있던 데모 상품 6종(립스틱/퍼퓸/데님자켓/티셔츠/블라우스/수트)은 전부 이 테이블로 옮겨졌음 (`image_url` null, 기존에 쓰던 `gradient` 값을 그대로 넣음). 이제 상품은 하드코딩 없이 전부 이 테이블 하나로 관리됨.
+- `admin.html`의 "상품추가" 탭은 상품 목록을 보여주고, 목록의 행을 클릭하면 수정 화면(대표/상세 사진 재업로드 가능, "상품 삭제" 버튼)으로 들어가는 방식 (`inquiries` 탭의 목록→상세 패턴과 동일). 수정 시 사진 입력란을 비워두면 기존 사진이 유지됨.
+- `product-images` 버킷은 `public: true`라서 업로드된 사진은 로그인 없이도 누구나 URL로 볼 수 있음 (쇼핑몰 상품 사진이라 문제 없음). 업로드(쓰기)는 admin@admin.com만 가능. 상품을 삭제해도 Storage에 올려둔 사진 파일 자체는 지워지지 않음 (요청 범위 밖이라 구현 안 함).
+- `index.html`은 페이지 로드 시 `products` 테이블 전체를 불러와 `category_id` 기준으로 `CATEGORIES`에 채워 넣음 (`loadDbProducts()`). 대표 사진(`image_url`)이 있으면 그라데이션 대신 실제 `<img>`로 렌더링하고, 상세 사진(`detail_image_urls`)이 있으면 상세 팝업 갤러리에서 그 사진들을(없으면 대표 사진 1장, 그것도 없으면 그라데이션 placeholder 6장을) 보여줌.
 
 ## DB 스키마 (`public.login_events`, `public.product_views`) — 관리자 통계용
 
@@ -271,6 +275,5 @@ Supabase Auth 설정에서 `mailer_autoconfirm = true`로 설정되어 있어, �
 - 토스페이먼츠 클라이언트/시크릿 키가 아직 **공용 샘플 테스트키**임. 본인 명의로 발급받은 테스트 키(또는 실서비스 전환 시 라이브 키)로 교체하려면: ①토스페이먼츠 개발자센터 가입 → 키 발급 → `index.html`의 `TOSS_CLIENT_KEY` 값 교체 + `npx supabase secrets set TOSS_SECRET_KEY=...` 다시 실행.
 - **카카오/네이버 간편인증도 아직 플레이스홀더 키**라 실제로는 동작 안 함. 실제 키를 받으면: 카카오는 `config/auth` PATCH로 `external_kakao_client_id`/`external_kakao_secret` 교체, 네이버는 `PUT /auth/v1/admin/custom-providers/custom:naver`로 `client_id`/`client_secret` 교체 (둘 다 위 "네이버/카카오 간편인증" 섹션 참고). 네이버는 처음 실제 로그인 테스트할 때 `attribute_mapping`이 제대로 맞는지도 같이 확인 필요.
 - 관리자가 문의에 답변을 남겨도 **문의를 남긴 사람에게 알림이 가지 않음** (이메일 발송 기능 없음, 로그인 없이 이메일만 받는 구조라 계정 연결도 안 됨). 필요하면 이메일 발송 연동(예: Resend, Supabase의 SMTP 설정 등)을 추가로 구현해야 함.
-- 상품은 6종(카테고리당 2개) 하드코딩 상태. 실제 재고/가격을 관리자가 웹에서 수정하는 기능은 없음 (요청 시 별도 구현 필요).
-- 상품 상세 팝업의 사진 슬라이드(6장)는 아직 **실제 사진이 없어서 그라데이션 자리표시용**임. `getDetailImages()` 함수가 `product.images` 배열이 있으면 그걸 쓰고 없으면 자리표시용을 만들도록 되어 있으니, 실제 사진 URL 6개를 `CATEGORIES`의 각 상품에 `images: [...]`로 추가하면 그대로 실제 사진으로 바뀜.
+- 관리자가 `products` 테이블 행을 삭제해도 Storage에 올렸던 사진 파일은 그대로 남음 (정리 기능 미구현, 요청 시 추가 가능).
 - 지금까지의 작업 이력(디자인 변경 히스토리, 발견했던 버그와 원인)은 git 커밋 로그(`git log`)에도 상세히 남아있음 — 특정 변경의 배경이 궁금하면 커밋 메시지를 참고.

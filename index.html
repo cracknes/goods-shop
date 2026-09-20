@@ -57,31 +57,12 @@
 <script>
   const TOSS_CLIENT_KEY = "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq"; // 토스 공용 샘플 테스트 클라이언트키
 
+  // 상품 데이터는 전부 Supabase의 products 테이블에서 불러옴 (관리자페이지 "상품추가" 탭에서 추가/수정/삭제).
+  // CATEGORIES는 카테고리 틀만 갖고 있고, loadDbProducts()가 각 카테고리의 products 배열을 채움.
   const CATEGORIES = [
-    {
-      id: "cosmetics",
-      name: "화장품",
-      products: [
-        { id: "lipstick", name: "매트 립스틱", price: 18000, gradient: "linear-gradient(135deg, #ffd6e8, #ffb3d1)" },
-        { id: "perfume", name: "시그니처 퍼퓸", price: 42000, gradient: "linear-gradient(135deg, #e3d9ff, #c6b3ff)" },
-      ],
-    },
-    {
-      id: "menswear",
-      name: "남성 의류",
-      products: [
-        { id: "denimjacket", name: "남성 데님 자켓", price: 89000, gradient: "linear-gradient(135deg, #cfe8ff, #a6d4ff)" },
-        { id: "mentshirt", name: "남성 긴팔 티셔츠", price: 35000, gradient: "linear-gradient(135deg, #d4f5e9, #a0e8cd)" },
-      ],
-    },
-    {
-      id: "womenswear",
-      name: "여성 의류",
-      products: [
-        { id: "blouse", name: "여성 블라우스", price: 45000, gradient: "linear-gradient(135deg, #ffe8c2, #ffcf8c)" },
-        { id: "suit", name: "여성 수트", price: 129000, gradient: "linear-gradient(135deg, #ffd9d9, #ffb3b3)" },
-      ],
-    },
+    { id: "cosmetics", name: "화장품", products: [] },
+    { id: "menswear", name: "남성 의류", products: [] },
+    { id: "womenswear", name: "여성 의류", products: [] },
   ];
 
   // 이모지는 기기/폰트마다 렌더링 크기가 달라서 SVG 아이콘 하나로 통일 (모든 기기에서 100% 동일한 크기)
@@ -413,7 +394,7 @@
     });
   }
 
-  // 관리자가 상품추가 탭에서 등록한 상품을 불러와 해당 카테고리 목록에 추가
+  // 관리자가 상품추가 탭에서 등록/수정/삭제한 상품을 카테고리별로 불러옴
   async function loadDbProducts() {
     const { data, error } = await supabaseClient.from("products").select("*");
     if (error || !data) return;
@@ -425,16 +406,14 @@
         name: row.name,
         price: row.price,
         imageUrl: row.image_url,
+        gradient: row.gradient,
         images: row.detail_image_urls,
       });
     });
   }
 
   renderCategoryList();
-  renderProducts();
-  loadDbProducts().then(() => {
-    if (activeCategory !== "game" && activeCategory !== "numbergame") renderProducts();
-  });
+  loadDbProducts().then(renderMainContent);
 </script>
 </body>
 </html>
