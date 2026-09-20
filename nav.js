@@ -12,7 +12,7 @@ async function renderNav() {
   const isAdmin = user?.email === "admin@admin.com";
 
   nav.innerHTML = `
-    <a class="brand" href="index.html">지우네 하우스 <span class="brand-sub">이지후</span></a>
+    <a class="brand" href="index.html">지후네 하우스 <span class="brand-sub">이지후</span></a>
     <div class="nav-links">
       ${user && !isAdmin ? `<a href="contact.html">문의하기</a>` : ""}
       ${user && !isAdmin ? `<a href="orders.html">결제내역</a>` : ""}
