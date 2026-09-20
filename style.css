@@ -182,14 +182,14 @@ h1 { font-size: 22px; font-weight: 800; }
   color: var(--text-soft);
 }
 .hint-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
   border: none;
-  background: var(--accent);
-  color: #fff;
+  background: var(--bg-soft);
+  color: var(--text-soft);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   cursor: pointer;
   vertical-align: middle;
