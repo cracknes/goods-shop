@@ -164,7 +164,7 @@ create policy "product_images_admin_delete" on storage.objects for delete to aut
 
 - 원래 `index.html`에 하드코딩돼 있던 데모 상품 6종(립스틱/퍼퓸/데님자켓/티셔츠/블라우스/수트)은 전부 이 테이블로 옮겨졌음 (`image_url` null, 기존에 쓰던 `gradient` 값을 그대로 넣음). 이제 상품은 하드코딩 없이 전부 이 테이블 하나로 관리됨.
 - `admin.html`의 "상품추가" 탭은 상품 목록을 보여주고, 목록의 행을 클릭하면 수정 화면(대표/상세 사진 재업로드 가능, "상품 삭제" 버튼)으로 들어가는 방식 (`inquiries` 탭의 목록→상세 패턴과 동일). 수정 시 사진 입력란을 비워두면 기존 사진이 유지됨.
-- `product-images` 버킷은 `public: true`라서 업로드된 사진은 로그인 없이도 누구나 URL로 볼 수 있음 (쇼핑몰 상품 사진이라 문제 없음). 업로드(쓰기)/삭제는 admin@admin.com만 가능. 상품을 삭제하면 `admin.html`이 그 상품의 대표/상세 사진 URL에서 Storage 경로를 뽑아내 `storage.from('product-images').remove([...])`로 파일도 함께 지움 (사진을 새로 교체할 때는 기존 파일을 지우지 않음 — 요청 범위 밖).
+- `product-images` 버킷은 `public: true`라서 업로드된 사진은 로그인 없이도 누구나 URL로 볼 수 있음 (쇼핑몰 상품 사진이라 문제 없음). 업로드(쓰기)/삭제는 admin@admin.com만 가능. 상품을 삭제하거나 사진을 새로 교체하면 `admin.html`이 대상 사진 URL에서 Storage 경로를 뽑아내(`extractStoragePath()`) `storage.from('product-images').remove([...])`로 옛 파일도 함께 지움.
 - `index.html`은 페이지 로드 시 `products` 테이블 전체를 불러와 `category_id` 기준으로 `CATEGORIES`에 채워 넣음 (`loadDbProducts()`). 대표 사진(`image_url`)이 있으면 그라데이션 대신 실제 `<img>`로 렌더링하고, 상세 사진(`detail_image_urls`)이 있으면 상세 팝업 갤러리에서 그 사진들을(없으면 대표 사진 1장, 그것도 없으면 그라데이션 placeholder 6장을) 보여줌.
 
 ## DB 스키마 (`public.login_events`, `public.product_views`) — 관리자 통계용
@@ -276,5 +276,5 @@ Supabase Auth 설정에서 `mailer_autoconfirm = true`로 설정되어 있어, �
 - 토스페이먼츠 클라이언트/시크릿 키가 아직 **공용 샘플 테스트키**임. 본인 명의로 발급받은 테스트 키(또는 실서비스 전환 시 라이브 키)로 교체하려면: ①토스페이먼츠 개발자센터 가입 → 키 발급 → `index.html`의 `TOSS_CLIENT_KEY` 값 교체 + `npx supabase secrets set TOSS_SECRET_KEY=...` 다시 실행.
 - **카카오/네이버 간편인증도 아직 플레이스홀더 키**라 실제로는 동작 안 함. 실제 키를 받으면: 카카오는 `config/auth` PATCH로 `external_kakao_client_id`/`external_kakao_secret` 교체, 네이버는 `PUT /auth/v1/admin/custom-providers/custom:naver`로 `client_id`/`client_secret` 교체 (둘 다 위 "네이버/카카오 간편인증" 섹션 참고). 네이버는 처음 실제 로그인 테스트할 때 `attribute_mapping`이 제대로 맞는지도 같이 확인 필요.
 - 관리자가 문의에 답변을 남겨도 **문의를 남긴 사람에게 알림이 가지 않음** (이메일 발송 기능 없음, 로그인 없이 이메일만 받는 구조라 계정 연결도 안 됨). 필요하면 이메일 발송 연동(예: Resend, Supabase의 SMTP 설정 등)을 추가로 구현해야 함.
-- 상품 수정 시 사진을 새로 교체하면, 그 전에 올려뒀던 이전 사진 파일은 Storage에 그대로 남음 (교체 시점의 정리는 미구현 — 삭제 시점 정리만 구현됨).
+- 상품 수정 시 사진을 새로 교체하면(대표/상세 각각), DB 업데이트 성공 후 교체되기 전 사진 파일도 Storage에서 함께 지워짐. 사진 입력란을 비워두고 저장하면(안 바꾸면) 기존 파일은 그대로 유지됨.
 - 지금까지의 작업 이력(디자인 변경 히스토리, 발견했던 버그와 원인)은 git 커밋 로그(`git log`)에도 상세히 남아있음 — 특정 변경의 배경이 궁금하면 커밋 메시지를 참고.

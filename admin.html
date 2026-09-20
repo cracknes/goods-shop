@@ -384,6 +384,8 @@
       return;
     }
 
+    const previousProduct = editingProductId ? allProducts.find(p => p.id === editingProductId) : null;
+
     statusEl.textContent = "저장 중...";
     try {
       const payload = { category_id, name, price };
@@ -397,6 +399,13 @@
       if (editingProductId) {
         const { error } = await supabaseClient.from("products").update(payload).eq("id", editingProductId);
         if (error) throw error;
+
+        // 새 사진으로 교체된 경우에만 이전 사진 파일을 Storage에서 지움
+        const replacedUrls = [];
+        if (imageFile && previousProduct.image_url) replacedUrls.push(previousProduct.image_url);
+        if (detailFiles.length) replacedUrls.push(...(previousProduct.detail_image_urls || []));
+        const oldPaths = replacedUrls.map(extractStoragePath).filter(Boolean);
+        if (oldPaths.length) await supabaseClient.storage.from("product-images").remove(oldPaths);
       } else {
         const { error } = await supabaseClient.from("products").insert({ detail_image_urls: [], ...payload });
         if (error) throw error;
