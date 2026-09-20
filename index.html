@@ -43,6 +43,13 @@
   </div>
 </div>
 
+<div id="solution-modal" class="modal-overlay" hidden>
+  <div class="modal-box">
+    <button type="button" id="solution-close" class="modal-close">&times;</button>
+    <div id="solution-content"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://js.tosspayments.com/v1/payment"></script>
 <script src="supabase-client.js"></script>
@@ -169,19 +176,15 @@
   }
 
   // 아이용 숫자 놀이: 덧셈/뺄셈은 한 자리(1~9)와 두 자리(10~99) 숫자를 섞어서 출제
-  // 곱셈은 한 자리끼리가 기본이고, 11×11~19×19 같은 동일 두 자리 제곱만 예외로 허용
+  // 곱셈은 1단~19단 전체 범위(1~19 × 1~19)에서 출제
   let numberScore = 0;
 
   function generateNumberProblem() {
     const op = ["+", "-", "×"][Math.floor(Math.random() * 3)];
 
     if (op === "×") {
-      if (Math.random() < 0.5) {
-        const n = Math.floor(Math.random() * 9) + 11; // 11~19
-        return { a: n, b: n, op, answer: n * n };
-      }
-      const a = Math.floor(Math.random() * 9) + 1;
-      const b = Math.floor(Math.random() * 9) + 1;
+      const a = Math.floor(Math.random() * 19) + 1; // 1~19
+      const b = Math.floor(Math.random() * 19) + 1; // 1~19
       return { a, b, op, answer: a * b };
     }
 
@@ -198,13 +201,37 @@
 
   let currentProblem = null;
 
+  // 곱셈은 반복 덧셈으로 풀이과정을 보여줌 (숫자가 작을 때만, 너무 길어지면 식과 답만 표시)
+  function getSolutionSteps({ a, b, op, answer }) {
+    if (op === "+") return `${a} + ${b} = ${answer}`;
+    if (op === "-") return `${a} - ${b} = ${answer}`;
+    if (b <= 9) return `${a} × ${b} = ${Array(b).fill(a).join(" + ")} = ${answer}`;
+    return `${a} × ${b} = ${answer}`;
+  }
+
+  function showSolution(problem) {
+    document.getElementById("solution-content").innerHTML = `
+      <h3 style="margin-top:0;">풀이과정</h3>
+      <p style="font-size:18px;">${getSolutionSteps(problem)}</p>
+      <p style="font-weight:700; font-size:20px; color:var(--accent);">정답: ${problem.answer}</p>
+    `;
+    document.getElementById("solution-modal").hidden = false;
+  }
+
+  document.getElementById("solution-close").addEventListener("click", () => {
+    document.getElementById("solution-modal").hidden = true;
+  });
+  document.getElementById("solution-modal").addEventListener("click", (e) => {
+    if (e.target.id === "solution-modal") document.getElementById("solution-modal").hidden = true;
+  });
+
   function renderNumberGame() {
     const container = document.getElementById("products");
     container.style.display = "block";
     currentProblem = generateNumberProblem();
     container.innerHTML = `
       <div class="card" style="width:100%;">
-        <h2 style="margin-top:0;">숫자 놀이 🔢</h2>
+        <h2 style="margin-top:0;">숫자 놀이 🔢 <button type="button" id="number-hint-btn" class="hint-btn">?</button></h2>
         <p class="muted">문제를 계산해서 정답을 입력해보세요!</p>
         <div style="font-size:40px; font-weight:700; text-align:center; margin:20px 0;">${currentProblem.a} ${currentProblem.op} ${currentProblem.b} = ?</div>
         <input id="number-input" type="number" placeholder="정답을 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
@@ -223,6 +250,8 @@
         showWrongAnswerAlert();
       }
     }
+
+    document.getElementById("number-hint-btn").addEventListener("click", () => showSolution(currentProblem));
 
     document.getElementById("number-check-btn").addEventListener("click", checkAnswer);
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") checkAnswer(); });
