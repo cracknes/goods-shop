@@ -18,6 +18,7 @@
       <button data-tab="inquiries">문의내역</button>
       <button data-tab="logins">로그인이력</button>
       <button data-tab="productstats">상품통계</button>
+      <button data-tab="addproduct">상품추가</button>
     </div>
     <div class="shop-content">
       <div class="card">
@@ -60,6 +61,23 @@
         </table>
         <p id="productstats-empty" class="muted" hidden>조회 기록이 없습니다.</p>
       </div>
+
+      <div class="card" id="addproduct-panel" hidden>
+        <h2 style="margin-top:0;">상품 추가</h2>
+        <select id="new-product-category">
+          <option value="cosmetics">화장품</option>
+          <option value="menswear">남성 의류</option>
+          <option value="womenswear">여성 의류</option>
+        </select>
+        <input id="new-product-name" type="text" placeholder="상품명">
+        <input id="new-product-price" type="number" placeholder="가격">
+        <label class="muted" style="display:block; margin-top:12px;">대표 사진 (필수)</label>
+        <input id="new-product-image" type="file" accept="image/*">
+        <label class="muted" style="display:block; margin-top:12px;">상세 사진 (선택, 여러 장 업로드 가능)</label>
+        <input id="new-product-detail-images" type="file" accept="image/*" multiple>
+        <button class="primary" id="new-product-submit" style="width:100%; margin-top:16px;">상품 등록</button>
+        <p id="new-product-status" class="muted"></p>
+      </div>
     </div>
   </div>
 </div>
@@ -78,6 +96,7 @@
     document.getElementById("inquiries-panel").hidden = tab !== "inquiries";
     document.getElementById("logins-panel").hidden = tab !== "logins";
     document.getElementById("productstats-panel").hidden = tab !== "productstats";
+    document.getElementById("addproduct-panel").hidden = tab !== "addproduct";
   }
 
   async function loadOrders() {
@@ -233,6 +252,49 @@
       </tr>
     `).join("");
   }
+
+  async function uploadProductImage(file) {
+    const ext = file.name.split(".").pop();
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabaseClient.storage.from("product-images").upload(path, file);
+    if (error) throw error;
+    const { data } = supabaseClient.storage.from("product-images").getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  document.getElementById("new-product-submit").addEventListener("click", async () => {
+    const statusEl = document.getElementById("new-product-status");
+    const category_id = document.getElementById("new-product-category").value;
+    const name = document.getElementById("new-product-name").value.trim();
+    const price = Number(document.getElementById("new-product-price").value);
+    const imageFile = document.getElementById("new-product-image").files[0];
+    const detailFiles = Array.from(document.getElementById("new-product-detail-images").files);
+
+    if (!name || !price || !imageFile) {
+      statusEl.textContent = "상품명, 가격, 대표 사진은 필수입니다.";
+      return;
+    }
+
+    statusEl.textContent = "업로드 중...";
+    try {
+      const image_url = await uploadProductImage(imageFile);
+      const detail_image_urls = [];
+      for (const file of detailFiles) {
+        detail_image_urls.push(await uploadProductImage(file));
+      }
+
+      const { error } = await supabaseClient.from("products").insert({ category_id, name, price, image_url, detail_image_urls });
+      if (error) throw error;
+
+      statusEl.textContent = "상품이 등록되었습니다.";
+      document.getElementById("new-product-name").value = "";
+      document.getElementById("new-product-price").value = "";
+      document.getElementById("new-product-image").value = "";
+      document.getElementById("new-product-detail-images").value = "";
+    } catch (err) {
+      statusEl.textContent = "등록 실패: " + err.message;
+    }
+  });
 
   async function loadAdmin() {
     const { data: { user } } = await supabaseClient.auth.getUser();

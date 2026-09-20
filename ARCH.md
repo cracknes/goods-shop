@@ -13,14 +13,14 @@
 
 | 파일 | 역할 |
 |---|---|
-| `index.html` | 카테고리(화장품/남성 의류/여성 의류)별 상품 목록 + 마지막 두 탭 "한글놀이"/"숫자놀이"(아이용 미니 게임, DB 연동 없음). 좌측에 카테고리 전용 탭(사이트 공통 상단 nav와는 별개). 상품 카드 클릭 시 상세 팝업이 뜨고, 팝업 안에 사진 슬라이드(최대 6장, 좌우 화살표/스와이프로 넘김)가 표시됨. 팝업에 머문 시간을 `product_views`에 기록 (팝업 안의 구매하기 버튼에서 토스 결제 시작) |
+| `index.html` | 카테고리(화장품/남성 의류/여성 의류)별 상품 목록 + 마지막 두 탭 "한글놀이"/"숫자놀이"(아이용 미니 게임, DB 연동 없음). 좌측에 카테고리 전용 탭(사이트 공통 상단 nav와는 별개). 상품은 하드코딩된 6종(`CATEGORIES`) + 관리자가 `admin.html`의 "상품추가" 탭에서 등록한 `products` 테이블 상품을 페이지 로드 시 불러와 합쳐서 보여줌. 상품 카드 클릭 시 상세 팝업이 뜨고, 팝업 안에 사진 슬라이드(최대 6장, 좌우 화살표/스와이프로 넘김)가 표시됨. 팝업에 머문 시간을 `product_views`에 기록 (팝업 안의 구매하기 버튼에서 토스 결제 시작) |
 | `login.html` | 로그인 (이메일/비밀번호 + 네이버/카카오 간편인증) |
 | `signup.html` | 회원가입 (이름/전화번호/이메일/성별/비밀번호 + 네이버/카카오 간편인증) |
 | `social-auth.js` | 네이버/카카오 버튼 렌더링 + `signInWithOAuth` 호출 (login/signup 공용) |
 | `success.html` | 토스 결제 성공 리다이렉트 대상 → Edge Function 호출해 승인 확정 |
 | `fail.html` | 토스 결제 실패/취소 리다이렉트 대상 |
 | `orders.html` | 내 결제내역 (일반 사용자용, 관리자는 상단 nav에 이 링크가 안 보임) |
-| `admin.html` | admin@admin.com 전용. 좌측 탭 4개: 결제내역 / 문의내역(목록→클릭 시 상세+답변) / 로그인이력(`login_events` 전체 이력) / 상품통계(`product_views`을 상품별로 집계: 조회수·평균/총 조회시간) |
+| `admin.html` | admin@admin.com 전용. 좌측 탭 5개: 결제내역 / 문의내역(목록→클릭 시 상세+답변) / 로그인이력(`login_events` 전체 이력) / 상품통계(`product_views`을 상품별로 집계: 조회수·평균/총 조회시간) / 상품추가(카테고리·상품명·가격·대표 사진(필수)·상세 사진(선택, 여러 장)을 입력해 `products` 테이블에 새 상품을 등록. 수정/삭제 기능은 없음 — 추가만 가능) |
 | `contact.html` | 문의하기. 페이지 상단 탭으로 "문의 접수하기"(로그인 불필요)와 "내 문의내역"(로그인 필요, 목록→클릭 시 상세+답변) 전환. `inquiries` 테이블에 저장하며 로그인 상태면 `user_id`도 함께 저장. 헤더에서 admin 로그인 시에는 이 페이지 링크가 안 보임 |
 | `supabase-client.js` | 공용 Supabase 클라이언트 초기화 (URL + publishable key, 공개돼도 안전) |
 | `nav.js` | 상단 네비게이션. 로그인 상태 + admin 여부에 따라 보여줄 링크가 달라짐 (아래 "상단 네비게이션 규칙" 참고) |
@@ -129,6 +129,38 @@ grant select, update on public.inquiries to authenticated;
 - `user_id` 컬럼을 나중에 추가해서, 그 전에 로그인 없이 남긴 문의는 `user_id`가 비어있었음 → 문의 당시 입력한 이메일이 실제 가입 이메일과 같으면 1회성으로 `update ... from auth.users where email 일치` 매칭해서 소급 연결함.
 - 프론트엔드에서 `.insert(...)` / `.update(...)` 호출 시 `.select()`를 체이닝하면 PostgREST가 처리 후 행을 다시 읽으려고 해서, 그 역할에 SELECT 권한이 없는 경우(anon의 insert) 에러가 남 — `contact.html`은 `.select()` 없이 insert만 호출함.
 - 관리자 답변은 `inquiries.reply` / `inquiries.replied_at` 컬럼에 저장 (별도 테이블 없이 1:1 관계라 컬럼으로 충분). 비로그인으로 남긴 문의(`user_id` null)는 본인이 나중에 조회/수정할 방법이 없음 — 필요하면 이메일로 직접 답변을 보내는 별도 절차가 있어야 함.
+
+## DB 스키마 (`public.products`) + Storage 버킷 (`product-images`) — 관리자 상품추가용
+
+```sql
+create table public.products (
+  id uuid primary key default gen_random_uuid(),
+  category_id text not null, -- 'cosmetics' | 'menswear' | 'womenswear' (index.html의 CATEGORIES id와 매칭)
+  name text not null,
+  price integer not null,
+  image_url text not null,           -- 대표(master) 사진
+  detail_image_urls text[] not null default '{}', -- 상세 사진 (최대 6장 권장, 강제는 아님)
+  created_at timestamptz not null default now()
+);
+
+alter table public.products enable row level security;
+
+create policy "products_select_anyone" on public.products for select to anon, authenticated using (true);
+create policy "products_insert_admin" on public.products for insert to authenticated with check (auth.jwt() ->> 'email' = 'admin@admin.com');
+
+grant select on public.products to anon, authenticated;
+grant insert on public.products to authenticated;
+grant select, delete on public.products to service_role; -- 앱에서는 안 쓰지만, 다른 테이블과 일관성 + 유지보수용
+
+insert into storage.buckets (id, name, public) values ('product-images', 'product-images', true);
+
+create policy "product_images_public_read" on storage.objects for select to anon, authenticated using (bucket_id = 'product-images');
+create policy "product_images_admin_insert" on storage.objects for insert to authenticated with check (bucket_id = 'product-images' and auth.jwt() ->> 'email' = 'admin@admin.com');
+```
+
+- **수정/삭제 정책 없음** — `admin.html`의 "상품추가" 탭은 추가만 지원하도록 요청받아서, 업데이트/삭제 UI와 정책을 만들지 않음. 잘못 등록한 상품을 고치려면 지금은 Supabase 대시보드에서 직접 행을 수정/삭제해야 함.
+- `product-images` 버킷은 `public: true`라서 업로드된 사진은 로그인 없이도 누구나 URL로 볼 수 있음 (쇼핑몰 상품 사진이라 문제 없음). 업로드(쓰기)는 admin@admin.com만 가능.
+- `index.html`은 페이지 로드 시 `products` 테이블 전체를 불러와 `category_id` 기준으로 하드코딩된 `CATEGORIES` 배열에 합쳐서 보여줌 (`loadDbProducts()`). 대표 사진(`image_url`)이 있으면 그라데이션 대신 실제 `<img>`로 렌더링하고, 상세 사진(`detail_image_urls`)이 있으면 상세 팝업 갤러리에서 그 사진들을(없으면 대표 사진 1장을) 보여줌.
 
 ## DB 스키마 (`public.login_events`, `public.product_views`) — 관리자 통계용
 
