@@ -345,10 +345,24 @@
 
   document.getElementById("products-back-btn").addEventListener("click", showProductsList);
 
+  function extractStoragePath(url) {
+    const marker = "/product-images/";
+    const idx = url.indexOf(marker);
+    return idx === -1 ? null : url.slice(idx + marker.length);
+  }
+
   document.getElementById("product-delete-btn").addEventListener("click", async () => {
     if (!editingProductId || !confirm("정말 삭제하시겠어요?")) return;
+    const product = allProducts.find(p => p.id === editingProductId);
     const { error } = await supabaseClient.from("products").delete().eq("id", editingProductId);
     if (error) { alert("삭제 실패: " + error.message); return; }
+
+    const paths = [product.image_url, ...(product.detail_image_urls || [])]
+      .filter(Boolean)
+      .map(extractStoragePath)
+      .filter(Boolean);
+    if (paths.length) await supabaseClient.storage.from("product-images").remove(paths);
+
     await loadProductsList();
     showProductsList();
   });
