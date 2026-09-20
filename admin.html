@@ -79,8 +79,10 @@
           <input id="new-product-name" type="text" placeholder="상품명">
           <input id="new-product-price" type="number" placeholder="가격">
           <label class="muted" style="display:block; margin-top:12px;">대표 사진 (수정 시 비워두면 기존 사진 유지)</label>
+          <div id="current-master-image" style="margin-bottom:8px;"></div>
           <input id="new-product-image" type="file" accept="image/*">
           <label class="muted" style="display:block; margin-top:12px;">상세 사진 (최대 6장, 수정 시 비워두면 기존 사진 유지)</label>
+          <div id="current-detail-images" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;"></div>
           <input id="new-product-detail-images" type="file" accept="image/*" multiple>
           <button class="primary" id="new-product-submit" style="width:100%; margin-top:16px;">상품 등록</button>
           <button type="button" id="product-delete-btn" hidden style="width:100%; margin-top:8px;">상품 삭제</button>
@@ -310,6 +312,15 @@
     renderProductsList();
   }
 
+  function renderCurrentImages(p) {
+    document.getElementById("current-master-image").innerHTML = p && (p.image_url || p.gradient)
+      ? `<div style="width:70px; height:70px; border-radius:8px; background:${p.image_url ? `url('${p.image_url}') center/cover` : p.gradient};"></div>`
+      : "";
+    document.getElementById("current-detail-images").innerHTML = (p && p.detail_image_urls && p.detail_image_urls.length)
+      ? p.detail_image_urls.map(url => `<img src="${url}" style="width:56px; height:56px; border-radius:8px; object-fit:cover;">`).join("")
+      : "";
+  }
+
   function resetProductForm() {
     editingProductId = null;
     document.getElementById("new-product-category").value = "cosmetics";
@@ -321,6 +332,7 @@
     document.getElementById("new-product-submit").textContent = "상품 등록";
     document.getElementById("product-delete-btn").hidden = true;
     document.getElementById("new-product-status").textContent = "";
+    renderCurrentImages(null);
   }
 
   function openProductForEdit(id) {
@@ -335,6 +347,7 @@
     document.getElementById("new-product-submit").textContent = "수정 저장";
     document.getElementById("product-delete-btn").hidden = false;
     document.getElementById("new-product-status").textContent = "";
+    renderCurrentImages(p);
     showProductForm();
   }
 

@@ -163,7 +163,7 @@ create policy "product_images_admin_delete" on storage.objects for delete to aut
 ```
 
 - 원래 `index.html`에 하드코딩돼 있던 데모 상품 6종(립스틱/퍼퓸/데님자켓/티셔츠/블라우스/수트)은 전부 이 테이블로 옮겨졌음 (`image_url` null, 기존에 쓰던 `gradient` 값을 그대로 넣음). 이제 상품은 하드코딩 없이 전부 이 테이블 하나로 관리됨.
-- `admin.html`의 "상품추가" 탭은 상품 목록을 보여주고, 목록의 행을 클릭하면 수정 화면(대표/상세 사진 재업로드 가능, "상품 삭제" 버튼)으로 들어가는 방식 (`inquiries` 탭의 목록→상세 패턴과 동일). 수정 시 사진 입력란을 비워두면 기존 사진이 유지됨.
+- `admin.html`의 "상품추가" 탭은 상품 목록을 보여주고, 목록의 행을 클릭하면 수정 화면(대표/상세 사진 재업로드 가능, "상품 삭제" 버튼)으로 들어가는 방식 (`inquiries` 탭의 목록→상세 패턴과 동일). 수정 화면에는 현재 등록된 대표 사진(또는 그라데이션)과 상세 사진들을 `renderCurrentImages()`가 미리보기로 보여줘서, 사진을 바꾸기 전에 지금 뭐가 걸려있는지 확인할 수 있음. 사진 입력란을 비워두면 기존 사진이 유지됨.
 - `product-images` 버킷은 `public: true`라서 업로드된 사진은 로그인 없이도 누구나 URL로 볼 수 있음 (쇼핑몰 상품 사진이라 문제 없음). 업로드(쓰기)/삭제는 admin@admin.com만 가능. 상품을 삭제하거나 사진을 새로 교체하면 `admin.html`이 대상 사진 URL에서 Storage 경로를 뽑아내(`extractStoragePath()`) `storage.from('product-images').remove([...])`로 옛 파일도 함께 지움.
 - `index.html`은 페이지 로드 시 `products` 테이블 전체를 불러와 `category_id` 기준으로 `CATEGORIES`에 채워 넣음 (`loadDbProducts()`). 대표 사진(`image_url`)이 있으면 그라데이션 대신 실제 `<img>`로 렌더링하고, 상세 사진(`detail_image_urls`)이 있으면 상세 팝업 갤러리에서 그 사진들을(없으면 대표 사진 1장, 그것도 없으면 그라데이션 placeholder 6장을) 보여줌.
 
