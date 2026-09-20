@@ -176,15 +176,19 @@
   }
 
   // 아이용 숫자 놀이: 덧셈/뺄셈은 한 자리(1~9)와 두 자리(10~99) 숫자를 섞어서 출제
-  // 곱셈은 1단~19단 전체 범위(1~19 × 1~19)에서 출제
+  // 곱셈은 한 자리끼리가 기본이고, 11×11~19×19 같은 동일 두 자리 제곱만 예외로 허용
   let numberScore = 0;
 
   function generateNumberProblem() {
     const op = ["+", "-", "×"][Math.floor(Math.random() * 3)];
 
     if (op === "×") {
-      const a = Math.floor(Math.random() * 19) + 1; // 1~19
-      const b = Math.floor(Math.random() * 19) + 1; // 1~19
+      if (Math.random() < 0.5) {
+        const n = Math.floor(Math.random() * 9) + 11; // 11~19
+        return { a: n, b: n, op, answer: n * n };
+      }
+      const a = Math.floor(Math.random() * 9) + 1;
+      const b = Math.floor(Math.random() * 9) + 1;
       return { a, b, op, answer: a * b };
     }
 
