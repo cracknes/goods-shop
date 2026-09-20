@@ -36,6 +36,13 @@
   </div>
 </div>
 
+<div id="wrong-modal" class="modal-overlay" hidden>
+  <div class="modal-box celebrate-box">
+    <div class="celebrate-emoji">😢</div>
+    <div class="celebrate-text">지후야 다시생각해봐</div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://js.tosspayments.com/v1/payment"></script>
 <script src="supabase-client.js"></script>
@@ -110,7 +117,10 @@
   }
 
   function showWrongAnswerAlert() {
-    alert("지후야 다시생각해봐 😢");
+    document.getElementById("wrong-modal").hidden = false;
+    setTimeout(() => {
+      document.getElementById("wrong-modal").hidden = true;
+    }, 1300);
   }
 
   function showCelebration(next) {
@@ -158,27 +168,14 @@
     input.focus();
   }
 
-  // 아이용 숫자 놀이: 1~2자리 덧셈/뺄셈/곱셈. 곱셈의 2자리 문제는 11×11~19×19 같은 동일 숫자 제곱만 나오게 함
+  // 아이용 숫자 놀이: 1자리 숫자(1~9)로 덧셈/뺄셈/곱셈
   let numberScore = 0;
 
   function generateNumberProblem() {
     const op = ["+", "-", "×"][Math.floor(Math.random() * 3)];
-    let a, b;
-
-    if (op === "×") {
-      if (Math.random() < 0.5) {
-        a = Math.floor(Math.random() * 9) + 1; // 1~9
-        b = Math.floor(Math.random() * 9) + 1;
-      } else {
-        const n = Math.floor(Math.random() * 9) + 11; // 11~19
-        a = n;
-        b = n;
-      }
-    } else {
-      a = Math.floor(Math.random() * 99) + 1; // 1~99
-      b = Math.floor(Math.random() * 99) + 1;
-      if (op === "-" && a < b) [a, b] = [b, a]; // 결과가 음수 안 되게
-    }
+    let a = Math.floor(Math.random() * 9) + 1; // 1~9 (아직 두 자리는 어려워해서 한 자리로 제한)
+    let b = Math.floor(Math.random() * 9) + 1;
+    if (op === "-" && a < b) [a, b] = [b, a]; // 결과가 음수 안 되게
 
     const answer = op === "+" ? a + b : op === "-" ? a - b : a * b;
     return { a, b, op, answer };
