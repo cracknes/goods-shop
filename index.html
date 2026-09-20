@@ -168,16 +168,31 @@
     input.focus();
   }
 
-  // 아이용 숫자 놀이: 1자리 숫자(1~9)로 덧셈/뺄셈/곱셈
+  // 아이용 숫자 놀이: 덧셈/뺄셈은 한 자리(1~9)와 두 자리(10~99) 숫자를 섞어서 출제
+  // 곱셈은 한 자리끼리가 기본이고, 11×11~19×19 같은 동일 두 자리 제곱만 예외로 허용
   let numberScore = 0;
 
   function generateNumberProblem() {
     const op = ["+", "-", "×"][Math.floor(Math.random() * 3)];
-    let a = Math.floor(Math.random() * 9) + 1; // 1~9 (아직 두 자리는 어려워해서 한 자리로 제한)
-    let b = Math.floor(Math.random() * 9) + 1;
+
+    if (op === "×") {
+      if (Math.random() < 0.5) {
+        const n = Math.floor(Math.random() * 9) + 11; // 11~19
+        return { a: n, b: n, op, answer: n * n };
+      }
+      const a = Math.floor(Math.random() * 9) + 1;
+      const b = Math.floor(Math.random() * 9) + 1;
+      return { a, b, op, answer: a * b };
+    }
+
+    const randomOperand = () => Math.random() < 0.5
+      ? Math.floor(Math.random() * 9) + 1 // 1~9
+      : Math.floor(Math.random() * 90) + 10; // 10~99
+    let a = randomOperand();
+    let b = randomOperand();
     if (op === "-" && a < b) [a, b] = [b, a]; // 결과가 음수 안 되게
 
-    const answer = op === "+" ? a + b : op === "-" ? a - b : a * b;
+    const answer = op === "+" ? a + b : a - b;
     return { a, b, op, answer };
   }
 
