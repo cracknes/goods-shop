@@ -181,19 +181,6 @@ h1 { font-size: 22px; font-weight: 800; }
   cursor: pointer;
   color: var(--text-soft);
 }
-.hint-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  border: none;
-  background: var(--accent);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1;
-  cursor: pointer;
-  vertical-align: middle;
-}
 .detail-gallery {
   position: relative;
   border-radius: 8px;
