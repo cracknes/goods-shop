@@ -84,7 +84,9 @@
     const list = document.getElementById("category-list");
     list.innerHTML = CATEGORIES.map(c => `
       <button data-cat="${c.id}" class="${c.id === activeCategory ? "active" : ""}">${c.name}</button>
-    `).join("") + `<button data-cat="game" class="${activeCategory === "game" ? "active" : ""}">한글놀이</button>`;
+    `).join("")
+      + `<button data-cat="game" class="${activeCategory === "game" ? "active" : ""}">한글놀이</button>`
+      + `<button data-cat="numbergame" class="${activeCategory === "numbergame" ? "active" : ""}">숫자놀이</button>`;
 
     list.querySelectorAll("button[data-cat]").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -100,21 +102,29 @@
       renderHangulGame();
       return;
     }
+    if (activeCategory === "numbergame") {
+      renderNumberGame();
+      return;
+    }
     renderProducts();
+  }
+
+  function showWrongAnswerAlert() {
+    alert("지후야 다시생각해봐");
+  }
+
+  function showCelebration(next) {
+    document.getElementById("celebrate-modal").hidden = false;
+    setTimeout(() => {
+      document.getElementById("celebrate-modal").hidden = true;
+      next();
+    }, 1300);
   }
 
   // 아이용 한글 놀이: 화면에 뜬 단어를 실제 키보드(한글 IME)로 그대로 입력해서 맞히기
   const HANGUL_WORDS = ["사과", "바나나", "나비", "우유", "고양이", "강아지", "학교", "나무", "하늘", "바다"];
   let gameIndex = 0;
   let gameScore = 0;
-
-  function showCelebration() {
-    document.getElementById("celebrate-modal").hidden = false;
-    setTimeout(() => {
-      document.getElementById("celebrate-modal").hidden = true;
-      renderHangulGame();
-    }, 1300);
-  }
 
   function renderHangulGame() {
     const container = document.getElementById("products");
@@ -127,25 +137,82 @@
         <div style="font-size:40px; font-weight:700; text-align:center; margin:20px 0;">${word}</div>
         <input id="game-input" type="text" placeholder="여기에 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
         <button class="primary" id="game-check-btn" style="width:100%;">확인</button>
-        <p id="game-feedback" class="muted" style="text-align:center; font-size:16px;"></p>
         <p class="muted" style="text-align:center;">맞춘 개수: ${gameScore}개</p>
       </div>
     `;
 
     const input = document.getElementById("game-input");
-    const feedback = document.getElementById("game-feedback");
 
     function checkAnswer() {
       if (input.value.trim() === word) {
         gameScore++;
         gameIndex++;
-        showCelebration();
+        showCelebration(renderHangulGame);
       } else {
-        feedback.textContent = "다시 한번 써볼까요?";
+        showWrongAnswerAlert();
       }
     }
 
     document.getElementById("game-check-btn").addEventListener("click", checkAnswer);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") checkAnswer(); });
+    input.focus();
+  }
+
+  // 아이용 숫자 놀이: 1~2자리 덧셈/뺄셈/곱셈. 곱셈의 2자리 문제는 11×11~19×19 같은 동일 숫자 제곱만 나오게 함
+  let numberScore = 0;
+
+  function generateNumberProblem() {
+    const op = ["+", "-", "×"][Math.floor(Math.random() * 3)];
+    let a, b;
+
+    if (op === "×") {
+      if (Math.random() < 0.5) {
+        a = Math.floor(Math.random() * 9) + 1; // 1~9
+        b = Math.floor(Math.random() * 9) + 1;
+      } else {
+        const n = Math.floor(Math.random() * 9) + 11; // 11~19
+        a = n;
+        b = n;
+      }
+    } else {
+      a = Math.floor(Math.random() * 99) + 1; // 1~99
+      b = Math.floor(Math.random() * 99) + 1;
+      if (op === "-" && a < b) [a, b] = [b, a]; // 결과가 음수 안 되게
+    }
+
+    const answer = op === "+" ? a + b : op === "-" ? a - b : a * b;
+    return { a, b, op, answer };
+  }
+
+  let currentProblem = null;
+
+  function renderNumberGame() {
+    const container = document.getElementById("products");
+    container.style.display = "block";
+    currentProblem = generateNumberProblem();
+    container.innerHTML = `
+      <div class="card" style="width:100%;">
+        <h2 style="margin-top:0;">숫자 놀이 🔢</h2>
+        <p class="muted">문제를 계산해서 정답을 입력해보세요!</p>
+        <div style="font-size:40px; font-weight:700; text-align:center; margin:20px 0;">${currentProblem.a} ${currentProblem.op} ${currentProblem.b} = ?</div>
+        <input id="number-input" type="number" placeholder="정답을 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
+        <button class="primary" id="number-check-btn" style="width:100%;">확인</button>
+        <p class="muted" style="text-align:center;">맞춘 개수: ${numberScore}개</p>
+      </div>
+    `;
+
+    const input = document.getElementById("number-input");
+
+    function checkAnswer() {
+      if (Number(input.value) === currentProblem.answer) {
+        numberScore++;
+        showCelebration(renderNumberGame);
+      } else {
+        showWrongAnswerAlert();
+      }
+    }
+
+    document.getElementById("number-check-btn").addEventListener("click", checkAnswer);
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") checkAnswer(); });
     input.focus();
   }
