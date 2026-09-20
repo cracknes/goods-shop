@@ -186,10 +186,10 @@ h1 { font-size: 22px; font-weight: 800; }
   height: 26px;
   border-radius: 50%;
   border: none;
-  background: var(--bg-soft);
-  color: var(--text-soft);
+  background: var(--accent);
+  color: #fff;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1;
   cursor: pointer;
   vertical-align: middle;
