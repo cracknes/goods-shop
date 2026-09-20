@@ -348,6 +348,76 @@ textarea { resize: vertical; }
 .inquiry-row:last-child { border-bottom: none; }
 .inquiry-row:hover { opacity: 0.85; }
 
+.list-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.form-section-label {
+  display: block;
+  font-weight: 700;
+  margin-top: 20px;
+  margin-bottom: 2px;
+}
+.image-preview-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 68px;
+  padding: 10px;
+  background: var(--bg-soft);
+  border-radius: 14px;
+  margin-bottom: 10px;
+}
+.image-preview-box:empty::after {
+  content: "등록된 사진이 없습니다";
+  color: var(--text-soft);
+  font-size: 13px;
+}
+.image-thumb {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+}
+.image-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.remove-image-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+.danger-btn {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--danger);
+  background: transparent;
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.danger-btn:hover { background: var(--danger); color: #fff; }
+
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 .status-paid { color: var(--accent); font-weight: 600; }

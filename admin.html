@@ -18,7 +18,7 @@
       <button data-tab="inquiries">문의내역</button>
       <button data-tab="logins">로그인이력</button>
       <button data-tab="productstats">상품통계</button>
-      <button data-tab="addproduct">상품추가</button>
+      <button data-tab="addproduct">상품관리</button>
     </div>
     <div class="shop-content">
       <div class="card">
@@ -78,14 +78,19 @@
           </select>
           <input id="new-product-name" type="text" placeholder="상품명">
           <input id="new-product-price" type="number" placeholder="가격">
-          <label class="muted" style="display:block; margin-top:12px;">대표 사진 (수정 시 비워두면 기존 사진 유지)</label>
-          <div id="current-master-image" style="margin-bottom:8px;"></div>
+
+          <label class="form-section-label">대표 사진</label>
+          <p class="muted" style="margin:0 0 8px;">수정 시 비워두면 기존 사진 유지, X를 누르면 기존 사진 삭제</p>
+          <div id="current-master-image" class="image-preview-box"></div>
           <input id="new-product-image" type="file" accept="image/*">
-          <label class="muted" style="display:block; margin-top:12px;">상세 사진 (최대 6장, 수정 시 비워두면 기존 사진 유지)</label>
-          <div id="current-detail-images" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;"></div>
+
+          <label class="form-section-label">상세 사진 (최대 6장)</label>
+          <p class="muted" style="margin:0 0 8px;">수정 시 비워두면 기존 사진 유지, X를 누르면 기존 사진 삭제</p>
+          <div id="current-detail-images" class="image-preview-box"></div>
           <input id="new-product-detail-images" type="file" accept="image/*" multiple>
-          <button class="primary" id="new-product-submit" style="width:100%; margin-top:16px;">상품 등록</button>
-          <button type="button" id="product-delete-btn" hidden style="width:100%; margin-top:8px;">상품 삭제</button>
+
+          <button class="primary" id="new-product-submit" style="width:100%; margin-top:20px;">상품 등록</button>
+          <button type="button" class="danger-btn" id="product-delete-btn" hidden style="margin-top:8px;">상품 삭제</button>
           <p id="new-product-status" class="muted"></p>
         </div>
       </div>
@@ -267,6 +272,9 @@
   const CATEGORY_LABELS = { cosmetics: "화장품", menswear: "남성 의류", womenswear: "여성 의류" };
   let allProducts = [];
   let editingProductId = null;
+  let currentEditingProduct = null; // 수정 중인 상품의 원본 스냅샷 (X로 지운 사진 계산용)
+  let editMasterRemoved = false;
+  let editDetailImages = []; // X로 지우고 남은 상세 사진 URL들
 
   async function uploadProductImage(file) {
     const ext = file.name.split(".").pop();
@@ -292,7 +300,7 @@
     document.getElementById("admin-products-list").innerHTML = allProducts.map(p => `
       <div class="inquiry-row" data-id="${p.id}">
         <div style="display:flex; align-items:center; gap:12px;">
-          <div style="width:36px; height:36px; border-radius:8px; flex-shrink:0; background:${p.image_url ? `url('${p.image_url}') center/cover` : p.gradient};"></div>
+          <div class="list-thumb" style="background:${p.image_url ? `url('${p.image_url}') center/cover` : p.gradient};"></div>
           <div>
             <div>${p.name}</div>
             <div class="inquiry-meta">${CATEGORY_LABELS[p.category_id] || p.category_id} · ${p.price.toLocaleString()}원</div>
@@ -312,17 +320,42 @@
     renderProductsList();
   }
 
-  function renderCurrentImages(p) {
-    document.getElementById("current-master-image").innerHTML = p && (p.image_url || p.gradient)
-      ? `<div style="width:70px; height:70px; border-radius:8px; background:${p.image_url ? `url('${p.image_url}') center/cover` : p.gradient};"></div>`
-      : "";
-    document.getElementById("current-detail-images").innerHTML = (p && p.detail_image_urls && p.detail_image_urls.length)
-      ? p.detail_image_urls.map(url => `<img src="${url}" style="width:56px; height:56px; border-radius:8px; object-fit:cover;">`).join("")
-      : "";
+  function renderCurrentImages() {
+    const masterEl = document.getElementById("current-master-image");
+    if (currentEditingProduct && !editMasterRemoved && (currentEditingProduct.image_url || currentEditingProduct.gradient)) {
+      const bg = currentEditingProduct.image_url ? `url('${currentEditingProduct.image_url}') center/cover` : currentEditingProduct.gradient;
+      masterEl.innerHTML = `
+        <div class="image-thumb" style="background:${bg};">
+          <button type="button" class="remove-image-btn" data-type="master">&times;</button>
+        </div>`;
+    } else {
+      masterEl.innerHTML = "";
+    }
+
+    document.getElementById("current-detail-images").innerHTML = editDetailImages.map((url, i) => `
+      <div class="image-thumb">
+        <img src="${url}">
+        <button type="button" class="remove-image-btn" data-type="detail" data-index="${i}">&times;</button>
+      </div>
+    `).join("");
   }
+
+  document.getElementById("current-master-image").addEventListener("click", (e) => {
+    if (!e.target.classList.contains("remove-image-btn")) return;
+    editMasterRemoved = true;
+    renderCurrentImages();
+  });
+  document.getElementById("current-detail-images").addEventListener("click", (e) => {
+    if (!e.target.classList.contains("remove-image-btn")) return;
+    editDetailImages.splice(Number(e.target.dataset.index), 1);
+    renderCurrentImages();
+  });
 
   function resetProductForm() {
     editingProductId = null;
+    currentEditingProduct = null;
+    editMasterRemoved = false;
+    editDetailImages = [];
     document.getElementById("new-product-category").value = "cosmetics";
     document.getElementById("new-product-name").value = "";
     document.getElementById("new-product-price").value = "";
@@ -332,12 +365,15 @@
     document.getElementById("new-product-submit").textContent = "상품 등록";
     document.getElementById("product-delete-btn").hidden = true;
     document.getElementById("new-product-status").textContent = "";
-    renderCurrentImages(null);
+    renderCurrentImages();
   }
 
   function openProductForEdit(id) {
     const p = allProducts.find(x => x.id === id);
     editingProductId = id;
+    currentEditingProduct = p;
+    editMasterRemoved = false;
+    editDetailImages = (p.detail_image_urls || []).slice();
     document.getElementById("new-product-category").value = p.category_id;
     document.getElementById("new-product-name").value = p.name;
     document.getElementById("new-product-price").value = p.price;
@@ -347,7 +383,7 @@
     document.getElementById("new-product-submit").textContent = "수정 저장";
     document.getElementById("product-delete-btn").hidden = false;
     document.getElementById("new-product-status").textContent = "";
-    renderCurrentImages(p);
+    renderCurrentImages();
     showProductForm();
   }
 
@@ -397,27 +433,31 @@
       return;
     }
 
-    const previousProduct = editingProductId ? allProducts.find(p => p.id === editingProductId) : null;
-
     statusEl.textContent = "저장 중...";
     try {
       const payload = { category_id, name, price };
       if (imageFile) payload.image_url = await uploadProductImage(imageFile);
+      else if (editingProductId && editMasterRemoved) payload.image_url = null;
+
+      const originalDetailUrls = currentEditingProduct ? (currentEditingProduct.detail_image_urls || []) : [];
       if (detailFiles.length) {
         const detail_image_urls = [];
         for (const file of detailFiles) detail_image_urls.push(await uploadProductImage(file));
         payload.detail_image_urls = detail_image_urls;
+      } else if (editingProductId && editDetailImages.length !== originalDetailUrls.length) {
+        payload.detail_image_urls = editDetailImages;
       }
 
       if (editingProductId) {
         const { error } = await supabaseClient.from("products").update(payload).eq("id", editingProductId);
         if (error) throw error;
 
-        // 새 사진으로 교체된 경우에만 이전 사진 파일을 Storage에서 지움
-        const replacedUrls = [];
-        if (imageFile && previousProduct.image_url) replacedUrls.push(previousProduct.image_url);
-        if (detailFiles.length) replacedUrls.push(...(previousProduct.detail_image_urls || []));
-        const oldPaths = replacedUrls.map(extractStoragePath).filter(Boolean);
+        // 새로 교체됐거나 X로 지운 사진의 옛 파일을 Storage에서 지움
+        const removedUrls = [];
+        if ((imageFile || editMasterRemoved) && currentEditingProduct.image_url) removedUrls.push(currentEditingProduct.image_url);
+        if (detailFiles.length) removedUrls.push(...originalDetailUrls);
+        else removedUrls.push(...originalDetailUrls.filter(url => !editDetailImages.includes(url)));
+        const oldPaths = removedUrls.map(extractStoragePath).filter(Boolean);
         if (oldPaths.length) await supabaseClient.storage.from("product-images").remove(oldPaths);
       } else {
         const { error } = await supabaseClient.from("products").insert({ detail_image_urls: [], ...payload });
