@@ -181,15 +181,76 @@ h1 { font-size: 22px; font-weight: 800; }
   cursor: pointer;
   color: var(--text-soft);
 }
-.modal-box .thumb {
-  aspect-ratio: 1 / 1;
+.detail-gallery {
+  position: relative;
   border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  touch-action: pan-y;
+}
+.gallery-track {
+  display: flex;
+  transition: transform 0.3s ease;
+}
+.gallery-slide {
+  position: relative;
+  flex: 0 0 100%;
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
 }
-.modal-box .thumb svg { width: 35%; height: 35%; }
+.gallery-slide svg { width: 35%; height: 35%; }
+.gallery-index-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  z-index: 1;
+}
+.gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text-soft);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gallery-prev { left: 8px; }
+.gallery-next { right: 8px; }
+.gallery-dots {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.gallery-dots .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+}
+.gallery-dots .dot.active {
+  background: #fff;
+  width: 16px;
+  border-radius: 3px;
+}
 .modal-box .name { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
 .modal-box .price { color: var(--text-soft); margin-bottom: 16px; }
 

@@ -259,13 +259,48 @@
   let viewingProduct = null;
   let viewStartTime = null;
 
+  // 실제 상품 사진이 준비되면 product.images (URL 6개 배열)를 읽도록 바꾸면 됨.
+  // 지금은 사진이 없어서 자리표시용 슬라이드 6장을 만들어 스와이프 구조만 잡아둠.
+  const DETAIL_IMAGE_COUNT = 6;
+  function getDetailImages(product) {
+    return product.images || Array.from({ length: DETAIL_IMAGE_COUNT }, () => product.gradient);
+  }
+
+  let galleryImages = [];
+  let galleryIndex = 0;
+
+  function updateGallery() {
+    document.getElementById("gallery-track").style.transform = `translateX(-${galleryIndex * 100}%)`;
+    document.getElementById("gallery-index-badge").textContent = `${galleryIndex + 1}/${galleryImages.length}`;
+    document.querySelectorAll("#gallery-dots .dot").forEach((dot, i) => {
+      dot.classList.toggle("active", i === galleryIndex);
+    });
+  }
+
+  function goToSlide(index) {
+    galleryIndex = (index + galleryImages.length) % galleryImages.length;
+    updateGallery();
+  }
+
   function openProductModal(productId) {
     const product = CATEGORIES.flatMap(c => c.products).find(p => p.id === productId);
     viewingProduct = product;
     viewStartTime = Date.now();
+    galleryImages = getDetailImages(product);
+    galleryIndex = 0;
 
     document.getElementById("modal-content").innerHTML = `
-      <div class="thumb" style="background:${product.gradient}">${PRODUCT_ICON}</div>
+      <div class="detail-gallery">
+        <div class="gallery-track" id="gallery-track">
+          ${galleryImages.map(bg => `<div class="gallery-slide" style="background:${bg}">${PRODUCT_ICON}</div>`).join("")}
+        </div>
+        <span class="gallery-index-badge" id="gallery-index-badge"></span>
+        <button type="button" class="gallery-arrow gallery-prev">&lsaquo;</button>
+        <button type="button" class="gallery-arrow gallery-next">&rsaquo;</button>
+        <div class="gallery-dots" id="gallery-dots">
+          ${galleryImages.map((_, i) => `<span class="dot"></span>`).join("")}
+        </div>
+      </div>
       <div class="name">${product.name}</div>
       <div class="price">${product.price.toLocaleString()}원</div>
       <button class="primary" id="modal-buy-btn" style="width:100%">구매하기</button>
@@ -274,7 +309,20 @@
       closeProductModal();
       buy(product.id);
     });
+    document.querySelector(".gallery-prev").addEventListener("click", () => goToSlide(galleryIndex - 1));
+    document.querySelector(".gallery-next").addEventListener("click", () => goToSlide(galleryIndex + 1));
 
+    let touchStartX = null;
+    const gallery = document.querySelector(".detail-gallery");
+    gallery.addEventListener("touchstart", (e) => { touchStartX = e.touches[0].clientX; });
+    gallery.addEventListener("touchend", (e) => {
+      if (touchStartX === null) return;
+      const diff = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(diff) > 40) goToSlide(diff < 0 ? galleryIndex + 1 : galleryIndex - 1);
+      touchStartX = null;
+    });
+
+    updateGallery();
     document.getElementById("product-modal").hidden = false;
   }
 
