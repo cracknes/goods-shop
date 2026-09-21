@@ -19,6 +19,7 @@
       <button data-tab="logins">로그인이력</button>
       <button data-tab="productstats">상품통계</button>
       <button data-tab="addproduct">상품관리</button>
+      <button data-tab="menus">메뉴관리</button>
     </div>
     <div class="shop-content">
       <div class="card">
@@ -94,6 +95,18 @@
           <p id="new-product-status" class="muted"></p>
         </div>
       </div>
+
+      <div class="card" id="menus-panel" hidden>
+        <h2 style="margin-top:0;">메뉴 관리</h2>
+        <p class="muted">꺼두면 메인 화면 좌측 메뉴에서 바로 숨겨집니다.</p>
+        <div id="menus-list"></div>
+
+        <h3 style="margin-top:24px;">새 상품 카테고리 추가</h3>
+        <p class="muted" style="margin-top:-8px;">한글놀이/숫자놀이/오늘의뉴스 같은 기능 메뉴는 코드로 직접 만들어야 해서, 여기서는 상품 카테고리만 추가할 수 있어요.</p>
+        <input id="new-menu-name" type="text" placeholder="카테고리 이름 (예: 가전제품)">
+        <button class="primary" id="new-menu-submit" style="width:100%;">카테고리 추가</button>
+        <p id="new-menu-status" class="muted"></p>
+      </div>
     </div>
   </div>
 </div>
@@ -113,6 +126,7 @@
     document.getElementById("logins-panel").hidden = tab !== "logins";
     document.getElementById("productstats-panel").hidden = tab !== "productstats";
     document.getElementById("addproduct-panel").hidden = tab !== "addproduct";
+    document.getElementById("menus-panel").hidden = tab !== "menus";
   }
 
   async function loadOrders() {
@@ -269,7 +283,12 @@
     `).join("");
   }
 
-  const CATEGORY_LABELS = { cosmetics: "화장품", menswear: "남성 의류", womenswear: "여성 의류" };
+  let allMenus = []; // menus 테이블 전체 (상품 카테고리 + 기능 메뉴)
+  function categoryLabel(id) {
+    const m = allMenus.find(x => x.id === id);
+    return m ? m.name : id;
+  }
+
   let allProducts = [];
   let editingProductId = null;
   let currentEditingProduct = null; // 수정 중인 상품의 원본 스냅샷 (X로 지운 사진 계산용)
@@ -303,7 +322,7 @@
           <div class="list-thumb" style="background:${p.image_url ? `url('${p.image_url}') center/cover` : p.gradient};"></div>
           <div>
             <div>${escapeHtml(p.name)}</div>
-            <div class="inquiry-meta">${escapeHtml(CATEGORY_LABELS[p.category_id] || p.category_id)} · ${p.price.toLocaleString()}원</div>
+            <div class="inquiry-meta">${escapeHtml(categoryLabel(p.category_id))} · ${p.price.toLocaleString()}원</div>
           </div>
         </div>
       </div>
@@ -471,6 +490,101 @@
     }
   });
 
+  function populateCategorySelect() {
+    const select = document.getElementById("new-product-category");
+    const categories = allMenus.filter(m => m.type === "category");
+    const currentValue = select.value;
+    select.innerHTML = categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+    if (categories.some(c => c.id === currentValue)) select.value = currentValue;
+  }
+
+  function renderMenusList() {
+    document.getElementById("menus-list").innerHTML = allMenus.map(m => `
+      <div class="inquiry-row" data-id="${m.id}">
+        <div>${escapeHtml(m.name)}</div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input type="checkbox" class="menu-visible-toggle" data-id="${m.id}" style="width:18px; height:18px;" ${m.visible ? "checked" : ""}>
+            <span class="muted">노출</span>
+          </label>
+          ${m.type === "category" ? `<button type="button" class="danger-btn menu-delete-btn" data-id="${m.id}" style="width:auto; padding:6px 14px; font-size:13px;">삭제</button>` : ""}
+        </div>
+      </div>
+    `).join("");
+
+    document.querySelectorAll(".menu-visible-toggle").forEach(cb => {
+      cb.addEventListener("change", async () => {
+        const { error } = await supabaseClient.from("menus").update({ visible: cb.checked }).eq("id", cb.dataset.id);
+        if (error) {
+          alert("변경 실패: " + error.message);
+          cb.checked = !cb.checked;
+          return;
+        }
+        const menu = allMenus.find(m => m.id === cb.dataset.id);
+        if (menu) menu.visible = cb.checked;
+      });
+    });
+
+    document.querySelectorAll(".menu-delete-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.id;
+        const { count, error: countError } = await supabaseClient
+          .from("products")
+          .select("id", { count: "exact", head: true })
+          .eq("category_id", id);
+        if (countError) {
+          alert("확인 실패: " + countError.message);
+          return;
+        }
+        if (count > 0) {
+          alert(`이 카테고리에 상품이 ${count}개 있어서 삭제할 수 없어요. 먼저 상품을 다른 카테고리로 옮기거나 삭제해 주세요.`);
+          return;
+        }
+        if (!confirm("정말 삭제하시겠어요?")) return;
+
+        const { error } = await supabaseClient.from("menus").delete().eq("id", id);
+        if (error) {
+          alert("삭제 실패: " + error.message);
+          return;
+        }
+        await loadMenusAdmin();
+      });
+    });
+  }
+
+  async function loadMenusAdmin() {
+    const { data, error } = await supabaseClient.from("menus").select("*").order("sort_order");
+    allMenus = error ? [] : data;
+    renderMenusList();
+    populateCategorySelect();
+  }
+
+  document.getElementById("new-menu-submit").addEventListener("click", async () => {
+    const statusEl = document.getElementById("new-menu-status");
+    const name = document.getElementById("new-menu-name").value.trim();
+    if (!name) {
+      statusEl.textContent = "카테고리 이름을 입력해 주세요.";
+      return;
+    }
+
+    const maxOrder = allMenus.reduce((max, m) => Math.max(max, m.sort_order), 0);
+    const { error } = await supabaseClient.from("menus").insert({
+      id: crypto.randomUUID(),
+      name,
+      type: "category",
+      visible: true,
+      sort_order: maxOrder + 1,
+    });
+    if (error) {
+      statusEl.textContent = "추가 실패: " + error.message;
+      return;
+    }
+
+    document.getElementById("new-menu-name").value = "";
+    statusEl.textContent = "카테고리가 추가되었습니다.";
+    await loadMenusAdmin();
+  });
+
   async function loadAdmin() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
@@ -489,6 +603,7 @@
       btn.addEventListener("click", () => switchTab(btn.dataset.tab));
     });
 
+    await loadMenusAdmin();
     await loadOrders();
     await loadInquiries();
     await loadLoginHistory();

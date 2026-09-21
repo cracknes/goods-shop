@@ -57,13 +57,10 @@
 <script>
   const TOSS_CLIENT_KEY = "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq"; // 토스 공용 샘플 테스트 클라이언트키
 
-  // 상품 데이터는 전부 Supabase의 products 테이블에서 불러옴 (관리자페이지 "상품추가" 탭에서 추가/수정/삭제).
-  // CATEGORIES는 카테고리 틀만 갖고 있고, loadDbProducts()가 각 카테고리의 products 배열을 채움.
-  const CATEGORIES = [
-    { id: "cosmetics", name: "화장품", products: [] },
-    { id: "menswear", name: "남성 의류", products: [] },
-    { id: "womenswear", name: "여성 의류", products: [] },
-  ];
+  // 상품 카테고리 목록은 Supabase의 menus 테이블(type='category')에서 불러옴 — 관리자페이지
+  // "메뉴관리" 탭에서 자유롭게 추가/삭제/노출설정 가능. loadMenus()가 채워줌.
+  // 상품 데이터 자체는 products 테이블에서 불러옴 (관리자페이지 "상품관리" 탭에서 추가/수정/삭제).
+  let CATEGORIES = [];
 
   // 이모지는 기기/폰트마다 렌더링 크기가 달라서 SVG 아이콘 하나로 통일 (모든 기기에서 100% 동일한 크기)
   const PRODUCT_ICON = `
@@ -83,16 +80,26 @@
     </svg>
   `;
 
-  let activeCategory = CATEGORIES[0].id;
+  let activeCategory = null;
+
+  // 좌측 메뉴 전체(상품 카테고리 + 한글놀이/숫자놀이/오늘의뉴스)를 menus 테이블에서 불러옴.
+  // 관리자페이지 "메뉴관리" 탭에서 노출 여부를 켜고 끄거나, 상품 카테고리는 추가/삭제도 할 수 있음.
+  let allMenuItems = [];
+
+  async function loadMenus() {
+    const { data, error } = await supabaseClient.from("menus").select("*").order("sort_order");
+    if (error || !data) return;
+    allMenuItems = data;
+    CATEGORIES = data.filter(m => m.type === "category").map(m => ({ id: m.id, name: m.name, products: [] }));
+  }
 
   function renderCategoryList() {
     const list = document.getElementById("category-list");
-    list.innerHTML = CATEGORIES.map(c => `
-      <button data-cat="${c.id}" class="${c.id === activeCategory ? "active" : ""}">${c.name}</button>
-    `).join("")
-      + `<button data-cat="game" class="${activeCategory === "game" ? "active" : ""}">한글놀이</button>`
-      + `<button data-cat="numbergame" class="${activeCategory === "numbergame" ? "active" : ""}">숫자놀이</button>`
-      + `<button data-cat="news" class="${activeCategory === "news" ? "active" : ""}">오늘의뉴스</button>`;
+    const items = allMenuItems.filter(m => m.visible);
+
+    list.innerHTML = items.map(item => `
+      <button data-cat="${item.id}" class="${item.id === activeCategory ? "active" : ""}">${escapeHtml(item.name)}</button>
+    `).join("");
 
     list.querySelectorAll("button[data-cat]").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -104,6 +111,11 @@
   }
 
   function renderMainContent() {
+    if (!activeCategory) {
+      document.getElementById("products").style.display = "block";
+      document.getElementById("products").innerHTML = `<div class="card" style="width:100%;"><p class="muted">표시할 메뉴가 없습니다.</p></div>`;
+      return;
+    }
     if (activeCategory === "game") {
       renderHangulGame();
       return;
@@ -452,8 +464,14 @@
     });
   }
 
-  renderCategoryList();
-  loadDbProducts().then(renderMainContent);
+  // CATEGORIES가 menus 테이블에서 채워져야 상품을 카테고리별로 연결할 수 있어서, 메뉴부터 불러온 뒤 상품을 불러옴
+  loadMenus().then(() => {
+    activeCategory = (allMenuItems.find(m => m.visible) || {}).id || null;
+    renderCategoryList();
+    return loadDbProducts();
+  }).then(() => {
+    renderMainContent();
+  });
 </script>
 </body>
 </html>
