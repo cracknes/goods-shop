@@ -50,9 +50,9 @@
 
     document.getElementById("orders-body").innerHTML = orders.map(o => `
       <tr>
-        <td data-label="상품">${o.product_name}</td>
+        <td data-label="상품">${escapeHtml(o.product_name)}</td>
         <td data-label="금액">${o.amount.toLocaleString()}원</td>
-        <td data-label="상태" class="status-paid">${o.status}</td>
+        <td data-label="상태" class="status-paid">${escapeHtml(o.status)}</td>
         <td data-label="결제일시">${new Date(o.created_at).toLocaleString()}</td>
       </tr>
     `).join("");

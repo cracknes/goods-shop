@@ -108,12 +108,12 @@
     const item = myInquiries.find(i => i.id === id);
     document.getElementById("inquiry-detail").innerHTML = `
       <div class="inquiry-meta">${new Date(item.created_at).toLocaleString()}</div>
-      <input id="edit-subject" type="text" value="${item.subject}">
-      <textarea id="edit-message" rows="6">${item.message}</textarea>
+      <input id="edit-subject" type="text" value="${escapeHtml(item.subject)}">
+      <textarea id="edit-message" rows="6">${escapeHtml(item.message)}</textarea>
       <button class="primary" id="edit-save-btn">수정 저장</button>
       <p id="edit-status" class="muted"></p>
       ${item.reply
-        ? `<div class="inquiry-reply-done"><strong>답변</strong> (${new Date(item.replied_at).toLocaleString()})<br>${item.reply}</div>`
+        ? `<div class="inquiry-reply-done"><strong>답변</strong> (${new Date(item.replied_at).toLocaleString()})<br>${escapeHtml(item.reply)}</div>`
         : `<p class="muted">아직 답변이 등록되지 않았습니다.</p>`}
     `;
 
@@ -177,7 +177,7 @@
     document.getElementById("inquiries-list").innerHTML = myInquiries.map(i => `
       <div class="inquiry-row" data-id="${i.id}">
         <div>
-          <div>${i.subject}</div>
+          <div>${escapeHtml(i.subject)}</div>
           <div class="inquiry-meta">${new Date(i.created_at).toLocaleString()}</div>
         </div>
         <span class="${i.reply ? "status-paid" : "muted"}">${i.reply ? "답변완료" : "답변대기"}</span>

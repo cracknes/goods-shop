@@ -129,8 +129,8 @@
 
     document.getElementById("orders-body").innerHTML = orders.map(o => `
       <tr>
-        <td data-label="사용자">${o.user_email ?? o.user_id}</td>
-        <td data-label="상품">${o.product_name}</td>
+        <td data-label="사용자">${escapeHtml(o.user_email ?? o.user_id)}</td>
+        <td data-label="상품">${escapeHtml(o.product_name)}</td>
         <td data-label="금액">${o.amount.toLocaleString()}원</td>
         <td data-label="상태" class="status-paid">${o.status}</td>
         <td data-label="결제일시">${new Date(o.created_at).toLocaleString()}</td>
@@ -148,10 +148,10 @@
   function showInquiryDetail(id) {
     const item = allInquiries.find(i => i.id === id);
     document.getElementById("inquiry-detail-content").innerHTML = `
-      <div class="inquiry-meta">${item.email} · ${item.subject} · ${new Date(item.created_at).toLocaleString()}</div>
-      <div class="inquiry-message">${item.message}</div>
-      ${item.reply ? `<div class="inquiry-reply-done"><strong>답변</strong> (${new Date(item.replied_at).toLocaleString()})<br>${item.reply}</div>` : ""}
-      <textarea id="reply-input" rows="3" placeholder="답변 내용">${item.reply ?? ""}</textarea>
+      <div class="inquiry-meta">${escapeHtml(item.email)} · ${escapeHtml(item.subject)} · ${new Date(item.created_at).toLocaleString()}</div>
+      <div class="inquiry-message">${escapeHtml(item.message)}</div>
+      ${item.reply ? `<div class="inquiry-reply-done"><strong>답변</strong> (${new Date(item.replied_at).toLocaleString()})<br>${escapeHtml(item.reply)}</div>` : ""}
+      <textarea id="reply-input" rows="3" placeholder="답변 내용">${escapeHtml(item.reply ?? "")}</textarea>
       <button class="primary" id="reply-submit">${item.reply ? "답변 수정" : "답변 등록"}</button>
       <p id="reply-status" class="muted"></p>
     `;
@@ -190,7 +190,7 @@
     document.getElementById("inquiries-list").innerHTML = allInquiries.map(i => `
       <div class="inquiry-row" data-id="${i.id}">
         <div>
-          <div>${i.email} · ${i.subject}</div>
+          <div>${escapeHtml(i.email)} · ${escapeHtml(i.subject)}</div>
           <div class="inquiry-meta">${new Date(i.created_at).toLocaleString()}</div>
         </div>
         <span class="${i.reply ? "status-paid" : "muted"}">${i.reply ? "답변완료" : "답변대기"}</span>
@@ -234,7 +234,7 @@
 
     document.getElementById("logins-body").innerHTML = logins.map(l => `
       <tr>
-        <td data-label="사용자">${l.email}</td>
+        <td data-label="사용자">${escapeHtml(l.email)}</td>
         <td data-label="로그인 시간">${new Date(l.logged_in_at).toLocaleString()}</td>
       </tr>
     `).join("");
@@ -261,7 +261,7 @@
     const rows = Object.entries(byProduct).sort((a, b) => b[1].count - a[1].count);
     document.getElementById("productstats-body").innerHTML = rows.map(([name, stat]) => `
       <tr>
-        <td data-label="상품">${name}</td>
+        <td data-label="상품">${escapeHtml(name)}</td>
         <td data-label="조회 수">${stat.count}회</td>
         <td data-label="평균 조회시간">${Math.round(stat.total / stat.count)}초</td>
         <td data-label="총 조회시간">${stat.total}초</td>
@@ -302,8 +302,8 @@
         <div style="display:flex; align-items:center; gap:12px;">
           <div class="list-thumb" style="background:${p.image_url ? `url('${p.image_url}') center/cover` : p.gradient};"></div>
           <div>
-            <div>${p.name}</div>
-            <div class="inquiry-meta">${CATEGORY_LABELS[p.category_id] || p.category_id} · ${p.price.toLocaleString()}원</div>
+            <div>${escapeHtml(p.name)}</div>
+            <div class="inquiry-meta">${escapeHtml(CATEGORY_LABELS[p.category_id] || p.category_id)} · ${p.price.toLocaleString()}원</div>
           </div>
         </div>
       </div>

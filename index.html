@@ -251,7 +251,7 @@
       <div class="product-card" data-id="${p.id}">
         <div class="thumb" style="${p.imageUrl ? "" : `background:${p.gradient}`}">${p.imageUrl ? `<img src="${p.imageUrl}" style="width:100%;height:100%;object-fit:cover;">` : PRODUCT_ICON}</div>
         <div class="body">
-          <div class="name">${p.name}</div>
+          <div class="name">${escapeHtml(p.name)}</div>
           <div class="price">${p.price.toLocaleString()}원</div>
           <button class="primary" data-id="${p.id}">구매하기</button>
         </div>
@@ -324,7 +324,7 @@
           ${galleryImages.map((_, i) => `<span class="dot"></span>`).join("")}
         </div>
       </div>
-      <div class="name">${product.name}</div>
+      <div class="name">${escapeHtml(product.name)}</div>
       <div class="price">${product.price.toLocaleString()}원</div>
       <button class="primary" id="modal-buy-btn" style="width:100%">구매하기</button>
     `;
