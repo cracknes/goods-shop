@@ -488,8 +488,22 @@
     renderMainContent();
   });
 
-  // 알림 받기(동의) 버튼: 이 브라우저가 푸시를 지원할 때만 보여줌
-  if (typeof isPushSupported === "function" && isPushSupported()) {
+  // 알림 받기(동의) 버튼: 한 번 눌러서 결정하고 나면(허용/거부 상관없이) 다시 안 보이게 함
+  // ("홈 화면에 추가" 배너와 동일한 1회성 노출 패턴)
+  (async function setupPushSubscribeCard() {
+    if (typeof isPushSupported !== "function" || !isPushSupported()) return;
+
+    const DISMISSED_KEY = "pushSubscribeCardDismissed";
+    let dismissed = false;
+    try {
+      dismissed = localStorage.getItem(DISMISSED_KEY) === "1";
+    } catch (_) { /* 프라이빗 모드 등에서 localStorage가 막혀있으면 그냥 매번 안 띄움 */ }
+    if (dismissed) return;
+
+    const reg = await navigator.serviceWorker.ready;
+    const existingSub = await reg.pushManager.getSubscription();
+    if (existingSub) return; // 이미 구독한 브라우저면 보여줄 필요 없음
+
     document.getElementById("push-subscribe-card").hidden = false;
     document.getElementById("push-subscribe-btn").addEventListener("click", async () => {
       const statusEl = document.getElementById("push-subscribe-status");
@@ -499,8 +513,10 @@
       } catch (err) {
         statusEl.textContent = "설정 실패: " + err.message;
       }
+      try { localStorage.setItem(DISMISSED_KEY, "1"); } catch (_) {}
+      setTimeout(() => { document.getElementById("push-subscribe-card").hidden = true; }, 1500);
     });
-  }
+  })();
 </script>
 </body>
 </html>
