@@ -120,10 +120,12 @@
   }
 
   // 오늘의뉴스: 신문사별 지면보기 + 한국거래소 시세정보 + DART 전자공시 바로가기
+  // 네이버 지면보기 3곳은 새 창으로 열면 일부 모바일 브라우저/앱에서 데스크탑 모드로 열리는 경우가 있어
+  // 같은 탭에서 이동하도록(sameTab) 함 — 새 탭으로 열 때보다 모바일 화면으로 뜰 확률이 높음.
   const NEWSPAPERS = [
-    { name: "한국경제", url: "https://media.naver.com/press/015/newspaper", gradient: "linear-gradient(135deg, #cfe0ff, #9db8f5)" },
-    { name: "매일경제", url: "https://media.naver.com/press/009/newspaper", gradient: "linear-gradient(135deg, #ffe3c2, #ffbf7a)" },
-    { name: "코리아중앙데일리", url: "https://media.naver.com/press/640/newspaper", gradient: "linear-gradient(135deg, #d7f0e6, #a3ddc4)" },
+    { name: "한국경제", url: "https://media.naver.com/press/015/newspaper", gradient: "linear-gradient(135deg, #cfe0ff, #9db8f5)", sameTab: true },
+    { name: "매일경제", url: "https://media.naver.com/press/009/newspaper", gradient: "linear-gradient(135deg, #ffe3c2, #ffbf7a)", sameTab: true },
+    { name: "코리아중앙데일리", url: "https://media.naver.com/press/640/newspaper", gradient: "linear-gradient(135deg, #d7f0e6, #a3ddc4)", sameTab: true },
     { name: "한국거래소(KRX) 시세정보", url: "https://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201020303", gradient: "linear-gradient(135deg, #e6e9f0, #c3cbe0)" },
     { name: "DART 전자공시", url: "https://dart.fss.or.kr/dsab007/main.do", gradient: "linear-gradient(135deg, #ffe0ec, #ffb3cf)" },
   ];
@@ -132,7 +134,7 @@
     const container = document.getElementById("products");
     container.style.display = ""; // 상품 그리드와 동일한 카드 그리드 레이아웃 사용
     container.innerHTML = NEWSPAPERS.map(n => `
-      <a class="product-card" href="${n.url}" target="_blank" rel="noopener" style="text-decoration:none; color:inherit;">
+      <a class="product-card" href="${n.url}" ${n.sameTab ? "" : `target="_blank" rel="noopener"`} style="text-decoration:none; color:inherit;">
         <div class="thumb" style="background:${n.gradient}">${NEWS_ICON}</div>
         <div class="body">
           <div class="name">${escapeHtml(n.name)}</div>
