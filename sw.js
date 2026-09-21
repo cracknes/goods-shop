@@ -2,7 +2,7 @@
 // Supabase(인증/DB/Edge Function), 토스페이먼츠, 뉴스/공시 외부 사이트는 절대 건드리지 않음 —
 // 이 캐시 로직은 이 사이트(같은 출처)의 GET 요청에만 적용됨.
 
-const CACHE_NAME = "goods-shop-cache-v2";
+const CACHE_NAME = "goods-shop-cache-v3";
 
 // 자주 보는 페이지 + 공용 자산은 설치 시점에 미리 캐시해둠 (오프라인에서도 바로 열리도록)
 const PRECACHE_URLS = [
@@ -52,19 +52,31 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // stale-while-revalidate: 캐시가 있으면 그걸 즉시 보여줘서 페이지 이동이 빠르게 느껴지게 하고,
+  // 최신 내용은 뒤에서 조용히 받아와 다음 방문을 위해 캐시를 갱신함 (network-first보다 체감 속도가 빠름).
   event.respondWith(
-    fetch(req)
-      .then((res) => {
-        const resClone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone)).catch(() => {});
-        return res;
-      })
-      .catch(async () => {
-        const cached = await caches.match(req);
-        if (cached) return cached;
-        if (req.mode === "navigate") return caches.match("offline.html");
-        return Response.error();
-      })
+    (async () => {
+      const cached = await caches.match(req);
+
+      const networkUpdate = fetch(req)
+        .then((res) => {
+          const resClone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone)).catch(() => {});
+          return res;
+        })
+        .catch(() => null);
+
+      // 캐시를 먼저 반환한 뒤에도 백그라운드 갱신이 끝까지 실행되도록 서비스워커 수명을 연장함
+      // (안 그러면 응답을 보내자마자 브라우저가 서비스워커를 꺼버려서 갱신이 중간에 끊길 수 있음)
+      event.waitUntil(networkUpdate);
+
+      if (cached) return cached;
+
+      const networkRes = await networkUpdate;
+      if (networkRes) return networkRes;
+      if (req.mode === "navigate") return caches.match("offline.html");
+      return Response.error();
+    })()
   );
 });
 
