@@ -101,6 +101,7 @@ async function subscribeToPush() {
     const subJson = sub.toJSON();
     await supabaseClient.from("push_subscriptions").insert({
       user_id: user ? user.id : null,
+      email: user ? user.email : null,
       endpoint: subJson.endpoint,
       p256dh: subJson.keys.p256dh,
       auth: subJson.keys.auth,
@@ -108,15 +109,4 @@ async function subscribeToPush() {
   } catch (_) { /* 구독 저장이 실패해도 지금 이 브라우저로 테스트 알림 받는 데는 지장 없음 */ }
 
   return sub;
-}
-
-// 동의를 구하고(아직 안 했다면) 방금 구독한 이 브라우저로 테스트 알림을 하나 보냄
-async function sendTestPush() {
-  const sub = await subscribeToPush();
-  if (!sub) throw new Error("알림 권한이 거부되었습니다.");
-
-  const { error } = await supabaseClient.functions.invoke("send-push", {
-    body: { subscription: sub.toJSON(), title: "지후네 하우스", body: "테스트 알림이에요! 🎉" },
-  });
-  if (error) throw error;
 }

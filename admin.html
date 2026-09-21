@@ -25,6 +25,7 @@
       <button data-tab="productstats">상품통계</button>
       <button data-tab="addproduct">상품관리</button>
       <button data-tab="menus">메뉴관리</button>
+      <button data-tab="push">PUSH관리</button>
     </div>
     <div class="shop-content">
       <div class="card">
@@ -112,6 +113,34 @@
         <button class="primary" id="new-menu-submit" style="width:100%;">카테고리 추가</button>
         <p id="new-menu-status" class="muted"></p>
       </div>
+
+      <div class="card" id="push-panel" hidden>
+        <div class="tab-bar">
+          <button type="button" data-pushtab="send" class="active">발송</button>
+          <button type="button" data-pushtab="history">발송 이력</button>
+        </div>
+
+        <div id="push-send-view">
+          <p class="muted">알림을 한 번이라도 구독한 사용자에게만 보낼 수 있어요.</p>
+          <select id="push-target-select"></select>
+          <p id="push-no-target" class="muted" hidden>아직 알림을 구독한 사용자가 없습니다.</p>
+          <input id="push-title" type="text" placeholder="알림 제목">
+          <textarea id="push-body" rows="4" placeholder="알림 내용"></textarea>
+          <button class="primary" id="push-send-btn" style="width:100%;">발송</button>
+          <p id="push-send-status" class="muted"></p>
+        </div>
+
+        <div id="push-history-view" hidden>
+          <div id="push-history-list-view">
+            <div id="push-history-list"></div>
+            <p id="push-history-empty" class="muted" hidden>발송 이력이 없습니다.</p>
+          </div>
+          <div id="push-history-detail-view" hidden>
+            <button type="button" id="push-history-back-btn" class="muted" style="background:none; border:none; cursor:pointer; padding:0; margin-bottom:12px;">&larr; 목록으로</button>
+            <div id="push-history-detail-content"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -133,6 +162,7 @@
     document.getElementById("productstats-panel").hidden = tab !== "productstats";
     document.getElementById("addproduct-panel").hidden = tab !== "addproduct";
     document.getElementById("menus-panel").hidden = tab !== "menus";
+    document.getElementById("push-panel").hidden = tab !== "push";
   }
 
   async function loadOrders() {
@@ -591,6 +621,120 @@
     await loadMenusAdmin();
   });
 
+  document.querySelectorAll("#push-panel [data-pushtab]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#push-panel [data-pushtab]").forEach(b => b.classList.toggle("active", b === btn));
+      document.getElementById("push-send-view").hidden = btn.dataset.pushtab !== "send";
+      document.getElementById("push-history-view").hidden = btn.dataset.pushtab !== "history";
+    });
+  });
+
+  async function loadPushTargets() {
+    const { data, error } = await supabaseClient
+      .from("push_subscriptions")
+      .select("user_id, email")
+      .not("user_id", "is", null);
+
+    const select = document.getElementById("push-target-select");
+    if (error || !data || !data.length) {
+      select.innerHTML = "";
+      document.getElementById("push-no-target").hidden = false;
+      return;
+    }
+
+    const uniqueTargets = new Map();
+    data.forEach(row => uniqueTargets.set(row.user_id, row.email));
+
+    document.getElementById("push-no-target").hidden = true;
+    select.innerHTML = [...uniqueTargets.entries()]
+      .map(([userId, email]) => `<option value="${userId}">${escapeHtml(email || userId)}</option>`)
+      .join("");
+  }
+
+  document.getElementById("push-send-btn").addEventListener("click", async () => {
+    const statusEl = document.getElementById("push-send-status");
+    const select = document.getElementById("push-target-select");
+    const targetUserId = select.value;
+    const targetEmail = select.selectedOptions[0]?.textContent;
+    const title = document.getElementById("push-title").value.trim();
+    const body = document.getElementById("push-body").value.trim();
+
+    if (!targetUserId || !title || !body) {
+      statusEl.textContent = "받는 사람, 제목, 내용을 모두 입력해 주세요.";
+      return;
+    }
+
+    statusEl.textContent = "발송 중...";
+    const { data, error } = await supabaseClient.functions.invoke("admin-send-push", {
+      body: { targetUserId, targetEmail, title, body },
+    });
+
+    if (error) {
+      statusEl.textContent = "발송 실패: " + error.message;
+      return;
+    }
+
+    statusEl.textContent = `발송 완료 (구독 ${data.subscriptionCount}건 중 성공 ${data.successCount}건, 실패 ${data.failureCount}건)`;
+    document.getElementById("push-title").value = "";
+    document.getElementById("push-body").value = "";
+    await loadPushHistory();
+  });
+
+  let allPushLogs = [];
+
+  function showPushHistoryList() {
+    document.getElementById("push-history-list-view").hidden = false;
+    document.getElementById("push-history-detail-view").hidden = true;
+  }
+
+  function showPushHistoryDetail(id) {
+    const log = allPushLogs.find(l => l.id === id);
+    document.getElementById("push-history-detail-content").innerHTML = `
+      <div class="inquiry-meta">받는 사람: ${escapeHtml(log.target_email || log.target_user_id)} · ${new Date(log.created_at).toLocaleString()}</div>
+      <div class="inquiry-meta">구독 ${log.subscription_count}건 중 성공 ${log.success_count}건 / 실패 ${log.failure_count}건</div>
+      <h3 style="margin-bottom:4px;">${escapeHtml(log.title)}</h3>
+      <div class="inquiry-message">${escapeHtml(log.body)}</div>
+    `;
+    document.getElementById("push-history-list-view").hidden = true;
+    document.getElementById("push-history-detail-view").hidden = false;
+  }
+
+  document.getElementById("push-history-back-btn").addEventListener("click", showPushHistoryList);
+
+  function renderPushHistoryList() {
+    document.getElementById("push-history-list").innerHTML = allPushLogs.map(l => `
+      <div class="inquiry-row" data-id="${l.id}">
+        <div>
+          <div>${escapeHtml(l.target_email || l.target_user_id)} · ${escapeHtml(l.title)}</div>
+          <div class="inquiry-meta">${new Date(l.created_at).toLocaleString()}</div>
+        </div>
+        <span class="${l.failure_count > 0 ? "muted" : "status-paid"}">성공 ${l.success_count}/${l.subscription_count}</span>
+      </div>
+    `).join("");
+
+    document.querySelectorAll("#push-history-list .inquiry-row").forEach(row => {
+      row.addEventListener("click", () => showPushHistoryDetail(row.dataset.id));
+    });
+  }
+
+  async function loadPushHistory() {
+    const { data, error } = await supabaseClient
+      .from("push_logs")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error || !data || !data.length) {
+      document.getElementById("push-history-empty").hidden = false;
+      allPushLogs = [];
+      document.getElementById("push-history-list").innerHTML = "";
+      return;
+    }
+
+    document.getElementById("push-history-empty").hidden = true;
+    allPushLogs = data;
+    renderPushHistoryList();
+  }
+
   async function loadAdmin() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
@@ -615,6 +759,8 @@
     await loadLoginHistory();
     await loadProductStats();
     await loadProductsList();
+    await loadPushTargets();
+    await loadPushHistory();
   }
 
   loadAdmin();

@@ -20,11 +20,11 @@
   </div>
   <p class="muted">토스페이먼츠 테스트 모드로 결제됩니다. 실제로 돈이 나가지 않으니, 결제창에는 아무 번호가 아니라 실제 본인 카드 정보를 입력해 주세요.</p>
 
-  <div class="card" id="push-test-card" hidden>
-    <h2 style="margin-top:0;">알림 받기 (테스트) 🔔</h2>
-    <p class="muted">브라우저 알림을 허용하면 테스트 알림을 하나 보내드려요.</p>
-    <button class="primary" id="push-test-btn" style="width:100%;">테스트 알림 받기</button>
-    <p id="push-test-status" class="muted"></p>
+  <div class="card" id="push-subscribe-card" hidden>
+    <h2 style="margin-top:0;">알림 받기 🔔</h2>
+    <p class="muted">새로운 소식을 알림으로 받아보세요.</p>
+    <button class="primary" id="push-subscribe-btn" style="width:100%;">알림 받기</button>
+    <p id="push-subscribe-status" class="muted"></p>
   </div>
 
   <div class="shop-layout">
@@ -487,17 +487,16 @@
     renderMainContent();
   });
 
-  // 알림 테스트 카드: 이 브라우저가 푸시를 지원할 때만 보여줌
+  // 알림 받기(동의) 버튼: 이 브라우저가 푸시를 지원할 때만 보여줌
   if (typeof isPushSupported === "function" && isPushSupported()) {
-    document.getElementById("push-test-card").hidden = false;
-    document.getElementById("push-test-btn").addEventListener("click", async () => {
-      const statusEl = document.getElementById("push-test-status");
-      statusEl.textContent = "전송 중...";
+    document.getElementById("push-subscribe-card").hidden = false;
+    document.getElementById("push-subscribe-btn").addEventListener("click", async () => {
+      const statusEl = document.getElementById("push-subscribe-status");
       try {
-        await sendTestPush();
-        statusEl.textContent = "테스트 알림을 보냈어요! 잠시 후 알림을 확인해보세요.";
+        const sub = await subscribeToPush();
+        statusEl.textContent = sub ? "알림을 받도록 설정했어요!" : "알림 권한이 거부되었습니다.";
       } catch (err) {
-        statusEl.textContent = "전송 실패: " + err.message;
+        statusEl.textContent = "설정 실패: " + err.message;
       }
     });
   }
