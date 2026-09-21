@@ -119,11 +119,12 @@
     renderProducts();
   }
 
-  // 오늘의뉴스: 신문사별 지면보기 페이지로 바로가기 (네이버 뉴스)
+  // 오늘의뉴스: 신문사별 지면보기 + 한국거래소 시세정보 바로가기
   const NEWSPAPERS = [
     { name: "한국경제", url: "https://media.naver.com/press/015/newspaper", gradient: "linear-gradient(135deg, #cfe0ff, #9db8f5)" },
     { name: "매일경제", url: "https://media.naver.com/press/009/newspaper", gradient: "linear-gradient(135deg, #ffe3c2, #ffbf7a)" },
     { name: "코리아중앙데일리", url: "https://media.naver.com/press/640/newspaper", gradient: "linear-gradient(135deg, #d7f0e6, #a3ddc4)" },
+    { name: "한국거래소(KRX) 시세정보", url: "https://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201020303", gradient: "linear-gradient(135deg, #e6e9f0, #c3cbe0)" },
   ];
 
   function renderNewsMenu() {
