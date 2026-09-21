@@ -16,6 +16,8 @@ body {
   background: var(--bg-soft);
   line-height: 1.6;
   overflow-x: hidden;
+  /* PWA 풀스크린 실행 시 노치/상태바 영역을 피해서 내용이 그려지도록 함 (노치 없는 기기는 0이라 영향 없음) */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 .wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
 .wrap-wide { max-width: 1080px; }
@@ -155,7 +157,7 @@ h1 { font-size: 22px; font-weight: 800; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   z-index: 100;
 }
 .modal-overlay[hidden] { display: none; }
@@ -420,6 +422,47 @@ textarea { resize: vertical; }
   cursor: pointer;
 }
 .danger-btn:hover { background: var(--danger); color: #fff; }
+
+/* PWA "홈 화면에 추가" 안내 배너 (pwa.js가 필요할 때만 만들어서 붙임) */
+.pwa-install-banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  background: var(--text);
+  color: #fff;
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 200;
+}
+.pwa-install-banner-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.pwa-install-banner-actions button {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+#pwa-install-btn {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+#pwa-install-close {
+  background: none;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px;
+  opacity: 0.8;
+}
 
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
