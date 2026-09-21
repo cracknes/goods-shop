@@ -67,3 +67,56 @@ if ("serviceWorker" in navigator) {
     });
   });
 })();
+
+// 푸시 알림 구독 + "테스트 알림 보내기" (index.html의 버튼이 이 함수들을 호출함)
+const VAPID_PUBLIC_KEY = "BNn9V-Oxd06jBmWIgf4sUpFAPMTCkbYHsVrf4oSY9JVzCveH9I00ORyeXOajtqcCOioRPQcUqEYXpSXBJKElGIk";
+
+function isPushSupported() {
+  return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
+// 알림을 아직 허용 안 했으면 동의를 구하고 구독까지 하고, 이미 구독돼 있으면 기존 구독을 그대로 반환
+async function subscribeToPush() {
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (sub) return sub;
+
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") return null;
+
+  sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+  });
+
+  try {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    const subJson = sub.toJSON();
+    await supabaseClient.from("push_subscriptions").insert({
+      user_id: user ? user.id : null,
+      endpoint: subJson.endpoint,
+      p256dh: subJson.keys.p256dh,
+      auth: subJson.keys.auth,
+    });
+  } catch (_) { /* 구독 저장이 실패해도 지금 이 브라우저로 테스트 알림 받는 데는 지장 없음 */ }
+
+  return sub;
+}
+
+// 동의를 구하고(아직 안 했다면) 방금 구독한 이 브라우저로 테스트 알림을 하나 보냄
+async function sendTestPush() {
+  const sub = await subscribeToPush();
+  if (!sub) throw new Error("알림 권한이 거부되었습니다.");
+
+  const { error } = await supabaseClient.functions.invoke("send-push", {
+    body: { subscription: sub.toJSON(), title: "지후네 하우스", body: "테스트 알림이에요! 🎉" },
+  });
+  if (error) throw error;
+}
