@@ -81,7 +81,8 @@
       <button data-cat="${c.id}" class="${c.id === activeCategory ? "active" : ""}">${c.name}</button>
     `).join("")
       + `<button data-cat="game" class="${activeCategory === "game" ? "active" : ""}">한글놀이</button>`
-      + `<button data-cat="numbergame" class="${activeCategory === "numbergame" ? "active" : ""}">숫자놀이</button>`;
+      + `<button data-cat="numbergame" class="${activeCategory === "numbergame" ? "active" : ""}">숫자놀이</button>`
+      + `<button data-cat="news" class="${activeCategory === "news" ? "active" : ""}">오늘의뉴스</button>`;
 
     list.querySelectorAll("button[data-cat]").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -101,7 +102,32 @@
       renderNumberGame();
       return;
     }
+    if (activeCategory === "news") {
+      renderNewsMenu();
+      return;
+    }
     renderProducts();
+  }
+
+  // 오늘의뉴스: 신문사별 지면보기 페이지로 바로가기 (네이버 뉴스)
+  const NEWSPAPERS = [
+    { name: "한국경제", url: "https://media.naver.com/press/009/newspaper" },
+    { name: "매일경제", url: "https://media.naver.com/press/015/newspaper" },
+    { name: "코리아중앙데일리", url: "https://media.naver.com/press/640/newspaper" },
+  ];
+
+  function renderNewsMenu() {
+    const container = document.getElementById("products");
+    container.style.display = "block";
+    container.innerHTML = `
+      <div class="card" style="width:100%;">
+        <h2 style="margin-top:0;">오늘의뉴스 📰</h2>
+        <p class="muted">신문사별 오늘자 지면을 바로 확인해보세요.</p>
+        ${NEWSPAPERS.map(n => `
+          <a class="primary" href="${n.url}" target="_blank" rel="noopener" style="display:block; width:100%; text-align:center; margin-bottom:12px; text-decoration:none;">${escapeHtml(n.name)} 지면보기</a>
+        `).join("")}
+      </div>
+    `;
   }
 
   function showWrongAnswerAlert() {

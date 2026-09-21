@@ -276,7 +276,8 @@ h1 { font-size: 22px; font-weight: 800; }
   100% { transform: scale(1) rotate(0); }
 }
 
-button.primary {
+.primary {
+  display: inline-block;
   background: var(--accent);
   color: #fff;
   border: none;
@@ -285,8 +286,10 @@ button.primary {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
 }
-button.primary:hover { opacity: 0.9; }
+.primary:hover { opacity: 0.9; }
 
 .social-buttons { display: flex; flex-direction: column; gap: 8px; }
 .social-buttons button {
