@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /orders.html
+Disallow: /success.html
+Disallow: /fail.html
+
+User-agent: Yeti
+Allow: /
+Disallow: /admin.html
+Disallow: /orders.html
+Disallow: /success.html
+Disallow: /fail.html
