@@ -186,17 +186,52 @@
     }, 1300);
   }
 
-  // 아이용 한글 놀이: 화면에 뜬 단어를 실제 키보드(한글 IME)로 그대로 입력해서 맞히기
+  // 아이용 한글 놀이: (1) 따라쓰기 - 화면에 뜬 단어를 그대로 입력, (2) 퀴즈 - 6세 아이가 알 만한 간단한 수수께끼
   const HANGUL_WORDS = ["사과", "바나나", "나비", "우유", "고양이", "강아지", "학교", "나무", "하늘", "바다"];
+  const HANGUL_QUIZZES = [
+    { question: "얼굴에 있고, 냄새를 맡는 곳은 어디일까요?", answer: "코", hint: "숨을 쉴 때도 써요" },
+    { question: "밤하늘에서 반짝반짝 빛나는 것은?", answer: "별", hint: "'반짝반짝 작은~' 동요에 나와요" },
+    { question: "음매~ 하고 우는 동물은?", answer: "소", hint: "우유를 줘요" },
+    { question: "빨갛고 동그랗고 아삭아삭한 과일은?", answer: "사과", hint: "백설공주가 먹었던 과일이에요" },
+    { question: "물속에서 헤엄치는 동물은?", answer: "물고기", hint: "지느러미가 있어요" },
+    { question: "겨울에 하늘에서 내리는 하얀 것은?", answer: "눈", hint: "눈사람을 만들 수 있어요" },
+    { question: "동물의 왕이라고 불리는 동물은?", answer: "사자", hint: "목 주변에 갈기가 있어요" },
+    { question: "우리가 밤에 이불을 덮고 자는 가구는?", answer: "침대", hint: "누워서 자는 곳이에요" },
+    { question: "멍멍 짖는 동물은?", answer: "강아지", hint: "우리 집에서 키우는 동물이에요" },
+    { question: "노란색이고 길쭉한 과일은?", answer: "바나나", hint: "원숭이가 좋아해요" },
+  ];
   let gameIndex = 0;
   let gameScore = 0;
+  let hangulMode = "copy"; // "copy" | "quiz"
+  let quizIndex = 0;
+  let quizScore = 0;
 
   function renderHangulGame() {
     const container = document.getElementById("products");
     container.style.display = "block"; // 상품 그리드(여러 칸) 대신 한 칸을 꽉 채우게
+
     const word = HANGUL_WORDS[gameIndex % HANGUL_WORDS.length];
-    container.innerHTML = `
+    const quiz = HANGUL_QUIZZES[quizIndex % HANGUL_QUIZZES.length];
+
+    const tabBar = `
+      <div class="tab-bar" style="margin-bottom:16px;">
+        <button type="button" data-hangulmode="copy" class="${hangulMode === "copy" ? "active" : ""}">따라쓰기</button>
+        <button type="button" data-hangulmode="quiz" class="${hangulMode === "quiz" ? "active" : ""}">퀴즈</button>
+      </div>
+    `;
+
+    container.innerHTML = hangulMode === "quiz" ? `
       <div class="card" style="width:100%;">
+        ${tabBar}
+        <h2 style="margin-top:0;">한글 퀴즈 🧩 <button type="button" id="hangul-hint-btn" class="hint-btn">?</button></h2>
+        <p class="muted" style="text-align:center; font-size:18px; margin:20px 0;">${escapeHtml(quiz.question)}</p>
+        <input id="game-input" type="text" placeholder="정답을 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
+        <button class="primary" id="game-check-btn" style="width:100%;">확인</button>
+        <p class="muted" style="text-align:center;">맞춘 개수: ${quizScore}개</p>
+      </div>
+    ` : `
+      <div class="card" style="width:100%;">
+        ${tabBar}
         <h2 style="margin-top:0;">한글 놀이 🎈</h2>
         <p class="muted">아래 글자를 똑같이 따라 입력해보세요!</p>
         <div style="font-size:40px; font-weight:700; text-align:center; margin:20px 0;">${word}</div>
@@ -206,12 +241,20 @@
       </div>
     `;
 
+    document.querySelectorAll("[data-hangulmode]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        hangulMode = btn.dataset.hangulmode;
+        renderHangulGame();
+      });
+    });
+
     const input = document.getElementById("game-input");
 
     function checkAnswer() {
-      if (input.value.trim() === word) {
-        gameScore++;
-        gameIndex++;
+      const correctAnswer = hangulMode === "quiz" ? quiz.answer : word;
+      if (input.value.trim() === correctAnswer) {
+        if (hangulMode === "quiz") { quizScore++; quizIndex++; }
+        else { gameScore++; gameIndex++; }
         showCelebration(renderHangulGame);
       } else {
         showWrongAnswerAlert();
@@ -221,6 +264,17 @@
     document.getElementById("game-check-btn").addEventListener("click", checkAnswer);
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") checkAnswer(); });
     input.focus();
+
+    const hintBtn = document.getElementById("hangul-hint-btn");
+    if (hintBtn) {
+      hintBtn.addEventListener("click", () => {
+        document.getElementById("solution-content").innerHTML = `
+          <h3 style="margin-top:0;">힌트</h3>
+          <p style="font-size:18px;">${escapeHtml(quiz.hint)}</p>
+        `;
+        document.getElementById("solution-modal").hidden = false;
+      });
+    }
   }
 
   // 아이용 숫자 놀이: 덧셈/뺄셈은 한 자리(1~9)와 두 자리(10~99) 숫자를 섞어서 출제
