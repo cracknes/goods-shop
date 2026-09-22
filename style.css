@@ -422,6 +422,21 @@ textarea { resize: vertical; }
 }
 .danger-btn:hover { background: var(--danger); color: #fff; }
 
+.reorder-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: none;
+  background: var(--bg-soft);
+  color: var(--text-soft);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.reorder-btn:disabled { opacity: 0.3; cursor: default; }
+.reorder-btn:hover:not(:disabled) { background: var(--accent); color: #fff; }
+
 /* PWA "홈 화면에 추가" 안내 배너 (pwa.js가 필요할 때만 만들어서 붙임) */
 .pwa-install-banner {
   position: fixed;

@@ -536,9 +536,15 @@
   }
 
   function renderMenusList() {
-    document.getElementById("menus-list").innerHTML = allMenus.map(m => `
+    document.getElementById("menus-list").innerHTML = allMenus.map((m, i) => `
       <div class="inquiry-row" data-id="${m.id}">
-        <div>${escapeHtml(m.name)}</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <button type="button" class="reorder-btn menu-up-btn" data-id="${m.id}" ${i === 0 ? "disabled" : ""} aria-label="위로">&uarr;</button>
+            <button type="button" class="reorder-btn menu-down-btn" data-id="${m.id}" ${i === allMenus.length - 1 ? "disabled" : ""} aria-label="아래로">&darr;</button>
+          </div>
+          <div>${escapeHtml(m.name)}</div>
+        </div>
         <div style="display:flex; align-items:center; gap:12px;">
           <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
             <input type="checkbox" class="menu-visible-toggle" data-id="${m.id}" style="width:18px; height:18px;" ${m.visible ? "checked" : ""}>
@@ -560,6 +566,13 @@
         const menu = allMenus.find(m => m.id === cb.dataset.id);
         if (menu) menu.visible = cb.checked;
       });
+    });
+
+    document.querySelectorAll(".menu-up-btn").forEach(btn => {
+      btn.addEventListener("click", () => moveMenu(btn.dataset.id, "up"));
+    });
+    document.querySelectorAll(".menu-down-btn").forEach(btn => {
+      btn.addEventListener("click", () => moveMenu(btn.dataset.id, "down"));
     });
 
     document.querySelectorAll(".menu-delete-btn").forEach(btn => {
@@ -587,6 +600,26 @@
         await loadMenusAdmin();
       });
     });
+  }
+
+  async function moveMenu(id, direction) {
+    const index = allMenus.findIndex(m => m.id === id);
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (index === -1 || targetIndex < 0 || targetIndex >= allMenus.length) return;
+
+    const current = allMenus[index];
+    const target = allMenus[targetIndex];
+
+    const [{ error: e1 }, { error: e2 }] = await Promise.all([
+      supabaseClient.from("menus").update({ sort_order: target.sort_order }).eq("id", current.id),
+      supabaseClient.from("menus").update({ sort_order: current.sort_order }).eq("id", target.id),
+    ]);
+
+    if (e1 || e2) {
+      alert("순서 변경 실패: " + (e1 || e2).message);
+      return;
+    }
+    await loadMenusAdmin();
   }
 
   async function loadMenusAdmin() {
