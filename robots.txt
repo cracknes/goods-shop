@@ -11,3 +11,5 @@ Disallow: /admin.html
 Disallow: /orders.html
 Disallow: /success.html
 Disallow: /fail.html
+
+Sitemap: https://cracknes.cloud/sitemap.xml
