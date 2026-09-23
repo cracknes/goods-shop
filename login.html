@@ -10,19 +10,78 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>로그인 | 지후네 하우스</title>
 <link rel="stylesheet" href="style.css">
+<style>
+  /* 이 로그인 페이지에서만 쓰는 스타일(밑줄 입력창 + 동그란 체크 아이콘) — 다른 페이지 폼에는 영향 없음 */
+  .login-form .field { margin-bottom: 22px; }
+  .login-form .field label { display: block; font-size: 13px; color: var(--text-soft); margin-bottom: 6px; }
+  .login-form .field input {
+    border: none;
+    border-bottom: 2px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+    padding: 8px 2px;
+    margin-bottom: 0;
+  }
+  .login-form .field input:focus { outline: none; border-bottom-color: var(--accent); }
+
+  .autologin-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: normal;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 4px;
+  }
+  .autologin-check input[type="checkbox"] { position: absolute; width: 0; height: 0; opacity: 0; margin: 0; }
+  .autologin-check .check-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    position: relative;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .autologin-check .check-icon::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 9px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    opacity: 0;
+  }
+  .autologin-check input:checked + .check-icon { background: var(--accent); border-color: var(--accent); }
+  .autologin-check input:checked + .check-icon::after { opacity: 1; }
+</style>
 </head>
 <body>
 <nav id="nav"></nav>
 <div class="wrap">
   <h1>로그인</h1>
 
-  <div class="card">
-    <input id="email" type="email" placeholder="이메일 전체 주소 (예: tester4@naver.com)">
-    <input id="password" type="password" placeholder="비밀번호">
-    <label style="display:flex; align-items:center; gap:6px; font-weight:normal;">
+  <div class="card login-form">
+    <div class="field">
+      <label for="email">이메일</label>
+      <input id="email" type="email" placeholder="이메일 전체 주소 (예: tester4@naver.com)">
+    </div>
+    <div class="field">
+      <label for="password">비밀번호</label>
+      <input id="password" type="password" placeholder="비밀번호">
+    </div>
+
+    <label class="autologin-check">
       <input type="checkbox" id="auto-login-check">
-      이 기기에서 로그인 상태 유지 (5분 무동작 자동로그아웃 예외)
+      <span class="check-icon"></span>
+      이 기기에서 로그인 상태 유지
     </label>
+    <p class="muted" style="margin:4px 0 20px; font-size:12px;">(5분 무동작 자동로그아웃 예외)</p>
+
     <button class="primary" id="login-btn" style="width:100%;">로그인</button>
     <p id="message" class="error"></p>
   </div>
