@@ -133,12 +133,8 @@
         </div>
 
         <div id="push-send-view">
-          <p class="muted">회원가입 시 등록한 이메일로 받는 사람을 선택해요 (알림을 한 번이라도 구독한 사용자만 보임).</p>
-          <label style="display:flex; align-items:center; gap:6px; font-weight:normal;">
-            <input type="checkbox" id="push-broadcast-check">
-            전체 발송 (구독한 모든 사용자에게 — 같은 기기에 여러 아이디가 로그인돼 있으면 최종 로그인한 아이디에게만 보내 중복을 방지해요)
-          </label>
-          <label class="form-section-label" for="push-target-select">받는 사람 (가입 이메일)</label>
+          <p class="muted">회원가입 시 등록한 이메일로 받는 사람을 선택해요 ("전체 발송"을 고르면 구독한 모든 사용자에게 보내고, 같은 기기에 여러 아이디가 로그인돼 있으면 최종 로그인한 아이디에게만 보내 중복을 방지해요).</p>
+          <label class="form-section-label" for="push-target-select" style="margin-top:0;">받는 사람</label>
           <select id="push-target-select"></select>
           <p id="push-no-target" class="muted" hidden>아직 알림을 구독한 사용자가 없습니다.</p>
           <input id="push-title" type="text" placeholder="알림 제목">
@@ -745,26 +741,22 @@
     data.forEach(row => uniqueTargets.set(row.user_id, row.email));
 
     document.getElementById("push-no-target").hidden = true;
-    select.innerHTML = [...uniqueTargets.entries()]
+    select.innerHTML = `<option value="__broadcast__">전체 발송</option>` + [...uniqueTargets.entries()]
       .map(([userId, email]) => `<option value="${userId}">${escapeHtml(email || userId)}</option>`)
       .join("");
   }
 
-  document.getElementById("push-broadcast-check").addEventListener("change", (e) => {
-    document.getElementById("push-target-select").disabled = e.target.checked;
-  });
-
   document.getElementById("push-send-btn").addEventListener("click", async () => {
     const statusEl = document.getElementById("push-send-status");
-    const broadcast = document.getElementById("push-broadcast-check").checked;
     const select = document.getElementById("push-target-select");
     const targetUserId = select.value;
+    const broadcast = targetUserId === "__broadcast__";
     const targetEmail = select.selectedOptions[0]?.textContent;
     const title = document.getElementById("push-title").value.trim();
     const body = document.getElementById("push-body").value.trim();
 
-    if (!broadcast && !targetUserId) {
-      statusEl.textContent = "받는 사람을 선택하거나 전체 발송을 선택해 주세요.";
+    if (!targetUserId) {
+      statusEl.textContent = "받는 사람을 선택해 주세요.";
       return;
     }
     if (!title || !body) {
