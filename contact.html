@@ -13,7 +13,7 @@
 </head>
 <body>
 <nav id="nav"></nav>
-<div class="wrap">
+<div class="wrap" id="normal-view">
   <h1>문의하기</h1>
 
   <div class="tab-bar">
@@ -50,18 +50,72 @@
   </div>
 </div>
 
+<div class="wrap" id="token-view" hidden>
+  <h1>답변 확인</h1>
+  <div class="card" id="token-inquiry-card"></div>
+  <p id="token-error" class="muted" hidden></p>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="supabase-client.js"></script>
 <script src="nav.js"></script>
 <script src="pwa.js"></script>
 <script>
-  // 로그인해야만 보이는 메뉴(문의하기)라, 로그아웃 후 뒤로가기로 돌아와도 로그인 상태가 아니면
-  // 메인페이지로 돌려보냄 (nav.js의 bfcache 새로고침과 함께 동작해서, 다른 계정/비로그인
-  // 상태로 뒤로가기 했을 때 이전 로그인 사용자의 화면이 그대로 보이는 것을 막음).
-  (async function guardLoginOnlyPage() {
+  // 문의 답변 알림(push)을 눌러서 들어온 경우(문의 ID + 1회성 토큰이 있는 경우):
+  // - 아직 로그인 상태면(자동로그인 켠 기기 등) 굳이 제한된 화면을 보여줄 필요 없이, 그냥
+  //   "문의내역" 탭으로 들어가서 그 문의를 바로 열어줌 — 다른 메뉴도 그대로 다 쓸 수 있음.
+  // - 로그인 상태가 아니면(5분 무동작 자동로그아웃 등으로 이미 로그아웃) 계정 전체를 다시
+  //   로그인시키는 대신, 그 문의 1건만 보여주는 1회성 링크로 대신함.
+  // 그 외(문의/토큰 파라미터가 없는 일반 접근)에는 로그인해야만 보이는 메뉴(문의하기)라, 로그아웃
+  // 후 뒤로가기로 돌아와도 로그인 상태가 아니면 메인페이지로 돌려보냄(nav.js의 bfcache
+  // 새로고침과 함께 동작해서, 다른 계정/비로그인 상태로 뒤로가기 했을 때 이전 로그인 사용자의
+  // 화면이 그대로 보이는 것을 막음).
+  (async function initPage() {
+    const params = new URLSearchParams(location.search);
+    const inquiryId = params.get("inquiry");
+    const token = params.get("token");
     const { data: { user } } = await supabaseClient.auth.getUser();
+
+    if (inquiryId && token) {
+      if (user) {
+        document.querySelectorAll(".tab-bar button").forEach(b => b.classList.toggle("active", b.dataset.tab === "mine"));
+        document.getElementById("write-view").hidden = true;
+        document.getElementById("mine-view").hidden = false;
+        myInquiriesLoaded = true;
+        await loadMyInquiries();
+        showInquiryDetail(inquiryId);
+        return;
+      }
+      await showTokenInquiryView(inquiryId, token);
+      return;
+    }
+
     if (!user) location.href = "index.html";
   })();
+
+  async function showTokenInquiryView(inquiryId, token) {
+    document.getElementById("normal-view").hidden = true;
+    document.getElementById("token-view").hidden = false;
+
+    const { data, error } = await supabaseClient.functions.invoke("get-inquiry-by-token", {
+      body: { inquiryId, token },
+    });
+
+    if (error || !data?.inquiry) {
+      document.getElementById("token-error").hidden = false;
+      document.getElementById("token-error").textContent = "링크가 만료되었거나 올바르지 않습니다.";
+      return;
+    }
+
+    const item = data.inquiry;
+    document.getElementById("token-inquiry-card").innerHTML = `
+      <div class="inquiry-meta">${escapeHtml(item.subject)} · ${new Date(item.created_at).toLocaleString()}</div>
+      <div class="inquiry-message">${escapeHtml(item.message)}</div>
+      ${item.reply
+        ? `<div class="inquiry-reply-done"><strong>답변</strong> (${new Date(item.replied_at).toLocaleString()})<br>${escapeHtml(item.reply)}</div>`
+        : `<p class="muted">아직 답변이 등록되지 않았습니다.</p>`}
+    `;
+  }
 
   document.getElementById("submit-btn").addEventListener("click", async () => {
     const email = document.getElementById("email").value;

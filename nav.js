@@ -12,6 +12,11 @@ const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
 let idleTimer = null;
 
 function setupIdleLogout() {
+  // 로그인 시 "이 기기에서 로그인 상태 유지"를 체크했으면, 이 기기는 5분 무동작 자동로그아웃 예외로 처리함
+  let autoLoginEnabled = false;
+  try { autoLoginEnabled = localStorage.getItem("autoLoginEnabled") === "1"; } catch (_) {}
+  if (autoLoginEnabled) return;
+
   const resetIdleTimer = () => {
     if (idleTimer) clearTimeout(idleTimer);
     idleTimer = setTimeout(async () => {

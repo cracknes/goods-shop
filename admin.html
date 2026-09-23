@@ -243,6 +243,9 @@
       item.replied_at = replied_at;
       statusEl.textContent = "답변이 저장되었습니다.";
       renderInquiriesList();
+
+      // 문의를 남긴 계정에게 "답변이 도착했어요" 푸시 알림을 보냄 (구독 안 했으면 자동으로 건너뜀)
+      supabaseClient.functions.invoke("notify-inquiry-reply", { body: { inquiryId: id } }).catch(() => {});
     });
 
     document.getElementById("inquiries-list-view").hidden = true;

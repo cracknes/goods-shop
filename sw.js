@@ -2,7 +2,7 @@
 // Supabase(인증/DB/Edge Function), 토스페이먼츠, 뉴스/공시 외부 사이트는 절대 건드리지 않음 —
 // 이 캐시 로직은 이 사이트(같은 출처)의 GET 요청에만 적용됨.
 
-const CACHE_NAME = "goods-shop-cache-v4";
+const CACHE_NAME = "goods-shop-cache-v5";
 
 // 자주 보는 페이지 + 공용 자산은 설치 시점에 미리 캐시해둠 (오프라인에서도 바로 열리도록)
 const PRECACHE_URLS = [
@@ -80,7 +80,8 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// 푸시 알림 수신 시 화면에 표시
+// 푸시 알림 수신 시 화면에 표시. data.url이 있으면(예: 문의 답변 알림) 눌렀을 때 그 주소로 이동시킴 —
+// 없으면(일반/전체 발송 알림) 기존처럼 메인페이지를 염.
 self.addEventListener("push", (event) => {
   let data = { title: "지후네 하우스", body: "새 알림이 있어요." };
   try {
@@ -92,11 +93,12 @@ self.addEventListener("push", (event) => {
       body: data.body,
       icon: "icons/icon-192.png",
       badge: "icons/icon-192.png",
+      data: { url: data.url || "index.html" },
     })
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  event.waitUntil(self.clients.openWindow("index.html"));
+  event.waitUntil(self.clients.openWindow(event.notification.data?.url || "index.html"));
 });
