@@ -82,31 +82,53 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
 }
 
-// 알림을 아직 허용 안 했으면 동의를 구하고 구독까지 하고, 이미 구독돼 있으면 기존 구독을 그대로 반환
+// 알림을 아직 허용 안 했으면 동의를 구하고 구독까지 하고, 이미 구독돼 있으면 기존 구독(기기 단위)을 재사용함.
+// 브라우저 알림 권한/구독은 기기·출처 단위라 계정이 바뀌어도 다시 물어볼 필요는 없지만,
+// DB에는 "이 계정도 이 기기에서 받기로 했다"는 행을 계정별로 따로 저장해서 아이디별로 구분함.
 async function subscribeToPush() {
   const reg = await navigator.serviceWorker.ready;
   let sub = await reg.pushManager.getSubscription();
-  if (sub) return sub;
 
-  const permission = await Notification.requestPermission();
-  if (permission !== "granted") return null;
+  if (!sub) {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return null;
 
-  sub = await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-  });
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+  }
 
   try {
     const { data: { user } } = await supabaseClient.auth.getUser();
     const subJson = sub.toJSON();
-    await supabaseClient.from("push_subscriptions").insert({
+    await supabaseClient.from("push_subscriptions").upsert({
       user_id: user ? user.id : null,
       email: user ? user.email : null,
       endpoint: subJson.endpoint,
       p256dh: subJson.keys.p256dh,
       auth: subJson.keys.auth,
-    });
-  } catch (_) { /* 구독 저장이 실패해도 지금 이 브라우저로 테스트 알림 받는 데는 지장 없음 */ }
+      last_login_at: new Date().toISOString(),
+    }, { onConflict: "endpoint,user_id" });
+  } catch (_) { /* 구독 저장이 실패해도 지금 이 브라우저로 알림 받는 데는 지장 없음 */ }
 
   return sub;
+}
+
+// 로그인한 계정이 이 기기에서 이미 알림을 구독 중이면, "이 계정이 이 기기에서 최근에 활동했다"는
+// 시각을 갱신함. 관리자 "전체 발송" 시 한 기기에 여러 계정이 로그인돼 있어도 최종 로그인 계정에게만
+// 보내 중복 알림을 막는 데 씀 (매 페이지 로드마다 nav.js에서 호출).
+async function touchPushLastLogin(user) {
+  if (!user || !("serviceWorker" in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) return;
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return;
+    await supabaseClient
+      .from("push_subscriptions")
+      .update({ last_login_at: new Date().toISOString() })
+      .eq("endpoint", sub.endpoint)
+      .eq("user_id", user.id);
+  } catch (_) { /* 실패해도 다음 발송 때 이전 로그인 시각으로 처리될 뿐, 기능에는 지장 없음 */ }
 }

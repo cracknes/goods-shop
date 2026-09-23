@@ -658,7 +658,10 @@
   (async function setupPushSubscribeCard() {
     if (typeof isPushSupported !== "function" || !isPushSupported()) return;
 
-    const DISMISSED_KEY = "pushSubscribeCardDismissed";
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    // 계정별로 "이미 결정했음" 여부를 따로 기억해야, 같은 기기에서 다른 아이디로 로그인해도
+    // 그 계정에게 다시 물어볼 수 있음 (기기 단위가 아니라 로그인 계정 단위로 판단).
+    const DISMISSED_KEY = "pushSubscribeCardDismissed_" + (user ? user.id : "anon");
     let dismissed = false;
     try {
       dismissed = localStorage.getItem(DISMISSED_KEY) === "1";
@@ -667,7 +670,22 @@
 
     const reg = await navigator.serviceWorker.ready;
     const existingSub = await reg.pushManager.getSubscription();
-    if (existingSub) return; // 이미 구독한 브라우저면 보여줄 필요 없음
+
+    if (existingSub) {
+      if (!user) return; // 비로그인 상태는 기존처럼 기기 단위 구독 여부만 봄
+      // 이 기기가 이미 구독 중이어도, 다른 계정이 먼저 구독했을 수 있으므로
+      // "이 계정"으로 등록된 행이 있는지 DB에서 따로 확인함
+      const { data: myRow } = await supabaseClient
+        .from("push_subscriptions")
+        .select("id")
+        .eq("endpoint", existingSub.endpoint)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (myRow) {
+        try { localStorage.setItem(DISMISSED_KEY, "1"); } catch (_) {}
+        return;
+      }
+    }
 
     document.getElementById("push-subscribe-card").hidden = false;
     document.getElementById("push-subscribe-btn").addEventListener("click", async () => {

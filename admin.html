@@ -122,7 +122,11 @@
 
         <div id="push-send-view">
           <p class="muted">회원가입 시 등록한 이메일로 받는 사람을 선택해요 (알림을 한 번이라도 구독한 사용자만 보임).</p>
-          <label class="form-section-label" for="push-target-select" style="margin-top:0;">받는 사람 (가입 이메일)</label>
+          <label style="display:flex; align-items:center; gap:6px; font-weight:normal;">
+            <input type="checkbox" id="push-broadcast-check">
+            전체 발송 (구독한 모든 사용자에게 — 같은 기기에 여러 아이디가 로그인돼 있으면 최종 로그인한 아이디에게만 보내 중복을 방지해요)
+          </label>
+          <label class="form-section-label" for="push-target-select">받는 사람 (가입 이메일)</label>
           <select id="push-target-select"></select>
           <p id="push-no-target" class="muted" hidden>아직 알림을 구독한 사용자가 없습니다.</p>
           <input id="push-title" type="text" placeholder="알림 제목">
@@ -685,22 +689,31 @@
       .join("");
   }
 
+  document.getElementById("push-broadcast-check").addEventListener("change", (e) => {
+    document.getElementById("push-target-select").disabled = e.target.checked;
+  });
+
   document.getElementById("push-send-btn").addEventListener("click", async () => {
     const statusEl = document.getElementById("push-send-status");
+    const broadcast = document.getElementById("push-broadcast-check").checked;
     const select = document.getElementById("push-target-select");
     const targetUserId = select.value;
     const targetEmail = select.selectedOptions[0]?.textContent;
     const title = document.getElementById("push-title").value.trim();
     const body = document.getElementById("push-body").value.trim();
 
-    if (!targetUserId || !title || !body) {
-      statusEl.textContent = "받는 사람, 제목, 내용을 모두 입력해 주세요.";
+    if (!broadcast && !targetUserId) {
+      statusEl.textContent = "받는 사람을 선택하거나 전체 발송을 선택해 주세요.";
+      return;
+    }
+    if (!title || !body) {
+      statusEl.textContent = "제목, 내용을 모두 입력해 주세요.";
       return;
     }
 
     statusEl.textContent = "발송 중...";
     const { data, error } = await supabaseClient.functions.invoke("admin-send-push", {
-      body: { targetUserId, targetEmail, title, body },
+      body: broadcast ? { broadcast: true, title, body } : { targetUserId, targetEmail, title, body },
     });
 
     if (error) {
@@ -724,7 +737,7 @@
   function showPushHistoryDetail(id) {
     const log = allPushLogs.find(l => l.id === id);
     document.getElementById("push-history-detail-content").innerHTML = `
-      <div class="inquiry-meta">받는 사람: ${escapeHtml(log.target_email || log.target_user_id)} · ${new Date(log.created_at).toLocaleString()}</div>
+      <div class="inquiry-meta">받는 사람: ${escapeHtml(log.target_email || log.target_user_id || "전체 발송")} · ${new Date(log.created_at).toLocaleString()}</div>
       <div class="inquiry-meta">구독 ${log.subscription_count}건 중 성공 ${log.success_count}건 / 실패 ${log.failure_count}건</div>
       <h3 style="margin-bottom:4px;">${escapeHtml(log.title)}</h3>
       <div class="inquiry-message">${escapeHtml(log.body)}</div>
@@ -739,7 +752,7 @@
     document.getElementById("push-history-list").innerHTML = allPushLogs.map(l => `
       <div class="inquiry-row" data-id="${l.id}">
         <div>
-          <div>${escapeHtml(l.target_email || l.target_user_id)} · ${escapeHtml(l.title)}</div>
+          <div>${escapeHtml(l.target_email || l.target_user_id || "전체 발송")} · ${escapeHtml(l.title)}</div>
           <div class="inquiry-meta">${new Date(l.created_at).toLocaleString()}</div>
         </div>
         <span class="${l.failure_count > 0 ? "muted" : "status-paid"}">성공 ${l.success_count}/${l.subscription_count}</span>
