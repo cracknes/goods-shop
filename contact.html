@@ -55,6 +55,14 @@
 <script src="nav.js"></script>
 <script src="pwa.js"></script>
 <script>
+  // 로그인해야만 보이는 메뉴(문의하기)라, 로그아웃 후 뒤로가기로 돌아와도 로그인 상태가 아니면
+  // 메인페이지로 돌려보냄 (nav.js의 bfcache 새로고침과 함께 동작해서, 다른 계정/비로그인
+  // 상태로 뒤로가기 했을 때 이전 로그인 사용자의 화면이 그대로 보이는 것을 막음).
+  (async function guardLoginOnlyPage() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) location.href = "index.html";
+  })();
+
   document.getElementById("submit-btn").addEventListener("click", async () => {
     const email = document.getElementById("email").value;
     const subject = document.getElementById("subject").value;
