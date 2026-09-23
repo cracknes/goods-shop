@@ -52,7 +52,7 @@
       <div class="card" id="logins-panel" hidden>
         <table id="logins-table">
           <thead>
-            <tr><th>사용자</th><th>로그인 시간</th></tr>
+            <tr><th>사용자</th><th>기기정보</th><th>로그인 시간</th></tr>
           </thead>
           <tbody id="logins-body"></tbody>
         </table>
@@ -60,13 +60,25 @@
       </div>
 
       <div class="card" id="productstats-panel" hidden>
-        <table id="productstats-table">
-          <thead>
-            <tr><th>상품</th><th>조회 수</th><th>평균 조회시간</th><th>총 조회시간</th></tr>
-          </thead>
-          <tbody id="productstats-body"></tbody>
-        </table>
-        <p id="productstats-empty" class="muted" hidden>조회 기록이 없습니다.</p>
+        <div id="productstats-list-view">
+          <table id="productstats-table">
+            <thead>
+              <tr><th>상품</th><th>조회 수</th><th>평균 조회시간</th><th>총 조회시간</th></tr>
+            </thead>
+            <tbody id="productstats-body"></tbody>
+          </table>
+          <p id="productstats-empty" class="muted" hidden>조회 기록이 없습니다.</p>
+        </div>
+        <div id="productstats-detail-view" hidden>
+          <button type="button" id="productstats-back-btn" class="muted" style="background:none; border:none; cursor:pointer; padding:0; margin-bottom:12px;">&larr; 목록으로</button>
+          <h3 id="productstats-detail-title" style="margin-bottom:12px;"></h3>
+          <table>
+            <thead>
+              <tr><th>날짜</th><th>아이디</th><th>조회 횟수</th><th>조회시간</th></tr>
+            </thead>
+            <tbody id="productstats-detail-body"></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="card" id="addproduct-panel" hidden>
@@ -290,10 +302,13 @@
     document.getElementById("logins-body").innerHTML = logins.map(l => `
       <tr>
         <td data-label="사용자">${escapeHtml(l.email)}</td>
+        <td data-label="기기정보">${escapeHtml(l.device_info || "-")}</td>
         <td data-label="로그인 시간">${new Date(l.logged_in_at).toLocaleString()}</td>
       </tr>
     `).join("");
   }
+
+  let allProductViews = []; // 상세 화면(일자별/아이디별 조회시간)에서 다시 쓰려고 통째로 보관
 
   async function loadProductStats() {
     const { data: views, error } = await supabaseClient
@@ -303,8 +318,11 @@
     if (error || !views.length) {
       document.getElementById("productstats-empty").hidden = false;
       if (error) document.getElementById("productstats-empty").textContent = "불러오기 실패: " + error.message;
+      allProductViews = [];
       return;
     }
+
+    allProductViews = views;
 
     const byProduct = {};
     views.forEach(v => {
@@ -315,14 +333,57 @@
 
     const rows = Object.entries(byProduct).sort((a, b) => b[1].count - a[1].count);
     document.getElementById("productstats-body").innerHTML = rows.map(([name, stat]) => `
-      <tr>
+      <tr data-name="${escapeHtml(name)}" style="cursor:pointer;">
         <td data-label="상품">${escapeHtml(name)}</td>
         <td data-label="조회 수">${stat.count}회</td>
         <td data-label="평균 조회시간">${Math.round(stat.total / stat.count)}초</td>
         <td data-label="총 조회시간">${stat.total}초</td>
       </tr>
     `).join("");
+
+    document.querySelectorAll("#productstats-body tr").forEach(tr => {
+      tr.addEventListener("click", () => showProductStatsDetail(tr.dataset.name));
+    });
   }
+
+  function showProductStatsList() {
+    document.getElementById("productstats-list-view").hidden = false;
+    document.getElementById("productstats-detail-view").hidden = true;
+  }
+
+  // 클릭한 상품의 조회 기록을 "날짜 + 아이디" 조합으로 묶어서 보여줌 (일자별·아이디별 조회시간)
+  function showProductStatsDetail(productName) {
+    const grouped = {};
+    allProductViews
+      .filter(v => v.product_name === productName)
+      .forEach(v => {
+        const date = new Date(v.viewed_at).toLocaleDateString();
+        const who = v.user_email || "비로그인";
+        const key = date + "||" + who;
+        if (!grouped[key]) grouped[key] = { date, who, count: 0, total: 0 };
+        grouped[key].count += 1;
+        grouped[key].total += v.duration_seconds;
+      });
+
+    const sorted = Object.values(grouped).sort((a, b) =>
+      a.date === b.date ? a.who.localeCompare(b.who) : (new Date(b.date) - new Date(a.date))
+    );
+
+    document.getElementById("productstats-detail-title").textContent = productName;
+    document.getElementById("productstats-detail-body").innerHTML = sorted.map(g => `
+      <tr>
+        <td data-label="날짜">${escapeHtml(g.date)}</td>
+        <td data-label="아이디">${escapeHtml(g.who)}</td>
+        <td data-label="조회 횟수">${g.count}회</td>
+        <td data-label="조회시간">${g.total}초</td>
+      </tr>
+    `).join("");
+
+    document.getElementById("productstats-list-view").hidden = true;
+    document.getElementById("productstats-detail-view").hidden = false;
+  }
+
+  document.getElementById("productstats-back-btn").addEventListener("click", showProductStatsList);
 
   let allMenus = []; // menus 테이블 전체 (상품 카테고리 + 기능 메뉴)
   function categoryLabel(id) {
