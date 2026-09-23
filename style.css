@@ -137,7 +137,7 @@ h1 { font-size: 22px; font-weight: 800; }
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
 }
 .product-card .thumb {
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 565 / 868;
   display: flex;
   align-items: center;
   justify-content: center;
