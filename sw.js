@@ -2,7 +2,7 @@
 // Supabase(인증/DB/Edge Function), 토스페이먼츠, 뉴스/공시 외부 사이트는 절대 건드리지 않음 —
 // 이 캐시 로직은 이 사이트(같은 출처)의 GET 요청에만 적용됨.
 
-const CACHE_NAME = "goods-shop-cache-v14";
+const CACHE_NAME = "goods-shop-cache-v15";
 
 // 자주 보는 페이지 + 공용 자산은 설치 시점에 미리 캐시해둠 (오프라인에서도 바로 열리도록)
 const PRECACHE_URLS = [
