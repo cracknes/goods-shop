@@ -26,6 +26,7 @@
       <button data-tab="addproduct">상품관리</button>
       <button data-tab="menus">메뉴관리</button>
       <button data-tab="push">PUSH관리</button>
+      <button data-tab="fairvalue">적정주가</button>
     </div>
     <div class="shop-content">
       <div class="card">
@@ -154,6 +155,23 @@
           </div>
         </div>
       </div>
+
+      <div class="card" id="fairvalue-panel" hidden>
+        <p class="muted">DART(전자공시) 재무제표를 바탕으로 그레이엄/PER/PBR/S-RIM/DCF/배당할인모형 6가지 적정주가를 한 번에 비교해요.</p>
+        <label class="form-section-label" for="fairvalue-search" style="margin-top:0;">회사명 검색</label>
+        <input id="fairvalue-search" type="text" placeholder="예: 삼성전자">
+        <div id="fairvalue-search-results"></div>
+
+        <div id="fairvalue-result-view" hidden style="margin-top:16px;">
+          <h3 id="fairvalue-corp-name" style="margin-bottom:4px;"></h3>
+          <p id="fairvalue-meta" class="muted"></p>
+          <table id="fairvalue-table">
+            <thead><tr><th>계산법</th><th>적정주가</th></tr></thead>
+            <tbody id="fairvalue-body"></tbody>
+          </table>
+        </div>
+        <p id="fairvalue-status" class="muted"></p>
+      </div>
     </div>
   </div>
 </div>
@@ -176,6 +194,7 @@
     document.getElementById("addproduct-panel").hidden = tab !== "addproduct";
     document.getElementById("menus-panel").hidden = tab !== "menus";
     document.getElementById("push-panel").hidden = tab !== "push";
+    document.getElementById("fairvalue-panel").hidden = tab !== "fairvalue";
   }
 
   async function loadOrders() {
@@ -836,6 +855,91 @@
     document.getElementById("push-history-empty").hidden = true;
     allPushLogs = data;
     renderPushHistoryList();
+  }
+
+  // 적정주가 — 회사명 입력할 때마다(300ms 대기 후) DART 회사 목록에서 검색
+  let fairvalueSearchTimer = null;
+  document.getElementById("fairvalue-search").addEventListener("input", (e) => {
+    clearTimeout(fairvalueSearchTimer);
+    const q = e.target.value.trim();
+    const resultsEl = document.getElementById("fairvalue-search-results");
+    if (!q) {
+      resultsEl.innerHTML = "";
+      return;
+    }
+    fairvalueSearchTimer = setTimeout(() => searchDartCorp(q), 300);
+  });
+
+  async function searchDartCorp(q) {
+    const resultsEl = document.getElementById("fairvalue-search-results");
+    const { data, error } = await supabaseClient
+      .from("dart_corp_codes")
+      .select("corp_code, corp_name, stock_code")
+      .ilike("corp_name", `%${q}%`)
+      .order("corp_name")
+      .limit(10);
+
+    if (error || !data || !data.length) {
+      resultsEl.innerHTML = `<p class="muted">검색 결과가 없습니다.</p>`;
+      return;
+    }
+
+    resultsEl.innerHTML = data.map(c => `
+      <div class="inquiry-row" data-corp="${c.corp_code}" style="cursor:pointer;">
+        <div>${escapeHtml(c.corp_name)} <span class="muted">(${escapeHtml(c.stock_code)})</span></div>
+      </div>
+    `).join("");
+
+    resultsEl.querySelectorAll("[data-corp]").forEach(row => {
+      row.addEventListener("click", () => loadFairValue(row.dataset.corp));
+    });
+  }
+
+  const FAIRVALUE_REPRT_NAMES = { "11011": "사업보고서(연간)", "11012": "반기보고서", "11013": "1분기보고서", "11014": "3분기보고서" };
+  const FAIRVALUE_METHOD_LABELS = {
+    graham: "그레이엄 공식",
+    per: "PER 배수",
+    pbr: "PBR 배수",
+    srim: "S-RIM(단순화)",
+    dcf: "DCF(간이)",
+    ddm: "배당할인모형",
+  };
+
+  async function loadFairValue(corpCode) {
+    const statusEl = document.getElementById("fairvalue-status");
+    document.getElementById("fairvalue-result-view").hidden = true;
+    document.getElementById("fairvalue-search-results").innerHTML = "";
+    statusEl.textContent = "조회 중입니다... (DART 자료를 불러오는 데 몇 초 걸릴 수 있어요)";
+
+    const { data, error } = await supabaseClient.functions.invoke("dart-fair-value", { body: { corpCode } });
+
+    if (error) {
+      statusEl.textContent = "조회 실패: " + error.message;
+      return;
+    }
+    if (data.error) {
+      statusEl.textContent = data.error;
+      return;
+    }
+
+    statusEl.textContent = "";
+    document.getElementById("fairvalue-corp-name").textContent = `${data.corpName} (${data.stockCode})`;
+    document.getElementById("fairvalue-meta").textContent =
+      `기준: ${data.reportPeriod.year}년 ${FAIRVALUE_REPRT_NAMES[data.reportPeriod.reprtCode]} · ` +
+      `${data.reportPeriod.fsDiv === "CFS" ? "연결" : "별도"}재무제표 · ` +
+      `EPS ${Math.round(data.metrics.eps).toLocaleString()}원 · BPS ${Math.round(data.metrics.bps).toLocaleString()}원 · ` +
+      `ROE ${(data.metrics.roe * 100).toFixed(1)}%`;
+
+    document.getElementById("fairvalue-body").innerHTML = Object.entries(FAIRVALUE_METHOD_LABELS).map(([key, label]) => {
+      const value = data.results[key];
+      let display;
+      if (key === "dcf" && data.isFinancialIndustry) display = "금융업이라 계산 제외";
+      else if (value === null) display = "계산 불가";
+      else display = Math.round(value).toLocaleString() + "원";
+      return `<tr><td data-label="계산법">${escapeHtml(label)}</td><td data-label="적정주가">${display}</td></tr>`;
+    }).join("");
+
+    document.getElementById("fairvalue-result-view").hidden = false;
   }
 
   async function loadAdmin() {
