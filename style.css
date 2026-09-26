@@ -143,6 +143,9 @@ h1 { font-size: 22px; font-weight: 800; }
   justify-content: center;
 }
 .product-card .thumb svg { width: 40%; height: 40%; }
+/* 오늘의 뉴스는 상품 사진이 아니라 바로가기 카드라 세로로 길 필요가 없어서 폭을 줄임 */
+.product-card.news-card .thumb { aspect-ratio: 2 / 1; }
+.product-card.news-card .body { text-align: center; }
 .product-card .body { padding: 16px; }
 .product-card .name { font-weight: 600; margin-bottom: 4px; }
 .product-card .price { color: var(--text-soft); font-size: 14px; margin-bottom: 12px; }
