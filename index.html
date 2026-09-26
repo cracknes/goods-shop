@@ -156,6 +156,7 @@
     { name: "한국거래소(KRX) 시세정보", url: "https://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201020303", gradient: "linear-gradient(135deg, #e6e9f0, #c3cbe0)" },
     { name: "DART 전자공시", url: "https://dart.fss.or.kr/dsab007/main.do", gradient: "linear-gradient(135deg, #ffe0ec, #ffb3cf)" },
     { name: "Npay 증권", url: "https://stock.naver.com/domestic/stock/000270/price", gradient: "linear-gradient(135deg, #fff3c4, #ffd980)", sameTab: true },
+    { name: "네이버웹툰", url: "https://m.comic.naver.com/webtoon/weekday", gradient: "linear-gradient(135deg, #d9f7d3, #7fe08c)", sameTab: true, label: "웹툰 보러가기" },
   ];
 
   function renderNewsMenu() {
@@ -166,7 +167,7 @@
         <div class="thumb" style="background:${n.gradient}">${NEWS_ICON}</div>
         <div class="body">
           <div class="name">${escapeHtml(n.name)}</div>
-          <div class="price">지면보기 바로가기</div>
+          <div class="price">${n.label || "지면보기 바로가기"}</div>
         </div>
       </a>
     `).join("");
