@@ -914,7 +914,14 @@
     const { data, error } = await supabaseClient.functions.invoke("dart-fair-value", { body: { corpCode } });
 
     if (error) {
-      statusEl.textContent = "조회 실패: " + error.message;
+      // supabase-js는 Edge Function이 에러 상태코드를 주면 "non-2xx status code"라는
+      // 뭉뚱그린 메시지만 주고 실제 이유(본문)는 error.context 응답 안에 따로 들어있음 — 그걸 꺼내서 보여줌.
+      let detail = error.message;
+      try {
+        const body = await error.context.json();
+        if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
+      } catch (_) {}
+      statusEl.textContent = "조회 실패: " + detail;
       return;
     }
     if (data.error) {
