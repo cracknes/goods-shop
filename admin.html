@@ -258,7 +258,7 @@
         <td data-label="상품">${escapeHtml(o.product_name)}</td>
         <td data-label="금액">${o.amount.toLocaleString()}원</td>
         <td data-label="상태" class="status-paid">${o.status}</td>
-        <td data-label="결제일시">${new Date(o.created_at).toLocaleString()}</td>
+        <td data-label="결제일시">${formatKDateTime(o.created_at)}</td>
       </tr>
     `).join("");
   }
@@ -273,9 +273,9 @@
   function showInquiryDetail(id) {
     const item = allInquiries.find(i => i.id === id);
     document.getElementById("inquiry-detail-content").innerHTML = `
-      <div class="inquiry-meta">${escapeHtml(item.email)} · ${escapeHtml(item.subject)} · ${new Date(item.created_at).toLocaleString()}</div>
+      <div class="inquiry-meta">${escapeHtml(item.email)} · ${escapeHtml(item.subject)} · ${formatKDateTime(item.created_at)}</div>
       <div class="inquiry-message">${escapeHtml(item.message)}</div>
-      ${item.reply ? `<div class="inquiry-reply-done"><strong>답변</strong> (${new Date(item.replied_at).toLocaleString()})<br>${escapeHtml(item.reply)}</div>` : ""}
+      ${item.reply ? `<div class="inquiry-reply-done"><strong>답변</strong> (${formatKDateTime(item.replied_at)})<br>${escapeHtml(item.reply)}</div>` : ""}
       <textarea id="reply-input" rows="3" placeholder="답변 내용">${escapeHtml(item.reply ?? "")}</textarea>
       <button class="primary" id="reply-submit">${item.reply ? "답변 수정" : "답변 등록"}</button>
       <p id="reply-status" class="muted"></p>
@@ -319,7 +319,7 @@
       <div class="inquiry-row" data-id="${i.id}">
         <div>
           <div>${escapeHtml(i.email)} · ${escapeHtml(i.subject)}</div>
-          <div class="inquiry-meta">${new Date(i.created_at).toLocaleString()}</div>
+          <div class="inquiry-meta">${formatKDateTime(i.created_at)}</div>
         </div>
         <span class="${i.reply ? "status-paid" : "muted"}">${i.reply ? "답변완료" : "답변대기"}</span>
       </div>
@@ -364,7 +364,7 @@
       <tr>
         <td data-label="사용자">${escapeHtml(l.email)}</td>
         <td data-label="기기정보">${escapeHtml(l.device_info || "-")}</td>
-        <td data-label="로그인 시간">${new Date(l.logged_in_at).toLocaleString()}</td>
+        <td data-label="로그인 시간">${formatKDateTime(l.logged_in_at)}</td>
       </tr>
     `).join("");
   }
@@ -418,7 +418,7 @@
     allProductViews
       .filter(v => v.product_name === productName)
       .forEach(v => {
-        const date = new Date(v.viewed_at).toLocaleDateString();
+        const date = formatKDate(v.viewed_at);
         const who = v.user_email || "비로그인";
         const key = date + "||" + who;
         if (!grouped[key]) grouped[key] = { date, who, count: 0, total: 0 };
@@ -855,7 +855,7 @@
   function showPushHistoryDetail(id) {
     const log = allPushLogs.find(l => l.id === id);
     document.getElementById("push-history-detail-content").innerHTML = `
-      <div class="inquiry-meta">받는 사람: ${escapeHtml(log.target_email || log.target_user_id || "전체 발송")} · ${new Date(log.created_at).toLocaleString()}</div>
+      <div class="inquiry-meta">받는 사람: ${escapeHtml(log.target_email || log.target_user_id || "전체 발송")} · ${formatKDateTime(log.created_at)}</div>
       <div class="inquiry-meta">구독 ${log.subscription_count}건 중 성공 ${log.success_count}건 / 실패 ${log.failure_count}건</div>
       <h3 style="margin-bottom:4px;">${escapeHtml(log.title)}</h3>
       <div class="inquiry-message">${escapeHtml(log.body)}</div>
@@ -871,7 +871,7 @@
       <div class="inquiry-row" data-id="${l.id}">
         <div>
           <div>${escapeHtml(l.target_email || l.target_user_id || "전체 발송")} · ${escapeHtml(l.title)}</div>
-          <div class="inquiry-meta">${new Date(l.created_at).toLocaleString()}</div>
+          <div class="inquiry-meta">${formatKDateTime(l.created_at)}</div>
         </div>
         <span class="${l.failure_count > 0 ? "muted" : "status-paid"}">성공 ${l.success_count}/${l.subscription_count}</span>
       </div>
@@ -932,12 +932,12 @@
   function showFairValueHistoryDetail(groupId) {
     const group = fvHistoryGroups.find(g => g.id === groupId);
     const prevCloseText = group.priceAtCalc !== null
-      ? `조회 당시 종가 ${Math.round(group.priceAtCalc).toLocaleString()}원 (${group.priceAtCalcDate ? group.priceAtCalcDate.slice(0, 4) + "." + group.priceAtCalcDate.slice(4, 6) + "." + group.priceAtCalcDate.slice(6, 8) : "-"} 기준)`
+      ? `조회 당시 종가 ${Math.round(group.priceAtCalc).toLocaleString()}원 (${group.priceAtCalcDate ? formatKDate(group.priceAtCalcDate) : "-"} 기준)`
       : "조회 당시 종가 정보 없음";
 
     document.getElementById("fvhistory-detail-content").innerHTML = `
       <h3 style="margin-bottom:4px;">${escapeHtml(group.corpName)} (${escapeHtml(group.stockCode)})</h3>
-      <p class="muted">${new Date(group.calculatedAt).toLocaleString()} 조회 · ${escapeHtml(prevCloseText)}</p>
+      <p class="muted">${formatKDateTime(group.calculatedAt)} 조회 · ${escapeHtml(prevCloseText)}</p>
       <table>
         <thead><tr><th>계산법</th><th>적정주가</th></tr></thead>
         <tbody>
@@ -959,7 +959,7 @@
       <div class="inquiry-row" data-group="${g.id}">
         <div>
           <div>${escapeHtml(g.corpName)} (${escapeHtml(g.stockCode)})</div>
-          <div class="inquiry-meta">${new Date(g.calculatedAt).toLocaleString()} · ${g.rows.length}개 계산법</div>
+          <div class="inquiry-meta">${formatKDateTime(g.calculatedAt)} · ${g.rows.length}개 계산법</div>
         </div>
         <span class="status-paid">${g.priceAtCalc !== null ? Math.round(g.priceAtCalc).toLocaleString() + "원" : "-"}</span>
       </div>
@@ -1128,7 +1128,7 @@
     statusEl.textContent = "";
     document.getElementById("fairvalue-corp-name").textContent = `${data.corpName} (${data.stockCode})`;
     const prevCloseText = data.previousClose
-      ? `전일 종가 ${data.previousClose.price.toLocaleString()}원 (${data.previousClose.date.slice(0, 4)}.${data.previousClose.date.slice(4, 6)}.${data.previousClose.date.slice(6, 8)} 기준) · `
+      ? `전일 종가 ${data.previousClose.price.toLocaleString()}원 (${formatKDate(data.previousClose.date)} 기준) · `
       : "";
     document.getElementById("fairvalue-meta").textContent =
       prevCloseText +

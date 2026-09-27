@@ -109,10 +109,10 @@
 
     const item = data.inquiry;
     document.getElementById("token-inquiry-card").innerHTML = `
-      <div class="inquiry-meta">${escapeHtml(item.subject)} · ${new Date(item.created_at).toLocaleString()}</div>
+      <div class="inquiry-meta">${escapeHtml(item.subject)} · ${formatKDateTime(item.created_at)}</div>
       <div class="inquiry-message">${escapeHtml(item.message)}</div>
       ${item.reply
-        ? `<div class="inquiry-reply-done"><strong>답변</strong> (${new Date(item.replied_at).toLocaleString()})<br>${escapeHtml(item.reply)}</div>`
+        ? `<div class="inquiry-reply-done"><strong>답변</strong> (${formatKDateTime(item.replied_at)})<br>${escapeHtml(item.reply)}</div>`
         : `<p class="muted">아직 답변이 등록되지 않았습니다.</p>`}
     `;
   }
@@ -175,13 +175,13 @@
   function showInquiryDetail(id) {
     const item = myInquiries.find(i => i.id === id);
     document.getElementById("inquiry-detail").innerHTML = `
-      <div class="inquiry-meta">${new Date(item.created_at).toLocaleString()}</div>
+      <div class="inquiry-meta">${formatKDateTime(item.created_at)}</div>
       <input id="edit-subject" type="text" value="${escapeHtml(item.subject)}">
       <textarea id="edit-message" rows="6">${escapeHtml(item.message)}</textarea>
       <button class="primary" id="edit-save-btn">수정 저장</button>
       <p id="edit-status" class="muted"></p>
       ${item.reply
-        ? `<div class="inquiry-reply-done"><strong>답변</strong> (${new Date(item.replied_at).toLocaleString()})<br>${escapeHtml(item.reply)}</div>`
+        ? `<div class="inquiry-reply-done"><strong>답변</strong> (${formatKDateTime(item.replied_at)})<br>${escapeHtml(item.reply)}</div>`
         : `<p class="muted">아직 답변이 등록되지 않았습니다.</p>`}
     `;
 
@@ -246,7 +246,7 @@
       <div class="inquiry-row" data-id="${i.id}">
         <div>
           <div>${escapeHtml(i.subject)}</div>
-          <div class="inquiry-meta">${new Date(i.created_at).toLocaleString()}</div>
+          <div class="inquiry-meta">${formatKDateTime(i.created_at)}</div>
         </div>
         <span class="${i.reply ? "status-paid" : "muted"}">${i.reply ? "답변완료" : "답변대기"}</span>
       </div>

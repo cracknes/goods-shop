@@ -48,6 +48,23 @@ async function recordLogin(user) {
   });
 }
 
+// 날짜/시각 표시는 브라우저 로케일에 의존하는 toLocaleString() 대신
+// 한국식 "년/월/일" 형식으로 고정해서 보여줌 (예: 2026/09/27, 2026/09/27 10:11).
+// YYYYMMDD 형태의 8자리 문자열(공공데이터포털/DART API 응답에서 자주 나오는 날짜 형식)도 그대로 받아들임.
+function formatKDate(input) {
+  const d = typeof input === "string" && /^\d{8}$/.test(input)
+    ? new Date(`${input.slice(0, 4)}-${input.slice(4, 6)}-${input.slice(6, 8)}`)
+    : new Date(input);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
+}
+
+function formatKDateTime(input) {
+  const d = new Date(input);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${formatKDate(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 // DB에서 불러온 값(상품명, 문의 내용, 이메일 등)을 innerHTML로 화면에 그릴 때
 // <script> 같은 태그가 실행되지 않도록 특수문자를 이스케이프 (저장형 XSS 방지)
 function escapeHtml(value) {
