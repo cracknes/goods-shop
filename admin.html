@@ -158,21 +158,57 @@
       </div>
 
       <div class="card" id="fairvalue-panel" hidden>
-        <p class="muted">DART(전자공시) 재무제표를 바탕으로 그레이엄/PER/PBR/S-RIM/DCF/배당할인모형 6가지 적정주가를 한 번에 비교해요.</p>
-        <label class="form-section-label" for="fairvalue-search" style="margin-top:0;">회사명 검색</label>
-        <input id="fairvalue-search" type="text" placeholder="예: 삼성전자">
-        <div id="fairvalue-search-results"></div>
-
-        <div id="fairvalue-result-view" hidden style="margin-top:16px;">
-          <h3 id="fairvalue-corp-name" style="margin-bottom:4px;"></h3>
-          <p id="fairvalue-meta" class="muted"></p>
-          <p id="fairvalue-history" class="muted" style="font-size:13px;"></p>
-          <table id="fairvalue-table">
-            <thead><tr><th>계산법</th><th>적정주가</th><th>계산식</th></tr></thead>
-            <tbody id="fairvalue-body"></tbody>
-          </table>
+        <div class="tab-bar">
+          <button type="button" data-fvtab="search" class="active">조회</button>
+          <button type="button" data-fvtab="history">이력</button>
         </div>
-        <p id="fairvalue-status" class="muted"></p>
+
+        <div id="fairvalue-search-view">
+          <p class="muted">DART(전자공시) 재무제표를 바탕으로 그레이엄/PER/PBR/S-RIM/DCF/배당할인모형 6가지 적정주가를 한 번에 비교해요.</p>
+          <label class="form-section-label" for="fairvalue-search" style="margin-top:0;">회사명 검색</label>
+          <input id="fairvalue-search" type="text" placeholder="예: 삼성전자">
+          <div id="fairvalue-search-results"></div>
+
+          <div id="fairvalue-result-view" hidden style="margin-top:16px;">
+            <h3 id="fairvalue-corp-name" style="margin-bottom:4px;"></h3>
+            <p id="fairvalue-meta" class="muted"></p>
+            <p id="fairvalue-history" class="muted" style="font-size:13px;"></p>
+            <table id="fairvalue-table">
+              <thead><tr><th>계산법</th><th>적정주가</th><th>계산식</th></tr></thead>
+              <tbody id="fairvalue-body"></tbody>
+            </table>
+          </div>
+          <p id="fairvalue-status" class="muted"></p>
+        </div>
+
+        <div id="fairvalue-history-view" hidden>
+          <p class="muted">조회할 때마다 6가지 계산법 결과가 자동으로 저장돼요. 나중에 그때 산정한 적정주가가 실제로 얼마나 맞았는지 비교해 볼 수 있어요.</p>
+          <label class="form-section-label" for="fvhistory-corp" style="margin-top:0;">회사명</label>
+          <input id="fvhistory-corp" type="text" placeholder="예: 삼성전자 (비우면 전체)">
+          <label class="form-section-label" for="fvhistory-method">계산법</label>
+          <select id="fvhistory-method">
+            <option value="">전체</option>
+            <option value="graham">그레이엄 공식</option>
+            <option value="per">PER 배수</option>
+            <option value="pbr">PBR 배수</option>
+            <option value="srim">S-RIM</option>
+            <option value="dcf">DCF</option>
+            <option value="ddm">배당할인모형</option>
+          </select>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1;">
+              <label class="form-section-label" for="fvhistory-from">시작일</label>
+              <input id="fvhistory-from" type="date">
+            </div>
+            <div style="flex:1;">
+              <label class="form-section-label" for="fvhistory-to">종료일</label>
+              <input id="fvhistory-to" type="date">
+            </div>
+          </div>
+          <button class="primary" id="fvhistory-search-btn" style="width:100%;">이력 검색</button>
+          <p id="fvhistory-status" class="muted"></p>
+          <div id="fvhistory-list"></div>
+        </div>
       </div>
 
       <div class="card" id="sector-panel" hidden>
@@ -865,6 +901,65 @@
     document.getElementById("push-history-empty").hidden = true;
     allPushLogs = data;
     renderPushHistoryList();
+  }
+
+  document.querySelectorAll("#fairvalue-panel [data-fvtab]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#fairvalue-panel [data-fvtab]").forEach(b => b.classList.toggle("active", b === btn));
+      document.getElementById("fairvalue-search-view").hidden = btn.dataset.fvtab !== "search";
+      document.getElementById("fairvalue-history-view").hidden = btn.dataset.fvtab !== "history";
+      if (btn.dataset.fvtab === "history") loadFairValueHistory();
+    });
+  });
+
+  document.getElementById("fvhistory-search-btn").addEventListener("click", loadFairValueHistory);
+
+  async function loadFairValueHistory() {
+    const statusEl = document.getElementById("fvhistory-status");
+    const listEl = document.getElementById("fvhistory-list");
+    const corpName = document.getElementById("fvhistory-corp").value.trim();
+    const method = document.getElementById("fvhistory-method").value;
+    const from = document.getElementById("fvhistory-from").value;
+    const to = document.getElementById("fvhistory-to").value;
+
+    statusEl.textContent = "조회 중...";
+    listEl.innerHTML = "";
+
+    let query = supabaseClient
+      .from("fair_value_history")
+      .select("*")
+      .order("calculated_at", { ascending: false })
+      .limit(200);
+
+    if (corpName) query = query.ilike("corp_name", `%${corpName}%`);
+    if (method) query = query.eq("method", method);
+    if (from) query = query.gte("calculated_at", `${from}T00:00:00Z`);
+    if (to) query = query.lte("calculated_at", `${to}T23:59:59Z`);
+
+    const { data, error } = await query;
+
+    if (error) {
+      statusEl.textContent = "조회 실패: " + error.message;
+      return;
+    }
+    if (!data.length) {
+      statusEl.textContent = "조건에 맞는 이력이 없습니다.";
+      return;
+    }
+
+    statusEl.textContent = `${data.length}건 (최근 200건까지 표시)`;
+    listEl.innerHTML = data.map(row => `
+      <div class="inquiry-row">
+        <div>
+          <div>${escapeHtml(row.corp_name)} (${escapeHtml(row.stock_code)}) · ${escapeHtml(FAIRVALUE_METHOD_LABELS[row.method] || row.method)}</div>
+          <div class="inquiry-meta">
+            ${new Date(row.calculated_at).toLocaleString()} ·
+            조회 당시 종가 ${row.price_at_calc !== null ? Math.round(row.price_at_calc).toLocaleString() + "원" : "-"}
+          </div>
+        </div>
+        <span class="status-paid">${row.fair_value !== null ? Math.round(row.fair_value).toLocaleString() + "원" : "계산 불가"}</span>
+      </div>
+    `).join("");
   }
 
   // 적정주가 — 회사명 입력할 때마다(300ms 대기 후) DART 회사 목록에서 검색
