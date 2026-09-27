@@ -27,6 +27,7 @@
       <button data-tab="menus">메뉴관리</button>
       <button data-tab="push">PUSH관리</button>
       <button data-tab="fairvalue">적정주가</button>
+      <button data-tab="sector">주도 섹터 분석</button>
     </div>
     <div class="shop-content">
       <div class="card">
@@ -172,6 +173,13 @@
         </div>
         <p id="fairvalue-status" class="muted"></p>
       </div>
+
+      <div class="card" id="sector-panel" hidden>
+        <p class="muted">조건: 거래대금 1000억 이상 · 등락률 5% 이상 &nbsp;/&nbsp; 정렬: 섹터 총 거래대금 내림차순 (1개 종목뿐인 섹터는 제외)</p>
+        <button class="primary" id="sector-run-btn">분석 실행</button>
+        <p id="sector-status" class="muted"></p>
+        <div id="sector-result"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -195,6 +203,7 @@
     document.getElementById("menus-panel").hidden = tab !== "menus";
     document.getElementById("push-panel").hidden = tab !== "push";
     document.getElementById("fairvalue-panel").hidden = tab !== "fairvalue";
+    document.getElementById("sector-panel").hidden = tab !== "sector";
   }
 
   async function loadOrders() {
@@ -952,6 +961,61 @@
 
     document.getElementById("fairvalue-result-view").hidden = false;
   }
+
+  document.getElementById("sector-run-btn").addEventListener("click", async () => {
+    const statusEl = document.getElementById("sector-status");
+    const resultEl = document.getElementById("sector-result");
+    statusEl.textContent = "분석 중입니다... (전 종목 시세를 불러오는 데 몇 초 걸릴 수 있어요)";
+    resultEl.innerHTML = "";
+
+    const { data, error } = await supabaseClient.functions.invoke("market-sector-analysis", { body: {} });
+
+    if (error) {
+      let detail = error.message;
+      try {
+        const body = await error.context.json();
+        if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
+      } catch (_) {}
+      statusEl.textContent = "분석 실패: " + detail;
+      return;
+    }
+    if (data.error) {
+      statusEl.textContent = data.error;
+      return;
+    }
+
+    const dateLabel = `${data.basDt.slice(0, 4)}.${data.basDt.slice(4, 6)}.${data.basDt.slice(6, 8)}`;
+    if (!data.sectors.length) {
+      statusEl.textContent = `${dateLabel} 기준으로 조건을 만족하는 섹터가 없습니다.`;
+      return;
+    }
+
+    statusEl.textContent = `${dateLabel} 기준 (최근 거래일)`;
+    resultEl.innerHTML = data.sectors.map((sector, i) => `
+      <div class="sector-card">
+        <div class="sector-card-head">
+          <div class="sector-rank">${i + 1}</div>
+          <div class="sector-name">${escapeHtml(sector.name)}</div>
+          <div class="sector-summary">
+            총 거래대금 ${(sector.totalTrPrc / 100000000).toLocaleString(undefined, { maximumFractionDigits: 0 })}억원<br>
+            종목 수 ${sector.count}개 · 평균 ${sector.avgFltRt.toFixed(2)}%
+          </div>
+        </div>
+        ${sector.stocks.map(s => `
+          <div class="sector-stock-row">
+            <div>
+              <span class="sector-stock-name">${escapeHtml(s.name)}</span>
+              <span class="sector-stock-detail"> (${escapeHtml(s.code)})</span>
+            </div>
+            <div style="text-align:right;">
+              <span class="sector-stock-rate ${s.fltRt >= 0 ? "up" : "down"}">${s.fltRt >= 0 ? "+" : ""}${s.fltRt.toFixed(2)}%</span>
+              <div class="sector-stock-detail">거래대금 ${(s.trPrc / 100000000).toLocaleString(undefined, { maximumFractionDigits: 0 })}억원</div>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `).join("");
+  });
 
   async function loadAdmin() {
     const { data: { user } } = await supabaseClient.auth.getUser();
