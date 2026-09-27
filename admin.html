@@ -166,6 +166,7 @@
         <div id="fairvalue-result-view" hidden style="margin-top:16px;">
           <h3 id="fairvalue-corp-name" style="margin-bottom:4px;"></h3>
           <p id="fairvalue-meta" class="muted"></p>
+          <p id="fairvalue-history" class="muted" style="font-size:13px;"></p>
           <table id="fairvalue-table">
             <thead><tr><th>계산법</th><th>적정주가</th><th>계산식</th></tr></thead>
             <tbody id="fairvalue-body"></tbody>
@@ -918,13 +919,15 @@
   function buildFairValueFormula(key, data) {
     const won = (n) => Math.round(n).toLocaleString() + "원";
     const pct = (n) => (n * 100).toFixed(1) + "%";
-    const { eps, bps, roe, fcf, dividendGrowthRate } = data.metrics;
+    const { eps, bps, roe, fcf, dividendGrowthRate, payoutRatio } = data.metrics;
     const a = data.assumptions;
 
     if (key === "graham") return `√(22.5 × EPS × BPS) = √(22.5 × ${won(eps)} × ${won(bps)})`;
-    if (key === "per") return `EPS × PER배수 = ${won(eps)} × ${a.targetPER}배`;
-    if (key === "pbr") return `BPS × PBR배수 = ${won(bps)} × ${a.targetPBR}배`;
-    if (key === "srim") return `BPS × (ROE ÷ 요구수익률) = ${won(bps)} × (${pct(roe)} ÷ ${pct(a.requiredReturn)})`;
+    if (key === "per") return `EPS × PER배수(최근 3개년 실제 평균) = ${won(eps)} × ${a.targetPER.toFixed(1)}배`;
+    if (key === "pbr") return `BPS × PBR배수(최근 3개년 실제 평균) = ${won(bps)} × ${a.targetPBR.toFixed(2)}배`;
+    if (key === "srim") {
+      return `BPS(${won(bps)})에서 시작해 ROE(${pct(roe)})가 ${a.srimFadeYears}년에 걸쳐 요구수익률(${pct(a.requiredReturn)})로 서서히 낮아진다고 보고, 그 사이 매년 초과이익(잔여이익)의 현재가치를 더함(유보율 ${pct(1 - payoutRatio)} 가정, 배당성향 ${pct(payoutRatio)}) — "ROE가 영원히 유지"된다고 보는 단순 모형보다 보수적인 다단계 모형`;
+    }
     if (key === "dcf") {
       if (data.isFinancialIndustry) return "금융업은 영업현금흐름 기반 계산이 맞지 않아 제외";
       const { totalBorrowings, netDebt } = data.rawFigures;
@@ -972,6 +975,13 @@
       `${data.reportPeriod.fsDiv === "CFS" ? "연결" : "별도"}재무제표 · ` +
       `EPS ${Math.round(data.metrics.eps).toLocaleString()}원 · BPS ${Math.round(data.metrics.bps).toLocaleString()}원 · ` +
       `ROE ${(data.metrics.roe * 100).toFixed(1)}%`;
+
+    const histYears = data.historicalMultiples?.years ?? [];
+    document.getElementById("fairvalue-history").textContent = histYears.length
+      ? "PER/PBR 평균에 쓰인 과거 실적: " + histYears.map(y =>
+          `${y.year}년(연말종가 ${y.price.toLocaleString()}원, PER ${y.per !== null ? y.per.toFixed(1) + "배" : "-"}, PBR ${y.pbr !== null ? y.pbr.toFixed(2) + "배" : "-"})`
+        ).join(" · ")
+      : "과거 데이터가 부족해 PER/PBR 배수는 기본값(10배/1배)을 사용했습니다.";
 
     document.getElementById("fairvalue-body").innerHTML = Object.entries(FAIRVALUE_METHOD_LABELS).map(([key, label]) => {
       const value = data.results[key];
