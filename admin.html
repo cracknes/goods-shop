@@ -185,16 +185,6 @@
           <p class="muted">조회할 때마다 6가지 계산법 결과가 자동으로 저장돼요. 나중에 그때 산정한 적정주가가 실제로 얼마나 맞았는지 비교해 볼 수 있어요.</p>
           <label class="form-section-label" for="fvhistory-corp" style="margin-top:0;">회사명</label>
           <input id="fvhistory-corp" type="text" placeholder="예: 삼성전자 (비우면 전체)">
-          <label class="form-section-label" for="fvhistory-method">계산법</label>
-          <select id="fvhistory-method">
-            <option value="">전체</option>
-            <option value="graham">그레이엄 공식</option>
-            <option value="per">PER 배수</option>
-            <option value="pbr">PBR 배수</option>
-            <option value="srim">S-RIM</option>
-            <option value="dcf">DCF</option>
-            <option value="ddm">배당할인모형</option>
-          </select>
           <div style="display:flex; gap:8px;">
             <div style="flex:1;">
               <label class="form-section-label" for="fvhistory-from">시작일</label>
@@ -910,6 +900,16 @@
     renderPushHistoryList();
   }
 
+  // 이력 검색 기간 기본값: 종료일은 오늘, 시작일은 한 달 전
+  (() => {
+    const fmt = (d) => d.toISOString().slice(0, 10);
+    const today = new Date();
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    document.getElementById("fvhistory-to").value = fmt(today);
+    document.getElementById("fvhistory-from").value = fmt(monthAgo);
+  })();
+
   document.querySelectorAll("#fairvalue-panel [data-fvtab]").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll("#fairvalue-panel [data-fvtab]").forEach(b => b.classList.toggle("active", b === btn));
@@ -974,7 +974,6 @@
     const statusEl = document.getElementById("fvhistory-status");
     showFairValueHistoryList();
     const corpName = document.getElementById("fvhistory-corp").value.trim();
-    const method = document.getElementById("fvhistory-method").value;
     const from = document.getElementById("fvhistory-from").value;
     const to = document.getElementById("fvhistory-to").value;
 
@@ -988,7 +987,6 @@
       .limit(1200);
 
     if (corpName) query = query.ilike("corp_name", `%${corpName}%`);
-    if (method) query = query.eq("method", method);
     if (from) query = query.gte("calculated_at", `${from}T00:00:00Z`);
     if (to) query = query.lte("calculated_at", `${to}T23:59:59Z`);
 
