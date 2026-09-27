@@ -207,7 +207,14 @@
           </div>
           <button class="primary" id="fvhistory-search-btn" style="width:100%;">이력 검색</button>
           <p id="fvhistory-status" class="muted"></p>
-          <div id="fvhistory-list"></div>
+
+          <div id="fvhistory-list-view">
+            <div id="fvhistory-list"></div>
+          </div>
+          <div id="fvhistory-detail-view" hidden>
+            <button type="button" id="fvhistory-back-btn" class="muted" style="background:none; border:none; cursor:pointer; padding:0; margin-bottom:12px;">&larr; 목록으로</button>
+            <div id="fvhistory-detail-content"></div>
+          </div>
         </div>
       </div>
 
@@ -913,23 +920,72 @@
   });
 
   document.getElementById("fvhistory-search-btn").addEventListener("click", loadFairValueHistory);
+  document.getElementById("fvhistory-back-btn").addEventListener("click", showFairValueHistoryList);
+
+  let fvHistoryGroups = [];
+
+  function showFairValueHistoryList() {
+    document.getElementById("fvhistory-list-view").hidden = false;
+    document.getElementById("fvhistory-detail-view").hidden = true;
+  }
+
+  function showFairValueHistoryDetail(groupId) {
+    const group = fvHistoryGroups.find(g => g.id === groupId);
+    const prevCloseText = group.priceAtCalc !== null
+      ? `조회 당시 종가 ${Math.round(group.priceAtCalc).toLocaleString()}원 (${group.priceAtCalcDate ? group.priceAtCalcDate.slice(0, 4) + "." + group.priceAtCalcDate.slice(4, 6) + "." + group.priceAtCalcDate.slice(6, 8) : "-"} 기준)`
+      : "조회 당시 종가 정보 없음";
+
+    document.getElementById("fvhistory-detail-content").innerHTML = `
+      <h3 style="margin-bottom:4px;">${escapeHtml(group.corpName)} (${escapeHtml(group.stockCode)})</h3>
+      <p class="muted">${new Date(group.calculatedAt).toLocaleString()} 조회 · ${escapeHtml(prevCloseText)}</p>
+      <table>
+        <thead><tr><th>계산법</th><th>적정주가</th></tr></thead>
+        <tbody>
+          ${Object.entries(FAIRVALUE_METHOD_LABELS).map(([key, label]) => {
+            const row = group.rows.find(r => r.method === key);
+            const display = !row || row.fair_value === null ? "계산 불가" : Math.round(row.fair_value).toLocaleString() + "원";
+            return `<tr><td data-label="계산법">${escapeHtml(label)}</td><td data-label="적정주가">${display}</td></tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+
+    document.getElementById("fvhistory-list-view").hidden = true;
+    document.getElementById("fvhistory-detail-view").hidden = false;
+  }
+
+  function renderFairValueHistoryList() {
+    document.getElementById("fvhistory-list").innerHTML = fvHistoryGroups.map(g => `
+      <div class="inquiry-row" data-group="${g.id}">
+        <div>
+          <div>${escapeHtml(g.corpName)} (${escapeHtml(g.stockCode)})</div>
+          <div class="inquiry-meta">${new Date(g.calculatedAt).toLocaleString()} · ${g.rows.length}개 계산법</div>
+        </div>
+        <span class="status-paid">${g.priceAtCalc !== null ? Math.round(g.priceAtCalc).toLocaleString() + "원" : "-"}</span>
+      </div>
+    `).join("");
+
+    document.querySelectorAll("#fvhistory-list .inquiry-row").forEach(row => {
+      row.addEventListener("click", () => showFairValueHistoryDetail(row.dataset.group));
+    });
+  }
 
   async function loadFairValueHistory() {
     const statusEl = document.getElementById("fvhistory-status");
-    const listEl = document.getElementById("fvhistory-list");
+    showFairValueHistoryList();
     const corpName = document.getElementById("fvhistory-corp").value.trim();
     const method = document.getElementById("fvhistory-method").value;
     const from = document.getElementById("fvhistory-from").value;
     const to = document.getElementById("fvhistory-to").value;
 
     statusEl.textContent = "조회 중...";
-    listEl.innerHTML = "";
+    document.getElementById("fvhistory-list").innerHTML = "";
 
     let query = supabaseClient
       .from("fair_value_history")
       .select("*")
       .order("calculated_at", { ascending: false })
-      .limit(200);
+      .limit(1200);
 
     if (corpName) query = query.ilike("corp_name", `%${corpName}%`);
     if (method) query = query.eq("method", method);
@@ -943,23 +999,35 @@
       return;
     }
     if (!data.length) {
+      fvHistoryGroups = [];
+      renderFairValueHistoryList();
       statusEl.textContent = "조건에 맞는 이력이 없습니다.";
       return;
     }
 
-    statusEl.textContent = `${data.length}건 (최근 200건까지 표시)`;
-    listEl.innerHTML = data.map(row => `
-      <div class="inquiry-row">
-        <div>
-          <div>${escapeHtml(row.corp_name)} (${escapeHtml(row.stock_code)}) · ${escapeHtml(FAIRVALUE_METHOD_LABELS[row.method] || row.method)}</div>
-          <div class="inquiry-meta">
-            ${new Date(row.calculated_at).toLocaleString()} ·
-            조회 당시 종가 ${row.price_at_calc !== null ? Math.round(row.price_at_calc).toLocaleString() + "원" : "-"}
-          </div>
-        </div>
-        <span class="status-paid">${row.fair_value !== null ? Math.round(row.fair_value).toLocaleString() + "원" : "계산 불가"}</span>
-      </div>
-    `).join("");
+    // 계산법 6개는 조회 한 번에 같은 시각(calculated_at)으로 저장되므로, 회사+조회 시각으로 묶어서
+    // "조회 건별"로 하나씩만 목록에 보여주고, 자세한 계산법별 결과는 상세화면에서 봄.
+    const groupMap = new Map();
+    data.forEach(row => {
+      const id = `${row.corp_code}|${row.calculated_at}`;
+      if (!groupMap.has(id)) {
+        groupMap.set(id, {
+          id,
+          corpCode: row.corp_code,
+          corpName: row.corp_name,
+          stockCode: row.stock_code,
+          calculatedAt: row.calculated_at,
+          priceAtCalc: row.price_at_calc,
+          priceAtCalcDate: row.price_at_calc_date,
+          rows: [],
+        });
+      }
+      groupMap.get(id).rows.push(row);
+    });
+
+    fvHistoryGroups = [...groupMap.values()];
+    statusEl.textContent = `${fvHistoryGroups.length}건의 조회 (최근 ${data.length}개 계산 결과 중)`;
+    renderFairValueHistoryList();
   }
 
   // 적정주가 — 회사명 입력할 때마다(300ms 대기 후) DART 회사 목록에서 검색
