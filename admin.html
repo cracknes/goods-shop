@@ -927,7 +927,8 @@
     if (key === "srim") return `BPS × (ROE ÷ 요구수익률) = ${won(bps)} × (${pct(roe)} ÷ ${pct(a.requiredReturn)})`;
     if (key === "dcf") {
       if (data.isFinancialIndustry) return "금융업은 영업현금흐름 기반 계산이 맞지 않아 제외";
-      return `FCF ${won(fcf)}을 연 ${pct(a.dcfGrowthRate)} 성장률로 ${a.dcfProjectionYears}년간 늘려 할인율 ${pct(a.requiredReturn)}로 현재가치 합산 + 영구성장률 ${pct(a.dcfTerminalGrowthRate)}로 잔존가치 계산 후 발행주식수(${data.rawFigures.shares.toLocaleString()}주)로 나눔`;
+      const { totalBorrowings, netDebt } = data.rawFigures;
+      return `FCF ${won(fcf)}을 연 ${pct(a.dcfGrowthRate)} 성장률로 ${a.dcfProjectionYears}년간 늘려 할인율 ${pct(a.requiredReturn)}로 현재가치 합산 + 영구성장률 ${pct(a.dcfTerminalGrowthRate)}로 잔존가치 계산 = 기업가치 → 순부채(총차입금 ${won(totalBorrowings)} − 현금 ${won(data.rawFigures.cash)} = ${won(netDebt)}) 차감 = 지분가치 → 발행주식수(${data.rawFigures.shares.toLocaleString()}주)로 나눔`;
     }
     if (key === "ddm") {
       if (data.rawFigures.dividendPerShare === null) return "배당을 지급하지 않아 계산 불가";
