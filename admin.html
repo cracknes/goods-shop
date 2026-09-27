@@ -167,7 +167,7 @@
           <h3 id="fairvalue-corp-name" style="margin-bottom:4px;"></h3>
           <p id="fairvalue-meta" class="muted"></p>
           <table id="fairvalue-table">
-            <thead><tr><th>계산법</th><th>적정주가</th></tr></thead>
+            <thead><tr><th>계산법</th><th>적정주가</th><th>계산식</th></tr></thead>
             <tbody id="fairvalue-body"></tbody>
           </table>
         </div>
@@ -914,6 +914,28 @@
     ddm: "배당할인모형",
   };
 
+  // 각 계산법이 실제로 어떤 값을 넣어서 계산됐는지 화면에 그대로 보여주기 위한 계산식 문자열
+  function buildFairValueFormula(key, data) {
+    const won = (n) => Math.round(n).toLocaleString() + "원";
+    const pct = (n) => (n * 100).toFixed(1) + "%";
+    const { eps, bps, roe, fcf, dividendGrowthRate } = data.metrics;
+    const a = data.assumptions;
+
+    if (key === "graham") return `√(22.5 × EPS × BPS) = √(22.5 × ${won(eps)} × ${won(bps)})`;
+    if (key === "per") return `EPS × PER배수 = ${won(eps)} × ${a.targetPER}배`;
+    if (key === "pbr") return `BPS × PBR배수 = ${won(bps)} × ${a.targetPBR}배`;
+    if (key === "srim") return `BPS × (ROE ÷ 요구수익률) = ${won(bps)} × (${pct(roe)} ÷ ${pct(a.requiredReturn)})`;
+    if (key === "dcf") {
+      if (data.isFinancialIndustry) return "금융업은 영업현금흐름 기반 계산이 맞지 않아 제외";
+      return `FCF ${won(fcf)}을 연 ${pct(a.dcfGrowthRate)} 성장률로 ${a.dcfProjectionYears}년간 늘려 할인율 ${pct(a.requiredReturn)}로 현재가치 합산 + 영구성장률 ${pct(a.dcfTerminalGrowthRate)}로 잔존가치 계산 후 발행주식수(${data.rawFigures.shares.toLocaleString()}주)로 나눔`;
+    }
+    if (key === "ddm") {
+      if (data.rawFigures.dividendPerShare === null) return "배당을 지급하지 않아 계산 불가";
+      return `DPS × (1+배당성장률) ÷ (요구수익률−배당성장률) = ${won(data.rawFigures.dividendPerShare)} × (1+${pct(dividendGrowthRate)}) ÷ (${pct(a.requiredReturn)}−${pct(dividendGrowthRate)})`;
+    }
+    return "";
+  }
+
   async function loadFairValue(corpCode) {
     const statusEl = document.getElementById("fairvalue-status");
     document.getElementById("fairvalue-result-view").hidden = true;
@@ -956,7 +978,8 @@
       if (key === "dcf" && data.isFinancialIndustry) display = "금융업이라 계산 제외";
       else if (value === null) display = "계산 불가";
       else display = Math.round(value).toLocaleString() + "원";
-      return `<tr><td data-label="계산법">${escapeHtml(label)}</td><td data-label="적정주가">${display}</td></tr>`;
+      const formula = buildFairValueFormula(key, data);
+      return `<tr><td data-label="계산법">${escapeHtml(label)}</td><td data-label="적정주가">${display}</td><td data-label="계산식">${escapeHtml(formula)}</td></tr>`;
     }).join("");
 
     document.getElementById("fairvalue-result-view").hidden = false;
