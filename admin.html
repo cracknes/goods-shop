@@ -188,11 +188,11 @@
           <div style="display:flex; gap:8px;">
             <div style="flex:1;">
               <label class="form-section-label" for="fvhistory-from">시작일</label>
-              <input id="fvhistory-from" type="date">
+              <input id="fvhistory-from" type="text" inputmode="numeric" placeholder="2026/08/27">
             </div>
             <div style="flex:1;">
               <label class="form-section-label" for="fvhistory-to">종료일</label>
-              <input id="fvhistory-to" type="date">
+              <input id="fvhistory-to" type="text" inputmode="numeric" placeholder="2026/09/27">
             </div>
           </div>
           <button class="primary" id="fvhistory-search-btn" style="width:100%;">이력 검색</button>
@@ -902,13 +902,20 @@
 
   // 이력 검색 기간 기본값: 종료일은 오늘, 시작일은 한 달 전
   (() => {
-    const fmt = (d) => d.toISOString().slice(0, 10);
     const today = new Date();
     const monthAgo = new Date(today);
     monthAgo.setMonth(monthAgo.getMonth() - 1);
-    document.getElementById("fvhistory-to").value = fmt(today);
-    document.getElementById("fvhistory-from").value = fmt(monthAgo);
+    document.getElementById("fvhistory-to").value = formatKDate(today);
+    document.getElementById("fvhistory-from").value = formatKDate(monthAgo);
   })();
+
+  // "YYYY/MM/DD" 텍스트를 쿼리에 쓸 "YYYY-MM-DD"로 변환 (형식이 틀리면 null)
+  function parseKDateInput(str) {
+    const m = str.trim().match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+    if (!m) return null;
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+  }
 
   document.querySelectorAll("#fairvalue-panel [data-fvtab]").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -974,8 +981,19 @@
     const statusEl = document.getElementById("fvhistory-status");
     showFairValueHistoryList();
     const corpName = document.getElementById("fvhistory-corp").value.trim();
-    const from = document.getElementById("fvhistory-from").value;
-    const to = document.getElementById("fvhistory-to").value;
+    const fromRaw = document.getElementById("fvhistory-from").value.trim();
+    const toRaw = document.getElementById("fvhistory-to").value.trim();
+    const from = fromRaw ? parseKDateInput(fromRaw) : null;
+    const to = toRaw ? parseKDateInput(toRaw) : null;
+
+    if (fromRaw && !from) {
+      statusEl.textContent = "시작일 형식이 올바르지 않습니다. 2026/08/27 처럼 입력해 주세요.";
+      return;
+    }
+    if (toRaw && !to) {
+      statusEl.textContent = "종료일 형식이 올바르지 않습니다. 2026/09/27 처럼 입력해 주세요.";
+      return;
+    }
 
     statusEl.textContent = "조회 중...";
     document.getElementById("fvhistory-list").innerHTML = "";
