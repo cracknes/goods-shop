@@ -931,7 +931,11 @@
 
     statusEl.textContent = "";
     document.getElementById("fairvalue-corp-name").textContent = `${data.corpName} (${data.stockCode})`;
+    const prevCloseText = data.previousClose
+      ? `전일 종가 ${data.previousClose.price.toLocaleString()}원 (${data.previousClose.date.slice(0, 4)}.${data.previousClose.date.slice(4, 6)}.${data.previousClose.date.slice(6, 8)} 기준) · `
+      : "";
     document.getElementById("fairvalue-meta").textContent =
+      prevCloseText +
       `기준: ${data.reportPeriod.year}년 ${FAIRVALUE_REPRT_NAMES[data.reportPeriod.reprtCode]} · ` +
       `${data.reportPeriod.fsDiv === "CFS" ? "연결" : "별도"}재무제표 · ` +
       `EPS ${Math.round(data.metrics.eps).toLocaleString()}원 · BPS ${Math.round(data.metrics.bps).toLocaleString()}원 · ` +
