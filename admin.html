@@ -190,11 +190,19 @@
           <div style="display:flex; gap:8px;">
             <div style="flex:1;">
               <label class="form-section-label" for="fvhistory-from">시작일</label>
-              <input id="fvhistory-from" type="text" inputmode="numeric" placeholder="2026/08/27" style="text-align:center;">
+              <div style="display:flex; gap:4px;">
+                <input id="fvhistory-from" type="text" inputmode="numeric" placeholder="2026/08/27" style="text-align:center; flex:1;">
+                <button type="button" id="fvhistory-from-cal-btn" class="muted" style="padding:0 12px;" aria-label="달력에서 시작일 선택">📅</button>
+                <input id="fvhistory-from-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
             </div>
             <div style="flex:1;">
               <label class="form-section-label" for="fvhistory-to">종료일</label>
-              <input id="fvhistory-to" type="text" inputmode="numeric" placeholder="2026/09/27" style="text-align:center;">
+              <div style="display:flex; gap:4px;">
+                <input id="fvhistory-to" type="text" inputmode="numeric" placeholder="2026/09/27" style="text-align:center; flex:1;">
+                <button type="button" id="fvhistory-to-cal-btn" class="muted" style="padding:0 12px;" aria-label="달력에서 종료일 선택">📅</button>
+                <input id="fvhistory-to-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
             </div>
           </div>
           <button class="primary" id="fvhistory-search-btn" style="width:100%;">이력 검색</button>
@@ -918,6 +926,23 @@
     const pad = (n) => String(n).padStart(2, "0");
     return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
   }
+
+  // 날짜 입력칸은 슬래시(YYYY/MM/DD) 형식을 우리가 직접 표시하려고 텍스트 입력으로 뒀는데
+  // (모바일 브라우저가 <input type="date">를 기기 로케일대로 "2026.08.27."처럼 그려서 통일이
+  // 안 됐던 문제 때문), 그래도 달력으로 고를 수 있으면 편해서 숨겨둔 <input type="date">를
+  // 달력 버튼으로 열어주고, 고른 날짜를 다시 우리 형식으로 텍스트 입력칸에 채워 넣음.
+  [["from", "fvhistory-from"], ["to", "fvhistory-to"]].forEach(([_, id]) => {
+    const textInput = document.getElementById(id);
+    const picker = document.getElementById(`${id}-picker`);
+    document.getElementById(`${id}-cal-btn`).addEventListener("click", () => {
+      const current = parseKDateInput(textInput.value);
+      if (current) picker.value = current;
+      try { picker.showPicker(); } catch (_) { picker.focus(); }
+    });
+    picker.addEventListener("change", () => {
+      if (picker.value) textInput.value = formatKDate(picker.value);
+    });
+  });
 
   document.querySelectorAll("#fairvalue-panel [data-fvtab]").forEach(btn => {
     btn.addEventListener("click", () => {
