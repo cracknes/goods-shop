@@ -173,6 +173,7 @@
             <h3 id="fairvalue-corp-name" style="margin-bottom:4px;"></h3>
             <p id="fairvalue-meta" class="muted"></p>
             <p id="fairvalue-history" class="muted" style="font-size:13px;"></p>
+            <p id="fairvalue-wacc" class="muted" style="font-size:13px;"></p>
             <p id="fairvalue-technicals" class="muted" style="font-size:13px;"></p>
             <table id="fairvalue-table">
               <thead><tr><th>계산법</th><th>적정주가</th><th>계산식</th></tr></thead>
@@ -1090,8 +1091,8 @@
     graham: "그레이엄 공식",
     per: "PER 배수",
     pbr: "PBR 배수",
-    srim: "S-RIM(단순화)",
-    dcf: "DCF(간이)",
+    srim: "S-RIM",
+    dcf: "DCF",
     ddm: "배당할인모형",
   };
 
@@ -1105,17 +1106,18 @@
     if (key === "graham") return `√(22.5 × EPS × BPS) = √(22.5 × ${won(eps)} × ${won(bps)})`;
     if (key === "per") return `EPS × PER배수(최근 3개년 실제 평균) = ${won(eps)} × ${a.targetPER.toFixed(1)}배`;
     if (key === "pbr") return `BPS × PBR배수(최근 3개년 실제 평균) = ${won(bps)} × ${a.targetPBR.toFixed(2)}배`;
+    const discountLabel = data.wacc ? "WACC" : "요구수익률(WACC 계산 실패, 기본값)";
     if (key === "srim") {
-      return `BPS(${won(bps)})에서 시작해 ROE(${pct(roe)})가 ${a.srimFadeYears}년에 걸쳐 요구수익률(${pct(a.requiredReturn)})로 서서히 낮아진다고 보고, 그 사이 매년 초과이익(잔여이익)의 현재가치를 더함(유보율 ${pct(1 - payoutRatio)} 가정, 배당성향 ${pct(payoutRatio)}) — "ROE가 영원히 유지"된다고 보는 단순 모형보다 보수적인 다단계 모형`;
+      return `BPS(${won(bps)})에서 시작해 ROE(${pct(roe)})가 ${a.srimFadeYears}년에 걸쳐 ${discountLabel}(${pct(a.requiredReturn)})로 서서히 낮아진다고 보고, 그 사이 매년 초과이익(잔여이익)의 현재가치를 더함(유보율 ${pct(1 - payoutRatio)} 가정, 배당성향 ${pct(payoutRatio)}) — "ROE가 영원히 유지"된다고 보는 단순 모형보다 보수적인 다단계 모형`;
     }
     if (key === "dcf") {
       if (data.isFinancialIndustry) return "금융업은 영업현금흐름 기반 계산이 맞지 않아 제외";
       const { totalBorrowings, netDebt } = data.rawFigures;
-      return `FCF ${won(fcf)}을 연 ${pct(a.dcfGrowthRate)} 성장률로 ${a.dcfProjectionYears}년간 늘려 할인율 ${pct(a.requiredReturn)}로 현재가치 합산 + 영구성장률 ${pct(a.dcfTerminalGrowthRate)}로 잔존가치 계산 = 기업가치 → 순부채(총차입금 ${won(totalBorrowings)} − 현금 ${won(data.rawFigures.cash)} = ${won(netDebt)}) 차감 = 지분가치 → 발행주식수(${data.rawFigures.shares.toLocaleString()}주)로 나눔`;
+      return `FCF ${won(fcf)}을 연 ${pct(a.dcfGrowthRate)} 성장률로 ${a.dcfProjectionYears}년간 늘려 할인율 ${discountLabel}(${pct(a.requiredReturn)})로 현재가치 합산 + 영구성장률 ${pct(a.dcfTerminalGrowthRate)}로 잔존가치 계산 = 기업가치 → 순부채(총차입금 ${won(totalBorrowings)} − 현금 ${won(data.rawFigures.cash)} = ${won(netDebt)}) 차감 = 지분가치 → 발행주식수(${data.rawFigures.shares.toLocaleString()}주)로 나눔`;
     }
     if (key === "ddm") {
       if (data.rawFigures.dividendPerShare === null) return "배당을 지급하지 않아 계산 불가";
-      return `DPS × (1+배당성장률) ÷ (요구수익률−배당성장률) = ${won(data.rawFigures.dividendPerShare)} × (1+${pct(dividendGrowthRate)}) ÷ (${pct(a.requiredReturn)}−${pct(dividendGrowthRate)})`;
+      return `DPS × (1+배당성장률) ÷ (${discountLabel}−배당성장률) = ${won(data.rawFigures.dividendPerShare)} × (1+${pct(dividendGrowthRate)}) ÷ (${pct(a.requiredReturn)}−${pct(dividendGrowthRate)})`;
     }
     return "";
   }
@@ -1154,7 +1156,10 @@
       `기준: ${data.reportPeriod.year}년 ${FAIRVALUE_REPRT_NAMES[data.reportPeriod.reprtCode]} · ` +
       `${data.reportPeriod.fsDiv === "CFS" ? "연결" : "별도"}재무제표 · ` +
       `EPS ${Math.round(data.metrics.eps).toLocaleString()}원 · BPS ${Math.round(data.metrics.bps).toLocaleString()}원 · ` +
-      `ROE ${(data.metrics.roe * 100).toFixed(1)}%`;
+      `ROE ${(data.metrics.roe * 100).toFixed(1)}%` +
+      (data.rawFigures.preferredShares
+        ? ` · 우선주 ${data.rawFigures.preferredShares.toLocaleString()}주 있음(EPS는 우선주배당 제외 후 보통주식수로, BPS는 보통주+우선주 합계로 계산)`
+        : "");
 
     const histYears = data.historicalMultiples?.years ?? [];
     document.getElementById("fairvalue-history").textContent = histYears.length
@@ -1162,6 +1167,11 @@
           `${y.year}년(연말종가 ${y.price.toLocaleString()}원, PER ${y.per !== null ? y.per.toFixed(1) + "배" : "-"}, PBR ${y.pbr !== null ? y.pbr.toFixed(2) + "배" : "-"})`
         ).join(" · ")
       : "과거 데이터가 부족해 PER/PBR 배수는 기본값(10배/1배)을 사용했습니다.";
+
+    const w = data.wacc;
+    document.getElementById("fairvalue-wacc").textContent = w
+      ? `WACC ${(w.wacc * 100).toFixed(2)}% = 자기자본비용 ${(w.costOfEquity * 100).toFixed(2)}%(베타 ${w.beta.toFixed(2)}, 최근 30거래일 종목·코스피 수익률 기준) × 자기자본비중 ${(w.equityWeight * 100).toFixed(1)}% + 세후 타인자본비용 ${(w.costOfDebt * (1 - data.assumptions.taxRate) * 100).toFixed(2)}% × 부채비중 ${(w.debtWeight * 100).toFixed(1)}%`
+      : "베타를 계산할 시세 데이터가 부족해 WACC 대신 기본 요구수익률(8%)을 사용했습니다.";
 
     const tech = data.technicals;
     document.getElementById("fairvalue-technicals").textContent = tech
