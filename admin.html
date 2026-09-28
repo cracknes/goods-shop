@@ -173,6 +173,7 @@
             <h3 id="fairvalue-corp-name" style="margin-bottom:4px;"></h3>
             <p id="fairvalue-meta" class="muted"></p>
             <p id="fairvalue-history" class="muted" style="font-size:13px;"></p>
+            <p id="fairvalue-technicals" class="muted" style="font-size:13px;"></p>
             <table id="fairvalue-table">
               <thead><tr><th>계산법</th><th>적정주가</th><th>계산식</th></tr></thead>
               <tbody id="fairvalue-body"></tbody>
@@ -1161,6 +1162,13 @@
           `${y.year}년(연말종가 ${y.price.toLocaleString()}원, PER ${y.per !== null ? y.per.toFixed(1) + "배" : "-"}, PBR ${y.pbr !== null ? y.pbr.toFixed(2) + "배" : "-"})`
         ).join(" · ")
       : "과거 데이터가 부족해 PER/PBR 배수는 기본값(10배/1배)을 사용했습니다.";
+
+    const tech = data.technicals;
+    document.getElementById("fairvalue-technicals").textContent = tech
+      ? `RSI(14일) ${tech.rsi14 !== null ? tech.rsi14.toFixed(1) + " (" + tech.rsiLabel + ")" : "계산 불가"} · ` +
+        `최근 거래량 ${tech.latestVolume !== null ? tech.latestVolume.toLocaleString() + "주" : "-"}` +
+        (tech.volumeRatio !== null ? ` (20일 평균 대비 ${tech.volumeRatio.toFixed(2)}배)` : "")
+      : "";
 
     document.getElementById("fairvalue-body").innerHTML = Object.entries(FAIRVALUE_METHOD_LABELS).map(([key, label]) => {
       const value = data.results[key];
