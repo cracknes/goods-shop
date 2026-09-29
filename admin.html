@@ -25,6 +25,7 @@
       <button data-tab="productstats">상품통계</button>
       <button data-tab="addproduct">상품관리</button>
       <button data-tab="menus">메뉴관리</button>
+      <button data-tab="newslinks">오늘의뉴스 관리</button>
       <button data-tab="push">PUSH관리</button>
       <button data-tab="fairvalue">적정주가</button>
       <button data-tab="sector">주도 섹터 분석</button>
@@ -126,6 +127,43 @@
         <input id="new-menu-name" type="text" placeholder="카테고리 이름 (예: 가전제품)">
         <button class="primary" id="new-menu-submit" style="width:100%;">카테고리 추가</button>
         <p id="new-menu-status" class="muted"></p>
+      </div>
+
+      <div class="card" id="newslinks-panel" hidden>
+        <h2 style="margin-top:0;">오늘의뉴스 관리</h2>
+        <p class="muted">메인 화면 "오늘의뉴스" 메뉴에 보여줄 바로가기 카드 목록이에요. 꺼두면 메인 화면에서 바로 숨겨집니다.</p>
+        <div id="newslinks-list-view">
+          <button type="button" class="primary" id="newslinks-new-btn" style="width:100%; margin-bottom:12px;">+ 새 바로가기 추가</button>
+          <div id="newslinks-list"></div>
+          <p id="newslinks-empty" class="muted" hidden>등록된 바로가기가 없습니다.</p>
+        </div>
+        <div id="newslinks-detail-view" hidden>
+          <button type="button" id="newslinks-back-btn" class="muted" style="background:none; border:none; cursor:pointer; padding:0; margin-bottom:12px;">&larr; 목록으로</button>
+          <h3 id="newslinks-form-title" style="margin-top:0;">바로가기 추가</h3>
+          <label class="form-section-label" for="newslinks-name" style="margin-top:0;">이름</label>
+          <input id="newslinks-name" type="text" placeholder="예: 한국경제">
+          <label class="form-section-label" for="newslinks-url">링크 주소</label>
+          <input id="newslinks-url" type="text" placeholder="https://...">
+          <label style="display:flex; align-items:center; gap:8px; margin:4px 0 12px; cursor:pointer;">
+            <input type="checkbox" id="newslinks-sametab" style="width:18px; height:18px;">
+            <span>같은 탭에서 열기 (체크 안 하면 새 탭으로 열림 — 네이버 지면보기처럼 새 탭에서 이상하게 열리는 사이트만 체크)</span>
+          </label>
+          <label class="form-section-label" style="margin-top:0;">카드 배경색</label>
+          <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <span class="muted" style="font-size:13px;">시작색</span>
+              <input id="newslinks-color1" type="color" value="#cfe0ff" style="width:44px; height:36px; padding:2px; margin:0;">
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <span class="muted" style="font-size:13px;">끝색</span>
+              <input id="newslinks-color2" type="color" value="#9db8f5" style="width:44px; height:36px; padding:2px; margin:0;">
+            </label>
+            <div id="newslinks-preview" style="flex:1; height:36px; border-radius:10px;"></div>
+          </div>
+          <button class="primary" id="newslinks-submit" style="width:100%; margin-top:8px;">저장</button>
+          <button type="button" class="danger-btn" id="newslinks-delete-btn" hidden style="width:100%; margin-top:8px;">삭제</button>
+          <p id="newslinks-status" class="muted"></p>
+        </div>
       </div>
 
       <div class="card" id="push-panel" hidden>
@@ -247,6 +285,7 @@
     document.getElementById("productstats-panel").hidden = tab !== "productstats";
     document.getElementById("addproduct-panel").hidden = tab !== "addproduct";
     document.getElementById("menus-panel").hidden = tab !== "menus";
+    document.getElementById("newslinks-panel").hidden = tab !== "newslinks";
     document.getElementById("push-panel").hidden = tab !== "push";
     document.getElementById("fairvalue-panel").hidden = tab !== "fairvalue";
     document.getElementById("sector-panel").hidden = tab !== "sector";
@@ -793,6 +832,169 @@
     await loadMenusAdmin();
   });
 
+  // 오늘의뉴스 관리 — 메인 화면 "오늘의뉴스" 카드 목록(news_links 테이블)을 관리자가 직접
+  // 추가/수정/삭제/순서변경할 수 있게 함. 카드 배경색은 CSS gradient 문자열을 직접 입력하게
+  // 하면 어려우니(초보자 대상 사이트라 CLAUDE.md 지침에 맞춰), 색상 선택기 2개(시작색/끝색)로
+  // 고르면 그 값으로 `linear-gradient(135deg, 시작색, 끝색)` 문자열을 자동으로 만들어줌.
+  let allNewsLinks = [];
+  let editingNewsLinkId = null;
+
+  function buildGradient(c1, c2) {
+    return `linear-gradient(135deg, ${c1}, ${c2})`;
+  }
+
+  // 저장된 gradient 문자열("linear-gradient(135deg, #xxxxxx, #xxxxxx)")에서 두 색상만 다시 뽑아냄
+  function parseGradientColors(gradient) {
+    const m = (gradient || "").match(/#[0-9a-fA-F]{6}/g);
+    return m && m.length >= 2 ? [m[0], m[1]] : ["#cfe0ff", "#9db8f5"];
+  }
+
+  function updateNewsLinkPreview() {
+    const c1 = document.getElementById("newslinks-color1").value;
+    const c2 = document.getElementById("newslinks-color2").value;
+    document.getElementById("newslinks-preview").style.background = buildGradient(c1, c2);
+  }
+  document.getElementById("newslinks-color1").addEventListener("input", updateNewsLinkPreview);
+  document.getElementById("newslinks-color2").addEventListener("input", updateNewsLinkPreview);
+
+  function showNewsLinksList() {
+    document.getElementById("newslinks-list-view").hidden = false;
+    document.getElementById("newslinks-detail-view").hidden = true;
+  }
+
+  function showNewsLinkForm(link) {
+    editingNewsLinkId = link ? link.id : null;
+    document.getElementById("newslinks-form-title").textContent = link ? "바로가기 수정" : "바로가기 추가";
+    document.getElementById("newslinks-name").value = link ? link.name : "";
+    document.getElementById("newslinks-url").value = link ? link.url : "";
+    document.getElementById("newslinks-sametab").checked = link ? link.same_tab : false;
+    const [c1, c2] = parseGradientColors(link ? link.gradient : null);
+    document.getElementById("newslinks-color1").value = c1;
+    document.getElementById("newslinks-color2").value = c2;
+    updateNewsLinkPreview();
+    document.getElementById("newslinks-delete-btn").hidden = !link;
+    document.getElementById("newslinks-status").textContent = "";
+    document.getElementById("newslinks-list-view").hidden = true;
+    document.getElementById("newslinks-detail-view").hidden = false;
+  }
+
+  document.getElementById("newslinks-new-btn").addEventListener("click", () => showNewsLinkForm(null));
+  document.getElementById("newslinks-back-btn").addEventListener("click", showNewsLinksList);
+
+  function renderNewsLinksList() {
+    document.getElementById("newslinks-empty").hidden = allNewsLinks.length > 0;
+    document.getElementById("newslinks-list").innerHTML = allNewsLinks.map((n, i) => `
+      <div class="inquiry-row" data-id="${n.id}">
+        <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" data-edit="${n.id}">
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <button type="button" class="reorder-btn newslink-up-btn" data-id="${n.id}" ${i === 0 ? "disabled" : ""} aria-label="위로">&uarr;</button>
+            <button type="button" class="reorder-btn newslink-down-btn" data-id="${n.id}" ${i === allNewsLinks.length - 1 ? "disabled" : ""} aria-label="아래로">&darr;</button>
+          </div>
+          <div style="width:32px; height:32px; border-radius:8px; background:${n.gradient}; flex-shrink:0;"></div>
+          <div>
+            <div>${escapeHtml(n.name)}</div>
+            <div class="inquiry-meta">${escapeHtml(n.url)}</div>
+          </div>
+        </div>
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+          <input type="checkbox" class="newslink-visible-toggle" data-id="${n.id}" style="width:18px; height:18px;" ${n.visible ? "checked" : ""}>
+          <span class="muted">노출</span>
+        </label>
+      </div>
+    `).join("");
+
+    document.querySelectorAll("[data-edit]").forEach(el => {
+      el.addEventListener("click", () => showNewsLinkForm(allNewsLinks.find(n => n.id === el.dataset.edit)));
+    });
+    document.querySelectorAll(".newslink-visible-toggle").forEach(cb => {
+      cb.addEventListener("change", async () => {
+        const { error } = await supabaseClient.from("news_links").update({ visible: cb.checked }).eq("id", cb.dataset.id);
+        if (error) {
+          alert("변경 실패: " + error.message);
+          cb.checked = !cb.checked;
+          return;
+        }
+        const link = allNewsLinks.find(n => n.id === cb.dataset.id);
+        if (link) link.visible = cb.checked;
+      });
+    });
+    document.querySelectorAll(".newslink-up-btn").forEach(btn => {
+      btn.addEventListener("click", () => moveNewsLink(btn.dataset.id, "up"));
+    });
+    document.querySelectorAll(".newslink-down-btn").forEach(btn => {
+      btn.addEventListener("click", () => moveNewsLink(btn.dataset.id, "down"));
+    });
+  }
+
+  async function moveNewsLink(id, direction) {
+    const index = allNewsLinks.findIndex(n => n.id === id);
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (index === -1 || targetIndex < 0 || targetIndex >= allNewsLinks.length) return;
+
+    const current = allNewsLinks[index];
+    const target = allNewsLinks[targetIndex];
+    const [{ error: e1 }, { error: e2 }] = await Promise.all([
+      supabaseClient.from("news_links").update({ sort_order: target.sort_order }).eq("id", current.id),
+      supabaseClient.from("news_links").update({ sort_order: current.sort_order }).eq("id", target.id),
+    ]);
+    if (e1 || e2) {
+      alert("순서 변경 실패: " + (e1 || e2).message);
+      return;
+    }
+    await loadNewsLinksAdmin();
+  }
+
+  async function loadNewsLinksAdmin() {
+    const { data, error } = await supabaseClient.from("news_links").select("*").order("sort_order");
+    allNewsLinks = error ? [] : data;
+    renderNewsLinksList();
+  }
+
+  document.getElementById("newslinks-submit").addEventListener("click", async () => {
+    const statusEl = document.getElementById("newslinks-status");
+    const name = document.getElementById("newslinks-name").value.trim();
+    const url = document.getElementById("newslinks-url").value.trim();
+    if (!name || !url) {
+      statusEl.textContent = "이름과 링크 주소를 모두 입력해 주세요.";
+      return;
+    }
+
+    const row = {
+      name,
+      url,
+      same_tab: document.getElementById("newslinks-sametab").checked,
+      gradient: buildGradient(document.getElementById("newslinks-color1").value, document.getElementById("newslinks-color2").value),
+    };
+
+    statusEl.textContent = "저장 중...";
+    let error;
+    if (editingNewsLinkId) {
+      ({ error } = await supabaseClient.from("news_links").update(row).eq("id", editingNewsLinkId));
+    } else {
+      const maxOrder = allNewsLinks.reduce((max, n) => Math.max(max, n.sort_order), 0);
+      ({ error } = await supabaseClient.from("news_links").insert({ ...row, visible: true, sort_order: maxOrder + 1 }));
+    }
+    if (error) {
+      statusEl.textContent = "저장 실패: " + error.message;
+      return;
+    }
+
+    await loadNewsLinksAdmin();
+    showNewsLinksList();
+  });
+
+  document.getElementById("newslinks-delete-btn").addEventListener("click", async () => {
+    if (!editingNewsLinkId) return;
+    if (!confirm("정말 삭제하시겠어요?")) return;
+    const { error } = await supabaseClient.from("news_links").delete().eq("id", editingNewsLinkId);
+    if (error) {
+      alert("삭제 실패: " + error.message);
+      return;
+    }
+    await loadNewsLinksAdmin();
+    showNewsLinksList();
+  });
+
   document.querySelectorAll("#push-panel [data-pushtab]").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll("#push-panel [data-pushtab]").forEach(b => b.classList.toggle("active", b === btn));
@@ -1294,6 +1496,7 @@
     });
 
     await loadMenusAdmin();
+    await loadNewsLinksAdmin();
     await loadOrders();
     await loadInquiries();
     await loadLoginHistory();

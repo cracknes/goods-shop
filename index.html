@@ -146,26 +146,27 @@
     renderProducts();
   }
 
-  // 오늘의뉴스: 신문사별 지면보기 + 한국거래소 시세정보 + DART 전자공시 바로가기
-  // 네이버 지면보기 3곳은 새 창으로 열면 일부 모바일 브라우저/앱에서 데스크탑 모드로 열리는 경우가 있어
-  // 같은 탭에서 이동하도록(sameTab) 함 — 새 탭으로 열 때보다 모바일 화면으로 뜰 확률이 높음.
-  const NEWSPAPERS = [
-    { name: "한국경제", url: "https://media.naver.com/press/015/newspaper", gradient: "linear-gradient(135deg, #cfe0ff, #9db8f5)", sameTab: true },
-    { name: "매일경제", url: "https://media.naver.com/press/009/newspaper", gradient: "linear-gradient(135deg, #ffe3c2, #ffbf7a)", sameTab: true },
-    { name: "코리아중앙데일리", url: "https://media.naver.com/press/640/newspaper", gradient: "linear-gradient(135deg, #d7f0e6, #a3ddc4)", sameTab: true },
-    { name: "한국거래소(KRX) 시세정보", url: "https://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201020303", gradient: "linear-gradient(135deg, #e6e9f0, #c3cbe0)" },
-    { name: "DART 전자공시", url: "https://dart.fss.or.kr/dsab007/main.do", gradient: "linear-gradient(135deg, #ffe0ec, #ffb3cf)" },
-    { name: "Npay 증권", url: "https://stock.naver.com/domestic/stock/000270/price", gradient: "linear-gradient(135deg, #fff3c4, #ffd980)", sameTab: true },
-    { name: "네이버웹툰", url: "https://m.comic.naver.com/webtoon/weekday", gradient: "linear-gradient(135deg, #d9f7d3, #7fe08c)", sameTab: true },
-    { name: "유튜브(모닝루틴)", url: "https://m.youtube.com/results?sp=mAEA&search_query=%EB%AA%A8%EB%8B%9D%EB%A3%A8%ED%8B%B4", gradient: "linear-gradient(135deg, #ffe0e0, #ff9c9c)" },
-    { name: "AXHub", url: "https://axlms.nonghyupit.axhub.ai/courses/19/learn?lesson=99", gradient: "linear-gradient(135deg, #e8ddff, #c3a6fb)" },
-  ];
+  // 오늘의뉴스: 신문사별 지면보기 + 한국거래소 시세정보 + DART 전자공시 바로가기 등.
+  // 관리자페이지에서 직접 추가/수정/삭제할 수 있도록 news_links 테이블에서 불러옴(하드코딩 아님).
+  // 네이버 지면보기처럼 새 창으로 열면 일부 모바일 브라우저/앱에서 데스크탑 모드로 열리는 경우가
+  // 있는 링크는 같은 탭에서 이동하도록(same_tab) 관리자가 켤 수 있음.
+  let NEWSPAPERS = [];
+
+  async function loadNewsLinks() {
+    const { data, error } = await supabaseClient
+      .from("news_links")
+      .select("*")
+      .eq("visible", true)
+      .order("sort_order");
+    if (error || !data) return;
+    NEWSPAPERS = data;
+  }
 
   function renderNewsMenu() {
     const container = document.getElementById("products");
     container.style.display = ""; // 상품 그리드와 동일한 카드 그리드 레이아웃 사용
     container.innerHTML = NEWSPAPERS.map(n => `
-      <a class="product-card news-card" href="${n.url}" ${n.sameTab ? "" : `target="_blank" rel="noopener"`} style="text-decoration:none; color:inherit;">
+      <a class="product-card news-card" href="${n.url}" ${n.same_tab ? "" : `target="_blank" rel="noopener"`} style="text-decoration:none; color:inherit;">
         <div class="thumb" style="background:${n.gradient}">${NEWS_ICON}</div>
         <div class="body">
           <div class="name">${escapeHtml(n.name)}</div>
@@ -650,7 +651,7 @@
   loadMenus().then(() => {
     activeCategory = (allMenuItems.find(m => m.visible) || {}).id || null;
     renderCategoryList();
-    return loadDbProducts();
+    return Promise.all([loadDbProducts(), loadNewsLinks()]);
   }).then(() => {
     renderMainContent();
   });
