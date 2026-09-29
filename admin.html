@@ -926,18 +926,18 @@
     document.getElementById("newslinks-empty").hidden = allNewsLinks.length > 0;
     document.getElementById("newslinks-list").innerHTML = allNewsLinks.map((n, i) => `
       <div class="inquiry-row" data-id="${n.id}">
-        <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" data-edit="${n.id}">
-          <div style="display:flex; flex-direction:column; gap:2px;">
+        <div style="display:flex; align-items:center; gap:10px; cursor:pointer; min-width:0; flex:1;" data-edit="${n.id}">
+          <div style="display:flex; flex-direction:column; gap:2px; flex-shrink:0;">
             <button type="button" class="reorder-btn newslink-up-btn" data-id="${n.id}" ${i === 0 ? "disabled" : ""} aria-label="위로">&uarr;</button>
             <button type="button" class="reorder-btn newslink-down-btn" data-id="${n.id}" ${i === allNewsLinks.length - 1 ? "disabled" : ""} aria-label="아래로">&darr;</button>
           </div>
           <div style="width:32px; height:32px; border-radius:8px; background:${n.gradient}; flex-shrink:0;"></div>
-          <div>
+          <div style="min-width:0;">
             <div>${escapeHtml(n.name)}</div>
-            <div class="inquiry-meta">${escapeHtml(n.url)}</div>
+            <div class="inquiry-meta" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(n.url)}</div>
           </div>
         </div>
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex-shrink:0;">
           <input type="checkbox" class="newslink-visible-toggle" data-id="${n.id}" style="width:18px; height:18px;" ${n.visible ? "checked" : ""}>
           <span class="muted">노출</span>
         </label>
