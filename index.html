@@ -85,15 +85,18 @@
     </svg>
   `;
 
-  // 신문사 로고 대신 쓰는 공용 아이콘 (실제 로고 이미지를 못 가져와서, 상품 아이콘과 동일한 방식으로 통일감 있게 표현)
-  const NEWS_ICON = `
-    <svg viewBox="0 0 24 24" fill="none" stroke="rgba(10,18,41,0.55)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="3" y="4" width="18" height="16" rx="2"></rect>
-      <line x1="7" y1="8" x2="17" y2="8"></line>
-      <line x1="7" y1="12" x2="17" y2="12"></line>
-      <line x1="7" y1="16" x2="13" y2="16"></line>
-    </svg>
-  `;
+  // "오늘의뉴스"는 상품이 아니라 신문·시세·공시·영상 등 성격이 전혀 다른 바로가기 모음이라,
+  // 전부 같은 신문 아이콘을 쓰면 무슨 링크인지 아이콘만 보고는 구분이 안 됐음 — 목적지 성격별로
+  // 아이콘을 구분해서 한눈에 알아볼 수 있게 함.
+  const NEWS_ICONS = {
+    paper: `<svg viewBox="0 0 24 24" fill="none" stroke="rgba(10,18,41,0.65)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="8" x2="17" y2="8"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="7" y1="16" x2="13" y2="16"></line></svg>`,
+    chart: `<svg viewBox="0 0 24 24" fill="none" stroke="rgba(10,18,41,0.65)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="3" x2="5" y2="21"></line><rect x="3" y="9" width="4" height="6"></rect><line x1="12" y1="6" x2="12" y2="21"></line><rect x="10" y="12" width="4" height="5"></rect><line x1="19" y1="3" x2="19" y2="21"></line><rect x="17" y="7" width="4" height="8"></rect></svg>`,
+    filing: `<svg viewBox="0 0 24 24" fill="none" stroke="rgba(10,18,41,0.65)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9"></path><path d="M14 3l5 5"></path><path d="M14 3v5h5"></path><circle cx="16" cy="17" r="3"></circle><line x1="18.5" y1="19.5" x2="21" y2="22"></line></svg>`,
+    trend: `<svg viewBox="0 0 24 24" fill="none" stroke="rgba(10,18,41,0.65)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"></polyline><polyline points="14 6 21 6 21 13"></polyline></svg>`,
+    webtoon: `<svg viewBox="0 0 24 24" fill="none" stroke="rgba(10,18,41,0.65)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21l4-4 4 4"></path><line x1="7" y1="9" x2="17" y2="9"></line><line x1="7" y1="12" x2="13" y2="12"></line></svg>`,
+    play: `<svg viewBox="0 0 24 24" fill="none" stroke="rgba(10,18,41,0.65)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="4"></rect><polygon points="10 9 16 12 10 15" fill="rgba(10,18,41,0.65)" stroke="none"></polygon></svg>`,
+    study: `<svg viewBox="0 0 24 24" fill="none" stroke="rgba(10,18,41,0.65)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l10-4 10 4-10 4-10-4z"></path><path d="M6 10.5v4.5c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"></path><line x1="22" y1="8" x2="22" y2="14"></line></svg>`,
+  };
 
   let activeCategory = null;
 
@@ -146,32 +149,37 @@
     renderProducts();
   }
 
-  // 오늘의뉴스: 신문사별 지면보기 + 한국거래소 시세정보 + DART 전자공시 바로가기
+  // 오늘의뉴스: 아침에 순서대로 훑어보는 개인 루틴(신문 지면 → 시세·공시 → 짬날 때 웹툰/영상/강의)이라
+  // 상품 그리드처럼 똑같이 생긴 카드를 늘어놓기보다, 신문 가판대의 목차 같은 세로 목록으로 구성함.
   // 네이버 지면보기 3곳은 새 창으로 열면 일부 모바일 브라우저/앱에서 데스크탑 모드로 열리는 경우가 있어
   // 같은 탭에서 이동하도록(sameTab) 함 — 새 탭으로 열 때보다 모바일 화면으로 뜰 확률이 높음.
   const NEWSPAPERS = [
-    { name: "한국경제", url: "https://media.naver.com/press/015/newspaper", gradient: "linear-gradient(135deg, #cfe0ff, #9db8f5)", sameTab: true },
-    { name: "매일경제", url: "https://media.naver.com/press/009/newspaper", gradient: "linear-gradient(135deg, #ffe3c2, #ffbf7a)", sameTab: true },
-    { name: "코리아중앙데일리", url: "https://media.naver.com/press/640/newspaper", gradient: "linear-gradient(135deg, #d7f0e6, #a3ddc4)", sameTab: true },
-    { name: "한국거래소(KRX) 시세정보", url: "https://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201020303", gradient: "linear-gradient(135deg, #e6e9f0, #c3cbe0)" },
-    { name: "DART 전자공시", url: "https://dart.fss.or.kr/dsab007/main.do", gradient: "linear-gradient(135deg, #ffe0ec, #ffb3cf)" },
-    { name: "Npay 증권", url: "https://stock.naver.com/domestic/stock/000270/price", gradient: "linear-gradient(135deg, #fff3c4, #ffd980)", sameTab: true },
-    { name: "네이버웹툰", url: "https://m.comic.naver.com/webtoon/weekday", gradient: "linear-gradient(135deg, #d9f7d3, #7fe08c)", sameTab: true },
-    { name: "유튜브(모닝루틴)", url: "https://m.youtube.com/results?sp=mAEA&search_query=%EB%AA%A8%EB%8B%9D%EB%A3%A8%ED%8B%B4", gradient: "linear-gradient(135deg, #ffe0e0, #ff9c9c)" },
-    { name: "AXHub", url: "https://axlms.nonghyupit.axhub.ai/courses/19/learn?lesson=99", gradient: "linear-gradient(135deg, #e8ddff, #c3a6fb)" },
+    { name: "한국경제", desc: "경제신문 지면보기", url: "https://media.naver.com/press/015/newspaper", icon: "paper", tint: "#eef1f8", sameTab: true },
+    { name: "매일경제", desc: "경제신문 지면보기", url: "https://media.naver.com/press/009/newspaper", icon: "paper", tint: "#eef1f8", sameTab: true },
+    { name: "코리아중앙데일리", desc: "영자신문 지면보기", url: "https://media.naver.com/press/640/newspaper", icon: "paper", tint: "#eef1f8", sameTab: true },
+    { name: "한국거래소(KRX) 시세정보", desc: "코스피·코스닥 실시간 시세", url: "https://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201020303", icon: "chart", tint: "#eaf7f0" },
+    { name: "DART 전자공시", desc: "기업 공시 검색", url: "https://dart.fss.or.kr/dsab007/main.do", icon: "filing", tint: "#fbeef0" },
+    { name: "Npay 증권", desc: "네이버페이 증권 시세", url: "https://stock.naver.com/domestic/stock/000270/price", icon: "trend", tint: "#fff6e0" },
+    { name: "네이버웹툰", desc: "요일별 웹툰 보기", url: "https://m.comic.naver.com/webtoon/weekday", icon: "webtoon", tint: "#eef7ea" },
+    { name: "유튜브(모닝루틴)", desc: "모닝루틴 영상 검색", url: "https://m.youtube.com/results?sp=mAEA&search_query=%EB%AA%A8%EB%8B%9D%EB%A3%A8%ED%8B%B4", icon: "play", tint: "#fdeaea" },
+    { name: "AXHub", desc: "온라인 강의", url: "https://axlms.nonghyupit.axhub.ai/courses/19/learn?lesson=99", icon: "study", tint: "#f1edfb" },
   ];
 
   function renderNewsMenu() {
     const container = document.getElementById("products");
-    container.style.display = ""; // 상품 그리드와 동일한 카드 그리드 레이아웃 사용
-    container.innerHTML = NEWSPAPERS.map(n => `
-      <a class="product-card news-card" href="${n.url}" ${n.sameTab ? "" : `target="_blank" rel="noopener"`} style="text-decoration:none; color:inherit;">
-        <div class="thumb" style="background:${n.gradient}">${NEWS_ICON}</div>
-        <div class="body">
-          <div class="name">${escapeHtml(n.name)}</div>
-        </div>
+    container.style.display = ""; // 한글놀이 등에서 바꿔둔 display를 복귀
+    // #products는 상품 그리드(.product-grid)와 공용으로 쓰는 요소라 className 자체는 안 건드리고,
+    // 세로 목록 레이아웃(.news-list)은 안쪽 래퍼 div 하나로만 감싸서 적용함.
+    container.innerHTML = `<div class="news-list">${NEWSPAPERS.map(n => `
+      <a class="news-row" href="${n.url}" ${n.sameTab ? "" : `target="_blank" rel="noopener"`}>
+        <span class="news-row-icon" style="background:${n.tint}">${NEWS_ICONS[n.icon]}</span>
+        <span class="news-row-text">
+          <span class="news-row-name">${escapeHtml(n.name)}</span>
+          <span class="news-row-desc">${escapeHtml(n.desc)}</span>
+        </span>
+        <span class="news-row-arrow">›</span>
       </a>
-    `).join("");
+    `).join("")}</div>`;
   }
 
   function showWrongAnswerAlert() {

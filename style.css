@@ -143,14 +143,46 @@ h1 { font-size: 22px; font-weight: 800; }
   justify-content: center;
 }
 .product-card .thumb svg { width: 40%; height: 40%; }
-/* 오늘의 뉴스는 상품 사진이 아니라 바로가기 카드라 세로로 길 필요가 없어서 폭을 줄임 */
-.product-card.news-card .thumb { aspect-ratio: 2 / 1; }
-.product-card.news-card .body { text-align: center; }
 .product-card .body { padding: 16px; }
 .product-card .name { font-weight: 600; margin-bottom: 4px; }
 .product-card .price { color: var(--text-soft); font-size: 14px; margin-bottom: 12px; }
 .product-card button.primary { width: 100%; }
 .product-card { cursor: pointer; }
+
+/* 오늘의뉴스: 신문 지면부터 시세·공시, 짬날 때 웹툰·영상까지 훑어보는 개인 아침 루틴 모음이라,
+   상품처럼 똑같은 그리드 타일 대신 신문 가판대의 목차 같은 세로 목록으로 구성함. */
+.news-list {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.news-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s ease;
+}
+.news-row:last-child { border-bottom: none; }
+.news-row:hover { background: var(--bg-soft); }
+.news-row-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.news-row-icon svg { width: 20px; height: 20px; }
+.news-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.news-row-name { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+.news-row-desc { font-size: 13px; color: var(--text-soft); }
+.news-row-arrow { flex-shrink: 0; font-size: 22px; color: var(--text-soft); line-height: 1; }
 
 .modal-overlay {
   position: fixed;
@@ -508,6 +540,9 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
   .product-card .body { padding: 12px 10px; }
   .product-card .name { font-size: 13px; }
   .product-card .price { font-size: 12px; }
+  .news-row { padding: 13px 14px; gap: 12px; }
+  .news-row-icon { width: 36px; height: 36px; }
+  .news-row-name { font-size: 15px; }
   h1 { font-size: 19px; }
 
   /* 표는 가로 스크롤 대신 카드형 리스트로 전환 (칸이 잘려 보이는 문제 방지) */
