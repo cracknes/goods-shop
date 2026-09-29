@@ -259,10 +259,51 @@
       </div>
 
       <div class="card" id="sector-panel" hidden>
-        <p class="muted">조건: 거래대금 1000억 이상 · 등락률 5% 이상 &nbsp;/&nbsp; 정렬: 섹터 총 거래대금 내림차순(상위 10개) &nbsp;/&nbsp; 대상: 코스피 &nbsp;/&nbsp; 반도체·금융·물류 등 투자 테마로 묶어서 표시</p>
-        <button class="primary" id="sector-run-btn">분석 실행</button>
-        <p id="sector-status" class="muted"></p>
-        <div id="sector-result"></div>
+        <div class="tab-bar">
+          <button type="button" data-sectortab="search" class="active">조회</button>
+          <button type="button" data-sectortab="history">이력</button>
+        </div>
+
+        <div id="sector-search-view">
+          <p class="muted">조건: 거래대금 1000억 이상 · 등락률 5% 이상 &nbsp;/&nbsp; 정렬: 섹터 총 거래대금 내림차순(상위 10개) &nbsp;/&nbsp; 대상: 코스피 &nbsp;/&nbsp; 반도체·금융·물류 등 투자 테마로 묶어서 표시</p>
+          <button class="primary" id="sector-run-btn">분석 실행</button>
+          <p id="sector-status" class="muted"></p>
+          <div id="sector-result"></div>
+        </div>
+
+        <div id="sector-history-view" hidden>
+          <p class="muted">분석을 실행할 때마다 그 결과가 자동으로 저장돼요. 나중에 그때 어떤 섹터가 주도했는지 다시 볼 수 있어요.</p>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1;">
+              <label class="form-section-label" for="sectorhistory-from" style="margin-top:0;">시작일</label>
+              <div style="position:relative;">
+                <input id="sectorhistory-from" type="text" inputmode="numeric" placeholder="2026/08/27" style="width:100%; padding-right:36px; text-align:center;">
+                <button type="button" id="sectorhistory-from-cal-btn" aria-label="달력에서 시작일 선택"
+                  style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; padding:4px;">📅</button>
+                <input id="sectorhistory-from-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
+            </div>
+            <div style="flex:1;">
+              <label class="form-section-label" for="sectorhistory-to">종료일</label>
+              <div style="position:relative;">
+                <input id="sectorhistory-to" type="text" inputmode="numeric" placeholder="2026/09/27" style="width:100%; padding-right:36px; text-align:center;">
+                <button type="button" id="sectorhistory-to-cal-btn" aria-label="달력에서 종료일 선택"
+                  style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; padding:4px;">📅</button>
+                <input id="sectorhistory-to-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
+            </div>
+          </div>
+          <button class="primary" id="sectorhistory-search-btn" style="width:100%;">이력 검색</button>
+          <p id="sectorhistory-status" class="muted"></p>
+
+          <div id="sectorhistory-list-view">
+            <div id="sectorhistory-list"></div>
+          </div>
+          <div id="sectorhistory-detail-view" hidden>
+            <button type="button" id="sectorhistory-back-btn" class="muted" style="background:none; border:none; cursor:pointer; padding:0; margin-bottom:12px;">&larr; 목록으로</button>
+            <div id="sectorhistory-detail-content"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1422,36 +1463,9 @@
     document.getElementById("fairvalue-result-view").hidden = false;
   }
 
-  document.getElementById("sector-run-btn").addEventListener("click", async () => {
-    const statusEl = document.getElementById("sector-status");
-    const resultEl = document.getElementById("sector-result");
-    statusEl.textContent = "분석 중입니다... (전 종목 시세를 불러오는 데 몇 초 걸릴 수 있어요)";
-    resultEl.innerHTML = "";
-
-    const { data, error } = await supabaseClient.functions.invoke("market-sector-analysis", { body: {} });
-
-    if (error) {
-      let detail = error.message;
-      try {
-        const body = await error.context.json();
-        if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
-      } catch (_) {}
-      statusEl.textContent = "분석 실패: " + detail;
-      return;
-    }
-    if (data.error) {
-      statusEl.textContent = data.error;
-      return;
-    }
-
-    const dateLabel = `${data.basDt.slice(0, 4)}.${data.basDt.slice(4, 6)}.${data.basDt.slice(6, 8)}`;
-    if (!data.sectors.length) {
-      statusEl.textContent = `${dateLabel} 기준으로 조건을 만족하는 섹터가 없습니다.`;
-      return;
-    }
-
-    statusEl.textContent = `${dateLabel} 기준 (최근 거래일)`;
-    resultEl.innerHTML = data.sectors.map((sector, i) => `
+  // 실행 결과 화면과 이력 상세 화면이 똑같은 섹터 카드 UI를 그려야 해서 함수 하나로 공유함
+  function renderSectorCards(sectors) {
+    return sectors.map((sector, i) => `
       <div class="sector-card">
         <div class="sector-card-head">
           <div class="sector-rank">${i + 1}</div>
@@ -1475,7 +1489,155 @@
         `).join("")}
       </div>
     `).join("");
+  }
+
+  document.getElementById("sector-run-btn").addEventListener("click", async () => {
+    const statusEl = document.getElementById("sector-status");
+    const resultEl = document.getElementById("sector-result");
+    statusEl.textContent = "분석 중입니다... (전 종목 시세를 불러오는 데 몇 초 걸릴 수 있어요)";
+    resultEl.innerHTML = "";
+
+    const { data, error } = await supabaseClient.functions.invoke("market-sector-analysis", { body: {} });
+
+    if (error) {
+      let detail = error.message;
+      try {
+        const body = await error.context.json();
+        if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
+      } catch (_) {}
+      statusEl.textContent = "분석 실패: " + detail;
+      return;
+    }
+    if (data.error) {
+      statusEl.textContent = data.error;
+      return;
+    }
+
+    const dateLabel = formatKDate(data.basDt);
+    if (!data.sectors.length) {
+      statusEl.textContent = `${dateLabel} 기준으로 조건을 만족하는 섹터가 없습니다.`;
+      return;
+    }
+
+    statusEl.textContent = `${dateLabel} 기준 (최근 거래일)`;
+    resultEl.innerHTML = renderSectorCards(data.sectors);
   });
+
+  // 주도 섹터 분석 이력 — 적정주가 이력과 같은 조회/이력 탭 + 목록/상세 구조를 그대로 따름
+  document.querySelectorAll("#sector-panel [data-sectortab]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#sector-panel [data-sectortab]").forEach(b => b.classList.toggle("active", b === btn));
+      document.getElementById("sector-search-view").hidden = btn.dataset.sectortab !== "search";
+      document.getElementById("sector-history-view").hidden = btn.dataset.sectortab !== "history";
+      if (btn.dataset.sectortab === "history") loadSectorHistory();
+    });
+  });
+
+  // 이력 검색 기간 기본값: 종료일은 오늘, 시작일은 한 달 전 (적정주가 이력과 동일)
+  (() => {
+    const today = new Date();
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    document.getElementById("sectorhistory-to").value = formatKDate(today);
+    document.getElementById("sectorhistory-from").value = formatKDate(monthAgo);
+  })();
+
+  [["from", "sectorhistory-from"], ["to", "sectorhistory-to"]].forEach(([_, id]) => {
+    const textInput = document.getElementById(id);
+    const picker = document.getElementById(`${id}-picker`);
+    document.getElementById(`${id}-cal-btn`).addEventListener("click", () => {
+      const current = parseKDateInput(textInput.value);
+      if (current) picker.value = current;
+      try { picker.showPicker(); } catch (_) { picker.focus(); }
+    });
+    picker.addEventListener("change", () => {
+      if (picker.value) textInput.value = formatKDate(picker.value);
+    });
+  });
+
+  let sectorHistoryRuns = [];
+
+  function showSectorHistoryList() {
+    document.getElementById("sectorhistory-list-view").hidden = false;
+    document.getElementById("sectorhistory-detail-view").hidden = true;
+  }
+
+  function showSectorHistoryDetail(id) {
+    const run = sectorHistoryRuns.find(r => r.id === id);
+    const dateLabel = formatKDate(run.bas_dt);
+    document.getElementById("sectorhistory-detail-content").innerHTML = `
+      <h3 style="margin-bottom:4px;">${dateLabel} 기준</h3>
+      <p class="muted">${formatKDateTime(run.calculated_at)} 분석 · 조건: 거래대금 ${(run.condition.tradingValueThreshold / 100000000).toLocaleString()}억 이상 · 등락률 ${run.condition.changeRateThreshold}% 이상</p>
+      ${run.sectors.length ? renderSectorCards(run.sectors) : `<p class="muted">그날은 조건을 만족하는 섹터가 없었습니다.</p>`}
+    `;
+    document.getElementById("sectorhistory-list-view").hidden = true;
+    document.getElementById("sectorhistory-detail-view").hidden = false;
+  }
+
+  function renderSectorHistoryList() {
+    document.getElementById("sectorhistory-list").innerHTML = sectorHistoryRuns.map(r => `
+      <div class="inquiry-row" data-id="${r.id}">
+        <div>
+          <div>${formatKDate(r.bas_dt)} 기준</div>
+          <div class="inquiry-meta">${formatKDateTime(r.calculated_at)} 분석 · ${r.sectors.length ? r.sectors[0].name + " 외 " + r.sectors.length + "개 섹터" : "해당 섹터 없음"}</div>
+        </div>
+      </div>
+    `).join("");
+
+    document.querySelectorAll("#sectorhistory-list .inquiry-row").forEach(row => {
+      row.addEventListener("click", () => showSectorHistoryDetail(row.dataset.id));
+    });
+  }
+
+  document.getElementById("sectorhistory-back-btn").addEventListener("click", showSectorHistoryList);
+  document.getElementById("sectorhistory-search-btn").addEventListener("click", loadSectorHistory);
+
+  async function loadSectorHistory() {
+    const statusEl = document.getElementById("sectorhistory-status");
+    showSectorHistoryList();
+    const fromRaw = document.getElementById("sectorhistory-from").value.trim();
+    const toRaw = document.getElementById("sectorhistory-to").value.trim();
+    const from = fromRaw ? parseKDateInput(fromRaw) : null;
+    const to = toRaw ? parseKDateInput(toRaw) : null;
+
+    if (fromRaw && !from) {
+      statusEl.textContent = "시작일 형식이 올바르지 않습니다. 2026/08/27 처럼 입력해 주세요.";
+      return;
+    }
+    if (toRaw && !to) {
+      statusEl.textContent = "종료일 형식이 올바르지 않습니다. 2026/09/27 처럼 입력해 주세요.";
+      return;
+    }
+
+    statusEl.textContent = "조회 중...";
+    document.getElementById("sectorhistory-list").innerHTML = "";
+
+    let query = supabaseClient
+      .from("sector_analysis_history")
+      .select("*")
+      .order("calculated_at", { ascending: false })
+      .limit(200);
+
+    if (from) query = query.gte("calculated_at", `${from}T00:00:00Z`);
+    if (to) query = query.lte("calculated_at", `${to}T23:59:59Z`);
+
+    const { data, error } = await query;
+
+    if (error) {
+      statusEl.textContent = "조회 실패: " + error.message;
+      return;
+    }
+    if (!data.length) {
+      sectorHistoryRuns = [];
+      renderSectorHistoryList();
+      statusEl.textContent = "조건에 맞는 이력이 없습니다.";
+      return;
+    }
+
+    sectorHistoryRuns = data;
+    statusEl.textContent = `${data.length}건 (최근 200건까지 표시)`;
+    renderSectorHistoryList();
+  }
 
   async function loadAdmin() {
     const { data: { user } } = await supabaseClient.auth.getUser();
