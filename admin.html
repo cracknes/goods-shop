@@ -265,7 +265,17 @@
         </div>
 
         <div id="sector-search-view">
-          <p class="muted">조건: 거래대금 1000억 이상 · 등락률 5% 이상 &nbsp;/&nbsp; 정렬: 섹터 총 거래대금 내림차순(상위 10개) &nbsp;/&nbsp; 대상: 코스피 &nbsp;/&nbsp; 반도체·금융·물류 등 투자 테마로 묶어서 표시</p>
+          <p class="muted">정렬: 섹터 총 거래대금 내림차순(상위 10개) &nbsp;/&nbsp; 대상: 코스피 &nbsp;/&nbsp; 반도체·금융·물류 등 투자 테마로 묶어서 표시</p>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1;">
+              <label class="form-section-label" for="sector-trvalue-input" style="margin-top:0;">거래대금 기준(억원)</label>
+              <input id="sector-trvalue-input" type="number" value="500" min="0" style="text-align:center;">
+            </div>
+            <div style="flex:1;">
+              <label class="form-section-label" for="sector-fltrt-input" style="margin-top:0;">등락률 기준(%)</label>
+              <input id="sector-fltrt-input" type="number" value="3" min="0" step="0.5" style="text-align:center;">
+            </div>
+          </div>
           <button class="primary" id="sector-run-btn" style="width:100%;">분석 실행</button>
           <p id="sector-status" class="muted"></p>
           <div id="sector-result"></div>
@@ -1494,10 +1504,20 @@
   document.getElementById("sector-run-btn").addEventListener("click", async () => {
     const statusEl = document.getElementById("sector-status");
     const resultEl = document.getElementById("sector-result");
+
+    const trValueEok = Number(document.getElementById("sector-trvalue-input").value);
+    const fltRt = Number(document.getElementById("sector-fltrt-input").value);
+    if (!Number.isFinite(trValueEok) || trValueEok < 0 || !Number.isFinite(fltRt) || fltRt < 0) {
+      statusEl.textContent = "거래대금·등락률 기준을 올바르게 입력해 주세요.";
+      return;
+    }
+
     statusEl.textContent = "분석 중입니다... (전 종목 시세를 불러오는 데 몇 초 걸릴 수 있어요)";
     resultEl.innerHTML = "";
 
-    const { data, error } = await supabaseClient.functions.invoke("market-sector-analysis", { body: {} });
+    const { data, error } = await supabaseClient.functions.invoke("market-sector-analysis", {
+      body: { tradingValueThreshold: trValueEok * 100000000, changeRateThreshold: fltRt },
+    });
 
     if (error) {
       let detail = error.message;
@@ -1514,12 +1534,13 @@
     }
 
     const dateLabel = formatKDate(data.basDt);
+    const condLabel = `거래대금 ${(data.condition.tradingValueThreshold / 100000000).toLocaleString()}억 · 등락률 ${data.condition.changeRateThreshold}% 이상`;
     if (!data.sectors.length) {
-      statusEl.textContent = `${dateLabel} 기준으로 조건을 만족하는 섹터가 없습니다.`;
+      statusEl.textContent = `${dateLabel} 기준(${condLabel})으로 조건을 만족하는 섹터가 없습니다.`;
       return;
     }
 
-    statusEl.textContent = `${dateLabel} 기준 (최근 거래일)`;
+    statusEl.textContent = `${dateLabel} 기준 (최근 거래일) · ${condLabel}`;
     resultEl.innerHTML = renderSectorCards(data.sectors);
   });
 
