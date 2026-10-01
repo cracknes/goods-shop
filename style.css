@@ -185,6 +185,19 @@ h1 { font-size: 22px; font-weight: 800; }
   cursor: pointer;
   color: var(--text-soft);
 }
+.btn-ghost-danger {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-ghost-danger:hover { border-color: var(--danger); color: var(--danger); }
+.btn-ghost-danger:disabled { opacity: 0.4; cursor: default; }
+
 .hint-btn {
   width: 26px;
   height: 26px;

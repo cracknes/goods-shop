@@ -319,11 +319,22 @@
 
       <div class="card" id="users-panel" hidden>
         <h2 style="margin-top:0;">사용자 관리</h2>
-        <p class="muted">"관리자로 지정"은 아직 데이터만 저장돼요 — 다른 관리자 화면(상품관리·푸시 등) 접근 권한을 실제로 열어주려면 그 화면들의 권한 설정을 각각 손봐야 해서, 이번엔 기반만 만들어뒀어요(다음 작업으로 이어서 할 수 있어요). "접근 차단"은 지금 바로 작동합니다 — 체크하면 그 사용자는 즉시 로그아웃되고 재로그인도 막혀요.</p>
+        <p class="muted">"관리자로 지정"하면 상품관리·메뉴관리·푸시 등 다른 관리자 화면에도 실제로 접근할 수 있어요. "접근 차단"은 체크하면 그 사용자가 즉시 로그아웃되고 재로그인도 막혀요. "삭제"는 주문·문의 등 남겨야 할 기록이 없는 계정만 가능해요(있으면 차단을 대신 써주세요).</p>
         <div id="users-list"></div>
         <p id="users-empty" class="muted" hidden>등록된 사용자가 없습니다.</p>
         <p id="users-status" class="muted"></p>
       </div>
+    </div>
+  </div>
+</div>
+
+<div id="confirm-modal" class="modal-overlay" hidden>
+  <div class="modal-box" style="max-width:320px;">
+    <div id="confirm-modal-title" style="font-weight:600; font-size:17px; margin-bottom:10px;"></div>
+    <div id="confirm-modal-message" class="muted" style="margin-bottom:22px; white-space:pre-line;"></div>
+    <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <button type="button" id="confirm-modal-cancel" style="width:auto; padding:8px 18px; border-radius:999px; border:1px solid var(--border); background:transparent; color:var(--text-soft); cursor:pointer;">취소</button>
+      <button type="button" id="confirm-modal-ok" style="width:auto; padding:8px 18px;"></button>
     </div>
   </div>
 </div>
@@ -1672,6 +1683,37 @@
 
   // 사용자 관리 — user_roles 테이블 기반. "관리자 지정"은 데이터만 저장(실제 권한 확장은 다음
   // 작업), "접근 차단"은 nav.js가 매 페이지 로드마다 확인해서 즉시 로그아웃시키므로 바로 작동함.
+  // 계정 삭제 확인/결과 안내용 공용 팝업 (brower 기본 confirm/alert 대신 사이트 디자인에 맞춘 모달)
+  function showConfirmModal({ title, message, okLabel = "확인", danger = false, showCancel = true }) {
+    return new Promise(resolve => {
+      const modal = document.getElementById("confirm-modal");
+      const okBtn = document.getElementById("confirm-modal-ok");
+      const cancelBtn = document.getElementById("confirm-modal-cancel");
+
+      document.getElementById("confirm-modal-title").textContent = title;
+      document.getElementById("confirm-modal-message").textContent = message;
+      okBtn.textContent = okLabel;
+      okBtn.className = danger ? "btn-ghost-danger" : "primary";
+      cancelBtn.hidden = !showCancel;
+      modal.hidden = false;
+
+      const cleanup = (result) => {
+        modal.hidden = true;
+        okBtn.removeEventListener("click", onOk);
+        cancelBtn.removeEventListener("click", onCancel);
+        resolve(result);
+      };
+      const onOk = () => cleanup(true);
+      const onCancel = () => cleanup(false);
+      okBtn.addEventListener("click", onOk);
+      cancelBtn.addEventListener("click", onCancel);
+    });
+  }
+
+  function showInfoModal(message, title) {
+    return showConfirmModal({ title, message, okLabel: "확인", showCancel: false });
+  }
+
   async function loadUsersAdmin() {
     const statusEl = document.getElementById("users-status");
     const { data, error } = await supabaseClient
@@ -1704,7 +1746,7 @@
               <input type="checkbox" class="user-blocked-toggle" data-id="${u.user_id}" style="width:18px; height:18px;" ${u.blocked ? "checked" : ""} ${isRoot ? "disabled" : ""}>
               <span class="muted">접근 차단</span>
             </label>
-            <button type="button" class="danger-btn user-delete-btn" data-id="${u.user_id}" data-email="${escapeHtml(u.email)}" style="width:auto; padding:6px 14px; font-size:13px;" ${isRoot ? "disabled" : ""}>삭제</button>
+            <button type="button" class="btn-ghost-danger user-delete-btn" data-id="${u.user_id}" data-email="${escapeHtml(u.email)}" style="padding:6px 14px; font-size:13px;" ${isRoot ? "disabled" : ""}>삭제</button>
           </div>
         </div>
       `;
@@ -1738,7 +1780,14 @@
 
     document.querySelectorAll(".user-delete-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
-        if (!confirm(`${btn.dataset.email} 계정을 삭제할까요? 이 작업은 되돌릴 수 없습니다.`)) return;
+        const confirmed = await showConfirmModal({
+          title: "계정을 삭제할까요?",
+          message: `${btn.dataset.email}\n이 작업은 되돌릴 수 없습니다.`,
+          okLabel: "삭제",
+          danger: true,
+        });
+        if (!confirmed) return;
+
         btn.disabled = true;
         const { error } = await supabaseClient.functions.invoke("delete-user", {
           body: { targetUserId: btn.dataset.id },
@@ -1749,10 +1798,11 @@
             const body = await error.context.json();
             if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
           } catch (_) {}
-          alert("삭제 실패: " + detail);
+          await showInfoModal(detail, "삭제 실패");
           btn.disabled = false;
           return;
         }
+        await showInfoModal(`${btn.dataset.email} 계정이 삭제되었습니다.`, "삭제 완료");
         await loadUsersAdmin();
       });
     });
