@@ -46,6 +46,9 @@ async function recordLogin(user) {
     email: user.email,
     device_info: getDeviceInfo(),
   });
+  // 같은 브라우저 세션(탭을 안 닫고 있는 동안)에서는 페이지를 이동하거나 새로고침해도 또
+  // 기록되지 않게 표시해둠 — "자동로그인" 세션 복원 시(nav.js) 이 표시를 보고 중복 기록을 막음.
+  try { sessionStorage.setItem("loginRecordedThisSession", "1"); } catch (_) {}
 }
 
 // 날짜/시각 표시는 브라우저 로케일에 의존하는 toLocaleString() 대신

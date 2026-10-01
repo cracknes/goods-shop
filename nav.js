@@ -44,6 +44,16 @@ async function renderNav() {
     await recordLogin(user);
   }
 
+  // "이 기기에서 로그인 상태 유지"(자동로그인)를 켠 기기는 세션이 그대로 유지돼서 로그인 폼을
+  // 다시 거치지 않는데, 그러면 recordLogin이 전혀 호출 안 돼서 이 기기로 다시 들어온 기록 자체가
+  // 하나도 안 남는 문제가 있었음 — 브라우저를 새로 열어 세션스토리지가 비어있을 때(=새 방문)만
+  // 한 번 기록해서, 같은 브라우저 세션 안에서 페이지를 이동/새로고침할 때마다 중복 기록되는 건 막음.
+  let autoLoginEnabled = false;
+  try { autoLoginEnabled = localStorage.getItem("autoLoginEnabled") === "1"; } catch (_) {}
+  if (user && autoLoginEnabled && sessionStorage.getItem("loginRecordedThisSession") !== "1") {
+    await recordLogin(user);
+  }
+
   const isAdmin = user?.email === "admin@admin.com";
 
   nav.innerHTML = `
