@@ -34,7 +34,26 @@ function setupIdleLogout() {
 // 모든 페이지 공통 상단 네비게이션. 로그인 상태에 따라 보여줄 링크가 다름.
 async function renderNav() {
   const nav = document.getElementById("nav");
-  const { data: { user } } = await supabaseClient.auth.getUser();
+  let { data: { user } } = await supabaseClient.auth.getUser();
+
+  // 관리자가 "접근 차단"으로 표시한 사용자는 세션이 남아있어도 즉시 로그아웃시키고 로그인 화면으로 보냄
+  if (user) {
+    const { data: roleRow } = await supabaseClient
+      .from("user_roles")
+      .select("blocked")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (roleRow?.blocked) {
+      await supabaseClient.auth.signOut();
+      user = null;
+      if (!location.pathname.endsWith("login.html")) {
+        alert("이 계정은 접근이 차단되었습니다.");
+        location.href = "login.html";
+        return;
+      }
+    }
+  }
+
   if (user) setupIdleLogout();
   if (user && typeof touchPushLastLogin === "function") touchPushLastLogin(user);
 
