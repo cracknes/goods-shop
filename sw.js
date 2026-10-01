@@ -2,7 +2,7 @@
 // Supabase(인증/DB/Edge Function), 토스페이먼츠, 뉴스/공시 외부 사이트는 절대 건드리지 않음 —
 // 이 캐시 로직은 이 사이트(같은 출처)의 GET 요청에만 적용됨.
 
-const CACHE_NAME = "goods-shop-cache-v50";
+const CACHE_NAME = "goods-shop-cache-v51";
 
 // 자주 보는 페이지 + 공용 자산은 설치 시점에 미리 캐시해둠 (오프라인에서도 바로 열리도록)
 const PRECACHE_URLS = [
@@ -24,8 +24,12 @@ const PRECACHE_URLS = [
 const NETWORK_ONLY_PATHS = ["success.html", "fail.html"];
 
 self.addEventListener("install", (event) => {
+  // GitHub Pages가 모든 파일에 10분(max-age=600) 브라우저 캐시를 걸어두기 때문에, 그냥 fetch하면
+  // 방금 배포한 새 버전이 있어도 브라우저가 "최근 10분 안에 받은 거니까 그거 써"라며 예전 파일을
+  // 돌려줄 수 있음 — { cache: "reload" }로 그 브라우저 캐시를 건너뛰고 항상 서버에서 새로 받아옴.
+  const precacheRequests = PRECACHE_URLS.map((url) => new Request(url, { cache: "reload" }));
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)).catch(() => {})
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(precacheRequests)).catch(() => {})
   );
   self.skipWaiting();
 });
@@ -48,7 +52,7 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET" || url.origin !== self.location.origin) return;
 
   if (NETWORK_ONLY_PATHS.some((p) => url.pathname.endsWith(p))) {
-    event.respondWith(fetch(req));
+    event.respondWith(fetch(req, { cache: "no-store" }));
     return;
   }
 
@@ -58,7 +62,10 @@ self.addEventListener("fetch", (event) => {
     (async () => {
       const cached = await caches.match(req);
 
-      const networkUpdate = fetch(req)
+      // 여기서도 브라우저의 일반 HTTP 캐시(max-age=600)를 건너뛰어야, "배경에서 최신 내용 받아오기"가
+      // 진짜로 서버에 물어보고 받아옴 — 안 그러면 10분 안에는 이 fetch도 그냥 예전 응답을 돌려줘서
+      // 서비스워커 캐시가 영영 갱신 안 되는 문제가 있었음.
+      const networkUpdate = fetch(req, { cache: "no-store" })
         .then((res) => {
           const resClone = res.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone)).catch(() => {});
