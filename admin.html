@@ -1743,10 +1743,17 @@
       return;
     }
 
-    // 화면 안내용 체크일 뿐, 실제 데이터 접근 제한은 DB의 RLS 정책이 담당함
-    if (user.email !== ADMIN_EMAIL) {
+    // 화면 안내용 체크일 뿐, 실제 데이터 접근 제한은 DB의 RLS 정책(is_admin())이 담당함
+    const { data: isAdminResult } = await supabaseClient.rpc("is_admin");
+    if (!isAdminResult) {
       document.getElementById("denied").hidden = false;
       return;
+    }
+
+    // "사용자 관리" 탭(다른 사람을 관리자로 지정/차단)은 최고 관리자만 접근 가능 —
+    // 지정된 관리자끼리 서로 차단하거나 권한을 계속 늘리는 걸 막기 위함
+    if (user.email !== ADMIN_EMAIL) {
+      document.querySelector('.category-list button[data-tab="users"]').hidden = true;
     }
 
     document.getElementById("admin-body").hidden = false;
@@ -1763,7 +1770,7 @@
     await loadProductsList();
     await loadPushTargets();
     await loadPushHistory();
-    await loadUsersAdmin();
+    if (user.email === ADMIN_EMAIL) await loadUsersAdmin();
   }
 
   loadAdmin();

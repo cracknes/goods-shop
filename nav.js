@@ -36,16 +36,20 @@ async function renderNav() {
   const nav = document.getElementById("nav");
   let { data: { user } } = await supabaseClient.auth.getUser();
 
-  // 관리자가 "접근 차단"으로 표시한 사용자는 세션이 남아있어도 즉시 로그아웃시키고 로그인 화면으로 보냄
+  // 관리자가 "접근 차단"으로 표시한 사용자는 세션이 남아있어도 즉시 로그아웃시키고 로그인 화면으로 보냄.
+  // role도 같이 읽어서 "관리자로 지정"된 사용자의 관리자 메뉴 노출 여부까지 한 번의 조회로 처리함.
+  let roleRow = null;
   if (user) {
-    const { data: roleRow } = await supabaseClient
+    const { data } = await supabaseClient
       .from("user_roles")
-      .select("blocked")
+      .select("role, blocked")
       .eq("user_id", user.id)
       .maybeSingle();
+    roleRow = data;
     if (roleRow?.blocked) {
       await supabaseClient.auth.signOut();
       user = null;
+      roleRow = null;
       if (!location.pathname.endsWith("login.html")) {
         alert("이 계정은 접근이 차단되었습니다.");
         location.href = "login.html";
@@ -73,7 +77,7 @@ async function renderNav() {
     await recordLogin(user);
   }
 
-  const isAdmin = user?.email === "admin@admin.com";
+  const isAdmin = user?.email === "admin@admin.com" || roleRow?.role === "admin";
 
   nav.innerHTML = `
     <a class="brand" href="index.html">JiHoo's House</a>
