@@ -1704,6 +1704,7 @@
               <input type="checkbox" class="user-blocked-toggle" data-id="${u.user_id}" style="width:18px; height:18px;" ${u.blocked ? "checked" : ""} ${isRoot ? "disabled" : ""}>
               <span class="muted">접근 차단</span>
             </label>
+            <button type="button" class="danger-btn user-delete-btn" data-id="${u.user_id}" data-email="${escapeHtml(u.email)}" style="width:auto; padding:6px 14px; font-size:13px;" ${isRoot ? "disabled" : ""}>삭제</button>
           </div>
         </div>
       `;
@@ -1732,6 +1733,27 @@
           alert("변경 실패: " + error.message);
           cb.checked = !cb.checked;
         }
+      });
+    });
+
+    document.querySelectorAll(".user-delete-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (!confirm(`${btn.dataset.email} 계정을 삭제할까요? 이 작업은 되돌릴 수 없습니다.`)) return;
+        btn.disabled = true;
+        const { error } = await supabaseClient.functions.invoke("delete-user", {
+          body: { targetUserId: btn.dataset.id },
+        });
+        if (error) {
+          let detail = error.message;
+          try {
+            const body = await error.context.json();
+            if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
+          } catch (_) {}
+          alert("삭제 실패: " + detail);
+          btn.disabled = false;
+          return;
+        }
+        await loadUsersAdmin();
       });
     });
   }
