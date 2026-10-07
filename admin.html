@@ -205,7 +205,10 @@
         <div id="fairvalue-search-view">
           <p class="muted">DART(전자공시) 재무제표를 바탕으로 그레이엄/PER/PBR/S-RIM/DCF/배당할인모형 6가지 적정주가를 한 번에 비교해요.</p>
           <label class="form-section-label" for="fairvalue-search" style="margin-top:0;">회사명 검색</label>
-          <input id="fairvalue-search" type="text" placeholder="예: 삼성전자">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input id="fairvalue-search" type="text" placeholder="예: 삼성전자" style="flex:1;">
+            <button type="button" id="fairvalue-naver-link" class="primary" style="width:auto;" disabled>네이버 증권</button>
+          </div>
           <div id="fairvalue-search-results"></div>
 
           <div id="fairvalue-result-view" hidden style="margin-top:16px;">
@@ -1353,6 +1356,8 @@
   let fairvalueSearchTimer = null;
   document.getElementById("fairvalue-search").addEventListener("input", (e) => {
     clearTimeout(fairvalueSearchTimer);
+    document.getElementById("fairvalue-naver-link").disabled = true;
+    document.getElementById("fairvalue-naver-link").removeAttribute("data-url");
     const q = e.target.value.trim();
     const resultsEl = document.getElementById("fairvalue-search-results");
     if (!q) {
@@ -1360,6 +1365,11 @@
       return;
     }
     fairvalueSearchTimer = setTimeout(() => searchDartCorp(q), 300);
+  });
+
+  document.getElementById("fairvalue-naver-link").addEventListener("click", (e) => {
+    const url = e.currentTarget.dataset.url;
+    if (url) window.open(url, "_blank", "noopener");
   });
 
   async function searchDartCorp(q) {
@@ -1427,6 +1437,7 @@
     const statusEl = document.getElementById("fairvalue-status");
     document.getElementById("fairvalue-result-view").hidden = true;
     document.getElementById("fairvalue-search-results").innerHTML = "";
+    document.getElementById("fairvalue-naver-link").disabled = true;
     statusEl.textContent = "조회 중입니다... (DART 자료를 불러오는 데 몇 초 걸릴 수 있어요)";
 
     const { data, error } = await supabaseClient.functions.invoke("dart-fair-value", { body: { corpCode } });
@@ -1449,6 +1460,9 @@
 
     statusEl.textContent = "";
     document.getElementById("fairvalue-corp-name").textContent = `${data.corpName} (${data.stockCode})`;
+    const naverLinkBtn = document.getElementById("fairvalue-naver-link");
+    naverLinkBtn.dataset.url = `https://m.stock.naver.com/domestic/stock/${data.stockCode}/price?domesticStockExchange=KRX`;
+    naverLinkBtn.disabled = false;
     const prevCloseText = data.previousClose
       ? `전일 종가 ${data.previousClose.price.toLocaleString()}원 (${formatKDate(data.previousClose.date)} 기준) · `
       : "";

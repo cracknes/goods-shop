@@ -307,6 +307,8 @@ h1 { font-size: 22px; font-weight: 800; }
   box-sizing: border-box;
 }
 .primary:hover { opacity: 0.9; }
+.primary:disabled { opacity: 0.4; cursor: default; }
+.primary:disabled:hover { opacity: 0.4; }
 
 .social-buttons { display: flex; flex-direction: column; gap: 8px; }
 .social-buttons button {
