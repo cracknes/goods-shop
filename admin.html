@@ -30,6 +30,8 @@
       <button data-tab="fairvalue">적정주가</button>
       <button data-tab="sector">주도 섹터 분석</button>
       <button data-tab="exportstats">주요 품목별 수출</button>
+      <button data-tab="dividendrank">배당순위</button>
+      <button data-tab="settlementcost">월별 주식결제대금</button>
       <button data-tab="users">사용자 관리</button>
     </div>
     <div class="shop-content">
@@ -369,6 +371,102 @@
         </div>
       </div>
 
+      <div class="card" id="dividendrank-panel" hidden>
+        <div class="tab-bar">
+          <button type="button" data-dividendranktab="search" class="active">조회</button>
+          <button type="button" data-dividendranktab="history">이력</button>
+        </div>
+
+        <div id="dividendrank-search-view">
+          <p class="muted">예탁결제원 자료로 유가증권시장(코스피) 전체 종목(보통주)의 시가배당율 상위 30개를 조회해요.</p>
+          <button class="primary" id="dividendrank-run-btn" style="width:100%;">조회 실행</button>
+          <p id="dividendrank-status" class="muted"></p>
+          <div id="dividendrank-result"></div>
+        </div>
+
+        <div id="dividendrank-history-view" hidden>
+          <p class="muted">조회할 때마다 그 결과가 자동으로 저장돼요.</p>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1;">
+              <label class="form-section-label" for="dividendrankhistory-from" style="margin-top:0;">시작일</label>
+              <div style="position:relative;">
+                <input id="dividendrankhistory-from" type="text" inputmode="numeric" placeholder="2026/08/27" style="width:100%; padding-right:36px; text-align:center;">
+                <button type="button" id="dividendrankhistory-from-cal-btn" aria-label="달력에서 시작일 선택"
+                  style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; padding:4px;">📅</button>
+                <input id="dividendrankhistory-from-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
+            </div>
+            <div style="flex:1;">
+              <label class="form-section-label" for="dividendrankhistory-to" style="margin-top:0;">종료일</label>
+              <div style="position:relative;">
+                <input id="dividendrankhistory-to" type="text" inputmode="numeric" placeholder="2026/09/27" style="width:100%; padding-right:36px; text-align:center;">
+                <button type="button" id="dividendrankhistory-to-cal-btn" aria-label="달력에서 종료일 선택"
+                  style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; padding:4px;">📅</button>
+                <input id="dividendrankhistory-to-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
+            </div>
+          </div>
+          <button class="primary" id="dividendrankhistory-search-btn" style="width:100%;">이력 검색</button>
+          <p id="dividendrankhistory-status" class="muted"></p>
+
+          <div id="dividendrankhistory-list-view">
+            <div id="dividendrankhistory-list"></div>
+          </div>
+          <div id="dividendrankhistory-detail-view" hidden>
+            <button type="button" id="dividendrankhistory-back-btn" class="muted" style="background:none; border:none; cursor:pointer; padding:0; margin-bottom:12px;">&larr; 목록으로</button>
+            <div id="dividendrankhistory-detail-content"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="settlementcost-panel" hidden>
+        <div class="tab-bar">
+          <button type="button" data-settlementcosttab="search" class="active">조회</button>
+          <button type="button" data-settlementcosttab="history">이력</button>
+        </div>
+
+        <div id="settlementcost-search-view">
+          <p class="muted">예탁결제원 자료로 최근 12개월치 월별 증권결제대금(거래대금·결제대금)을 조회해요.</p>
+          <button class="primary" id="settlementcost-run-btn" style="width:100%;">조회 실행</button>
+          <p id="settlementcost-status" class="muted"></p>
+          <div id="settlementcost-result"></div>
+        </div>
+
+        <div id="settlementcost-history-view" hidden>
+          <p class="muted">조회할 때마다 그 결과가 자동으로 저장돼요.</p>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1;">
+              <label class="form-section-label" for="settlementcosthistory-from" style="margin-top:0;">시작일</label>
+              <div style="position:relative;">
+                <input id="settlementcosthistory-from" type="text" inputmode="numeric" placeholder="2026/08/27" style="width:100%; padding-right:36px; text-align:center;">
+                <button type="button" id="settlementcosthistory-from-cal-btn" aria-label="달력에서 시작일 선택"
+                  style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; padding:4px;">📅</button>
+                <input id="settlementcosthistory-from-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
+            </div>
+            <div style="flex:1;">
+              <label class="form-section-label" for="settlementcosthistory-to" style="margin-top:0;">종료일</label>
+              <div style="position:relative;">
+                <input id="settlementcosthistory-to" type="text" inputmode="numeric" placeholder="2026/09/27" style="width:100%; padding-right:36px; text-align:center;">
+                <button type="button" id="settlementcosthistory-to-cal-btn" aria-label="달력에서 종료일 선택"
+                  style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; padding:4px;">📅</button>
+                <input id="settlementcosthistory-to-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
+            </div>
+          </div>
+          <button class="primary" id="settlementcosthistory-search-btn" style="width:100%;">이력 검색</button>
+          <p id="settlementcosthistory-status" class="muted"></p>
+
+          <div id="settlementcosthistory-list-view">
+            <div id="settlementcosthistory-list"></div>
+          </div>
+          <div id="settlementcosthistory-detail-view" hidden>
+            <button type="button" id="settlementcosthistory-back-btn" class="muted" style="background:none; border:none; cursor:pointer; padding:0; margin-bottom:12px;">&larr; 목록으로</button>
+            <div id="settlementcosthistory-detail-content"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="card" id="users-panel" hidden>
         <h2 style="margin-top:0;">사용자 관리</h2>
         <p class="muted">"관리자로 지정"하면 상품관리·메뉴관리·푸시 등 다른 관리자 화면에도 실제로 접근할 수 있어요. "접근 차단"은 체크하면 그 사용자가 즉시 로그아웃되고 재로그인도 막혀요. "삭제"는 주문·문의 등 남겨야 할 기록이 없는 계정만 가능해요(있으면 차단을 대신 써주세요).</p>
@@ -413,6 +511,8 @@
     document.getElementById("fairvalue-panel").hidden = tab !== "fairvalue";
     document.getElementById("sector-panel").hidden = tab !== "sector";
     document.getElementById("exportstats-panel").hidden = tab !== "exportstats";
+    document.getElementById("dividendrank-panel").hidden = tab !== "dividendrank";
+    document.getElementById("settlementcost-panel").hidden = tab !== "settlementcost";
     document.getElementById("users-panel").hidden = tab !== "users";
   }
 
@@ -1419,7 +1519,9 @@
 
   document.getElementById("fairvalue-naver-link").addEventListener("click", (e) => {
     const url = e.currentTarget.dataset.url;
-    if (url) window.open(url, "_blank", "noopener");
+    // window.open()도 PWA(홈 화면 설치, standalone 모드)에서는 새 탭이 안 열려서(사용자 리포트로
+    // 발견), 가장 확실하게 작동하는 현재 화면 이동으로 바꿈 — 뒤로가기로 돌아올 수 있음.
+    if (url) location.href = url;
   });
 
   async function searchDartCorp(q) {
@@ -1587,13 +1689,12 @@
     `).join("");
   }
 
-  // 종목명 클릭 → 네이버 증권. <a target="_blank"> 대신 명시적 window.open()을 씀 — 홈 화면에
-  // 설치한 PWA(standalone 모드)에서는 target="_blank" 링크가 새 탭을 못 여는 경우가 있어서
-  // (실제로 사용자가 "눌러도 반응이 없다"고 보고해서 발견), 적정주가 탭의 "주가 확인" 버튼과
-  // 같은 방식으로 통일함. 카드가 동적으로 다시 그려져도 항상 동작하도록 상위 요소에 위임함.
+  // 종목명 클릭 → 네이버 증권. window.open()도 PWA(홈 화면 설치, standalone 모드)에서는 새 탭이
+  // 안 열려서(사용자 리포트로 발견), 가장 확실하게 작동하는 현재 화면 이동으로 바꿈 — 뒤로가기로
+  // 돌아올 수 있음. 카드가 동적으로 다시 그려져도 항상 동작하도록 상위 요소에 위임함.
   document.getElementById("sector-panel").addEventListener("click", (e) => {
     const target = e.target.closest(".sector-stock-name[data-naver-url]");
-    if (target) window.open(target.dataset.naverUrl, "_blank", "noopener");
+    if (target) location.href = target.dataset.naverUrl;
   });
 
   document.getElementById("sector-run-btn").addEventListener("click", async () => {
@@ -1915,6 +2016,323 @@
     exportStatsHistoryRuns = data;
     statusEl.textContent = `${data.length}건 (최근 200건까지 표시)`;
     renderExportStatsHistoryList();
+  }
+
+  // 배당순위 — 적정주가/주도섹터분석과 같은 조회/이력 탭 + 목록/상세 구조를 그대로 따름
+  function renderDividendRankCards(result) {
+    return `
+      <div class="sector-card">
+        <div class="sector-card-head">
+          <div class="sector-name">${escapeHtml(result.marketLabel)} ${escapeHtml(result.baseYear)}년 기준</div>
+        </div>
+        ${result.rankings.map(r => `
+          <div class="sector-stock-row">
+            <div>
+              <span class="sector-stock-name">${r.rank}. ${escapeHtml(r.corpName)}</span>
+              <span class="sector-stock-detail"> (${escapeHtml(r.stockCode)}, ${escapeHtml(r.secnKacd)})</span>
+            </div>
+            <div style="text-align:right;">
+              <span class="sector-stock-rate up">시가배당율 ${r.divRateCpri.toFixed(2)}%</span>
+              <div class="sector-stock-detail">액면가배당율 ${r.divRatePval.toFixed(2)}% · 주당 ${Math.round(r.divAmtPerStk).toLocaleString()}원</div>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  document.getElementById("dividendrank-run-btn").addEventListener("click", async () => {
+    const statusEl = document.getElementById("dividendrank-status");
+    const resultEl = document.getElementById("dividendrank-result");
+    statusEl.textContent = "조회 중입니다...";
+    resultEl.innerHTML = "";
+
+    const { data, error } = await supabaseClient.functions.invoke("dividend-ranking", { body: {} });
+
+    if (error) {
+      let detail = error.message;
+      try {
+        const body = await error.context.json();
+        if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
+      } catch (_) {}
+      statusEl.textContent = "조회 실패: " + detail;
+      return;
+    }
+    if (data.error) {
+      statusEl.textContent = data.error;
+      return;
+    }
+
+    statusEl.textContent = "";
+    resultEl.innerHTML = renderDividendRankCards(data);
+  });
+
+  document.querySelectorAll("#dividendrank-panel [data-dividendranktab]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#dividendrank-panel [data-dividendranktab]").forEach(b => b.classList.toggle("active", b === btn));
+      document.getElementById("dividendrank-search-view").hidden = btn.dataset.dividendranktab !== "search";
+      document.getElementById("dividendrank-history-view").hidden = btn.dataset.dividendranktab !== "history";
+      if (btn.dataset.dividendranktab === "history") loadDividendRankHistory();
+    });
+  });
+
+  (() => {
+    const today = new Date();
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    document.getElementById("dividendrankhistory-to").value = formatKDate(today);
+    document.getElementById("dividendrankhistory-from").value = formatKDate(monthAgo);
+  })();
+
+  [["from", "dividendrankhistory-from"], ["to", "dividendrankhistory-to"]].forEach(([_, id]) => {
+    const textInput = document.getElementById(id);
+    const picker = document.getElementById(`${id}-picker`);
+    document.getElementById(`${id}-cal-btn`).addEventListener("click", () => {
+      const current = parseKDateInput(textInput.value);
+      if (current) picker.value = current;
+      try { picker.showPicker(); } catch (_) { picker.focus(); }
+    });
+    picker.addEventListener("change", () => {
+      if (picker.value) textInput.value = formatKDate(picker.value);
+    });
+  });
+
+  let dividendRankHistoryRuns = [];
+
+  function showDividendRankHistoryList() {
+    document.getElementById("dividendrankhistory-list-view").hidden = false;
+    document.getElementById("dividendrankhistory-detail-view").hidden = true;
+  }
+
+  function showDividendRankHistoryDetail(id) {
+    const run = dividendRankHistoryRuns.find(r => r.id === id);
+    document.getElementById("dividendrankhistory-detail-content").innerHTML = `
+      <p class="muted">${formatKDateTime(run.calculated_at)} 조회</p>
+      ${renderDividendRankCards({ baseYear: run.base_year, marketLabel: run.market_label, rankings: run.rankings })}
+    `;
+    document.getElementById("dividendrankhistory-list-view").hidden = true;
+    document.getElementById("dividendrankhistory-detail-view").hidden = false;
+  }
+
+  function renderDividendRankHistoryList() {
+    document.getElementById("dividendrankhistory-list").innerHTML = dividendRankHistoryRuns.map(r => `
+      <div class="inquiry-row" data-id="${r.id}">
+        <div>
+          <div>${escapeHtml(r.market_label)} ${escapeHtml(r.base_year)}년 기준</div>
+          <div class="inquiry-meta">${formatKDateTime(r.calculated_at)} 조회</div>
+        </div>
+      </div>
+    `).join("");
+
+    document.querySelectorAll("#dividendrankhistory-list .inquiry-row").forEach(row => {
+      row.addEventListener("click", () => showDividendRankHistoryDetail(row.dataset.id));
+    });
+  }
+
+  document.getElementById("dividendrankhistory-back-btn").addEventListener("click", showDividendRankHistoryList);
+  document.getElementById("dividendrankhistory-search-btn").addEventListener("click", loadDividendRankHistory);
+
+  async function loadDividendRankHistory() {
+    const statusEl = document.getElementById("dividendrankhistory-status");
+    showDividendRankHistoryList();
+    const fromRaw = document.getElementById("dividendrankhistory-from").value.trim();
+    const toRaw = document.getElementById("dividendrankhistory-to").value.trim();
+    const from = fromRaw ? parseKDateInput(fromRaw) : null;
+    const to = toRaw ? parseKDateInput(toRaw) : null;
+
+    if (fromRaw && !from) {
+      statusEl.textContent = "시작일 형식이 올바르지 않습니다. 2026/08/27 처럼 입력해 주세요.";
+      return;
+    }
+    if (toRaw && !to) {
+      statusEl.textContent = "종료일 형식이 올바르지 않습니다. 2026/09/27 처럼 입력해 주세요.";
+      return;
+    }
+
+    statusEl.textContent = "조회 중...";
+    document.getElementById("dividendrankhistory-list").innerHTML = "";
+
+    let query = supabaseClient
+      .from("dividend_ranking_history")
+      .select("*")
+      .order("calculated_at", { ascending: false })
+      .limit(200);
+
+    if (from) query = query.gte("calculated_at", `${from}T00:00:00Z`);
+    if (to) query = query.lte("calculated_at", `${to}T23:59:59Z`);
+
+    const { data, error } = await query;
+
+    if (error) {
+      statusEl.textContent = "조회 실패: " + error.message;
+      return;
+    }
+    if (!data.length) {
+      dividendRankHistoryRuns = [];
+      renderDividendRankHistoryList();
+      statusEl.textContent = "조건에 맞는 이력이 없습니다.";
+      return;
+    }
+
+    dividendRankHistoryRuns = data;
+    statusEl.textContent = `${data.length}건 (최근 200건까지 표시)`;
+    renderDividendRankHistoryList();
+  }
+
+  // 월별 주식결제대금 — 같은 패턴
+  function renderSettlementCostTable(result) {
+    const toJo = (n) => (n / 1_000_000_000_000).toLocaleString(undefined, { maximumFractionDigits: 1 });
+    return `
+      <table>
+        <thead><tr><th>기준월</th><th>거래대금(조원)</th><th>결제대금(조원)</th></tr></thead>
+        <tbody>
+          ${result.monthly.map(m => {
+            const totalTrade = m.marketSettleTradeAmt + m.stockSettleTradeAmt + m.kotcTradeAmt;
+            const totalSettled = m.marketSettleSettledAmt + m.stockSettleSettledAmt + m.kotcSettledAmt;
+            const ym = `${m.yymm.slice(0, 4)}.${m.yymm.slice(4, 6)}`;
+            return `<tr><td data-label="기준월">${ym}</td><td data-label="거래대금">${toJo(totalTrade)}</td><td data-label="결제대금">${toJo(totalSettled)}</td></tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  document.getElementById("settlementcost-run-btn").addEventListener("click", async () => {
+    const statusEl = document.getElementById("settlementcost-status");
+    const resultEl = document.getElementById("settlementcost-result");
+    statusEl.textContent = "조회 중입니다...";
+    resultEl.innerHTML = "";
+
+    const { data, error } = await supabaseClient.functions.invoke("settlement-cost-stats", { body: {} });
+
+    if (error) {
+      let detail = error.message;
+      try {
+        const body = await error.context.json();
+        if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
+      } catch (_) {}
+      statusEl.textContent = "조회 실패: " + detail;
+      return;
+    }
+    if (data.error) {
+      statusEl.textContent = data.error;
+      return;
+    }
+
+    statusEl.textContent = "";
+    resultEl.innerHTML = renderSettlementCostTable(data);
+  });
+
+  document.querySelectorAll("#settlementcost-panel [data-settlementcosttab]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#settlementcost-panel [data-settlementcosttab]").forEach(b => b.classList.toggle("active", b === btn));
+      document.getElementById("settlementcost-search-view").hidden = btn.dataset.settlementcosttab !== "search";
+      document.getElementById("settlementcost-history-view").hidden = btn.dataset.settlementcosttab !== "history";
+      if (btn.dataset.settlementcosttab === "history") loadSettlementCostHistory();
+    });
+  });
+
+  (() => {
+    const today = new Date();
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    document.getElementById("settlementcosthistory-to").value = formatKDate(today);
+    document.getElementById("settlementcosthistory-from").value = formatKDate(monthAgo);
+  })();
+
+  [["from", "settlementcosthistory-from"], ["to", "settlementcosthistory-to"]].forEach(([_, id]) => {
+    const textInput = document.getElementById(id);
+    const picker = document.getElementById(`${id}-picker`);
+    document.getElementById(`${id}-cal-btn`).addEventListener("click", () => {
+      const current = parseKDateInput(textInput.value);
+      if (current) picker.value = current;
+      try { picker.showPicker(); } catch (_) { picker.focus(); }
+    });
+    picker.addEventListener("change", () => {
+      if (picker.value) textInput.value = formatKDate(picker.value);
+    });
+  });
+
+  let settlementCostHistoryRuns = [];
+
+  function showSettlementCostHistoryList() {
+    document.getElementById("settlementcosthistory-list-view").hidden = false;
+    document.getElementById("settlementcosthistory-detail-view").hidden = true;
+  }
+
+  function showSettlementCostHistoryDetail(id) {
+    const run = settlementCostHistoryRuns.find(r => r.id === id);
+    document.getElementById("settlementcosthistory-detail-content").innerHTML = `
+      <p class="muted">${formatKDateTime(run.calculated_at)} 조회</p>
+      ${renderSettlementCostTable({ monthly: run.monthly })}
+    `;
+    document.getElementById("settlementcosthistory-list-view").hidden = true;
+    document.getElementById("settlementcosthistory-detail-view").hidden = false;
+  }
+
+  function renderSettlementCostHistoryList() {
+    document.getElementById("settlementcosthistory-list").innerHTML = settlementCostHistoryRuns.map(r => `
+      <div class="inquiry-row" data-id="${r.id}">
+        <div>
+          <div>${formatKDate(r.period_from)} ~ ${formatKDate(r.period_to)}</div>
+          <div class="inquiry-meta">${formatKDateTime(r.calculated_at)} 조회</div>
+        </div>
+      </div>
+    `).join("");
+
+    document.querySelectorAll("#settlementcosthistory-list .inquiry-row").forEach(row => {
+      row.addEventListener("click", () => showSettlementCostHistoryDetail(row.dataset.id));
+    });
+  }
+
+  document.getElementById("settlementcosthistory-back-btn").addEventListener("click", showSettlementCostHistoryList);
+  document.getElementById("settlementcosthistory-search-btn").addEventListener("click", loadSettlementCostHistory);
+
+  async function loadSettlementCostHistory() {
+    const statusEl = document.getElementById("settlementcosthistory-status");
+    showSettlementCostHistoryList();
+    const fromRaw = document.getElementById("settlementcosthistory-from").value.trim();
+    const toRaw = document.getElementById("settlementcosthistory-to").value.trim();
+    const from = fromRaw ? parseKDateInput(fromRaw) : null;
+    const to = toRaw ? parseKDateInput(toRaw) : null;
+
+    if (fromRaw && !from) {
+      statusEl.textContent = "시작일 형식이 올바르지 않습니다. 2026/08/27 처럼 입력해 주세요.";
+      return;
+    }
+    if (toRaw && !to) {
+      statusEl.textContent = "종료일 형식이 올바르지 않습니다. 2026/09/27 처럼 입력해 주세요.";
+      return;
+    }
+
+    statusEl.textContent = "조회 중...";
+    document.getElementById("settlementcosthistory-list").innerHTML = "";
+
+    let query = supabaseClient
+      .from("settlement_cost_history")
+      .select("*")
+      .order("calculated_at", { ascending: false })
+      .limit(200);
+
+    if (from) query = query.gte("calculated_at", `${from}T00:00:00Z`);
+    if (to) query = query.lte("calculated_at", `${to}T23:59:59Z`);
+
+    const { data, error } = await query;
+
+    if (error) {
+      statusEl.textContent = "조회 실패: " + error.message;
+      return;
+    }
+    if (!data.length) {
+      settlementCostHistoryRuns = [];
+      renderSettlementCostHistoryList();
+      statusEl.textContent = "조건에 맞는 이력이 없습니다.";
+      return;
+    }
+
+    settlementCostHistoryRuns = data;
+    statusEl.textContent = `${data.length}건 (최근 200건까지 표시)`;
+    renderSettlementCostHistoryList();
   }
 
   // 사용자 관리 — user_roles 테이블 기반. "관리자 지정"은 데이터만 저장(실제 권한 확장은 다음
