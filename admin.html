@@ -1438,7 +1438,7 @@
     document.getElementById("fairvalue-result-view").hidden = true;
     document.getElementById("fairvalue-search-results").innerHTML = "";
     document.getElementById("fairvalue-naver-link").disabled = true;
-    statusEl.textContent = "조회 중입니다... (DART 자료를 불러오는 데 몇 초 걸릴 수 있어요)";
+    statusEl.textContent = "조회 중입니다... (DART·시세 자료를 불러오는 데 최대 30초 정도 걸릴 수 있어요)";
 
     const { data, error } = await supabaseClient.functions.invoke("dart-fair-value", { body: { corpCode } });
 
