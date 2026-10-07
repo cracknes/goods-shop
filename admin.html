@@ -1574,7 +1574,7 @@
         ${sector.stocks.map(s => `
           <div class="sector-stock-row">
             <div>
-              <a class="sector-stock-name" href="https://m.stock.naver.com/domestic/stock/${escapeHtml(s.code)}/price?domesticStockExchange=KRX" target="_blank" rel="noopener">${escapeHtml(s.name)}</a>
+              <span class="sector-stock-name" data-naver-url="https://m.stock.naver.com/domestic/stock/${escapeHtml(s.code)}/price?domesticStockExchange=KRX">${escapeHtml(s.name)}</span>
               <span class="sector-stock-detail"> (${escapeHtml(s.code)})</span>
             </div>
             <div style="text-align:right;">
@@ -1586,6 +1586,15 @@
       </div>
     `).join("");
   }
+
+  // 종목명 클릭 → 네이버 증권. <a target="_blank"> 대신 명시적 window.open()을 씀 — 홈 화면에
+  // 설치한 PWA(standalone 모드)에서는 target="_blank" 링크가 새 탭을 못 여는 경우가 있어서
+  // (실제로 사용자가 "눌러도 반응이 없다"고 보고해서 발견), 적정주가 탭의 "주가 확인" 버튼과
+  // 같은 방식으로 통일함. 카드가 동적으로 다시 그려져도 항상 동작하도록 상위 요소에 위임함.
+  document.getElementById("sector-panel").addEventListener("click", (e) => {
+    const target = e.target.closest(".sector-stock-name[data-naver-url]");
+    if (target) window.open(target.dataset.naverUrl, "_blank", "noopener");
+  });
 
   document.getElementById("sector-run-btn").addEventListener("click", async () => {
     const statusEl = document.getElementById("sector-status");
