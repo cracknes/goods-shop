@@ -29,6 +29,7 @@
       <button data-tab="push">PUSH관리</button>
       <button data-tab="fairvalue">적정주가</button>
       <button data-tab="sector">주도 섹터 분석</button>
+      <button data-tab="exportstats">주요 품목별 수출</button>
       <button data-tab="users">사용자 관리</button>
     </div>
     <div class="shop-content">
@@ -320,6 +321,54 @@
         </div>
       </div>
 
+      <div class="card" id="exportstats-panel" hidden>
+        <div class="tab-bar">
+          <button type="button" data-exporttab="search" class="active">조회</button>
+          <button type="button" data-exporttab="history">이력</button>
+        </div>
+
+        <div id="exportstats-search-view">
+          <p class="muted">관세청 "수출 주요품목별 10일 단위 잠정치"를 조회해요. 조회해두면 "주도 섹터 분석" 결과 카드에도 관련 품목의 수출 증감률이 같이 표시돼요(반도체·자동차·정유·철강·조선·전기전자).</p>
+          <button class="primary" id="exportstats-run-btn" style="width:100%;">조회 실행</button>
+          <p id="exportstats-status" class="muted"></p>
+          <div id="exportstats-result"></div>
+        </div>
+
+        <div id="exportstats-history-view" hidden>
+          <p class="muted">조회할 때마다 그 결과가 자동으로 저장돼요. 나중에 그때 수출 동향이 어땠는지 다시 볼 수 있어요.</p>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1;">
+              <label class="form-section-label" for="exportstatshistory-from" style="margin-top:0;">시작일</label>
+              <div style="position:relative;">
+                <input id="exportstatshistory-from" type="text" inputmode="numeric" placeholder="2026/08/27" style="width:100%; padding-right:36px; text-align:center;">
+                <button type="button" id="exportstatshistory-from-cal-btn" aria-label="달력에서 시작일 선택"
+                  style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; padding:4px;">📅</button>
+                <input id="exportstatshistory-from-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
+            </div>
+            <div style="flex:1;">
+              <label class="form-section-label" for="exportstatshistory-to" style="margin-top:0;">종료일</label>
+              <div style="position:relative;">
+                <input id="exportstatshistory-to" type="text" inputmode="numeric" placeholder="2026/09/27" style="width:100%; padding-right:36px; text-align:center;">
+                <button type="button" id="exportstatshistory-to-cal-btn" aria-label="달력에서 종료일 선택"
+                  style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; padding:4px;">📅</button>
+                <input id="exportstatshistory-to-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
+            </div>
+          </div>
+          <button class="primary" id="exportstatshistory-search-btn" style="width:100%;">이력 검색</button>
+          <p id="exportstatshistory-status" class="muted"></p>
+
+          <div id="exportstatshistory-list-view">
+            <div id="exportstatshistory-list"></div>
+          </div>
+          <div id="exportstatshistory-detail-view" hidden>
+            <button type="button" id="exportstatshistory-back-btn" class="muted" style="background:none; border:none; cursor:pointer; padding:0; margin-bottom:12px;">&larr; 목록으로</button>
+            <div id="exportstatshistory-detail-content"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="card" id="users-panel" hidden>
         <h2 style="margin-top:0;">사용자 관리</h2>
         <p class="muted">"관리자로 지정"하면 상품관리·메뉴관리·푸시 등 다른 관리자 화면에도 실제로 접근할 수 있어요. "접근 차단"은 체크하면 그 사용자가 즉시 로그아웃되고 재로그인도 막혀요. "삭제"는 주문·문의 등 남겨야 할 기록이 없는 계정만 가능해요(있으면 차단을 대신 써주세요).</p>
@@ -363,6 +412,7 @@
     document.getElementById("push-panel").hidden = tab !== "push";
     document.getElementById("fairvalue-panel").hidden = tab !== "fairvalue";
     document.getElementById("sector-panel").hidden = tab !== "sector";
+    document.getElementById("exportstats-panel").hidden = tab !== "exportstats";
     document.getElementById("users-panel").hidden = tab !== "users";
   }
 
@@ -1518,6 +1568,7 @@
           <div class="sector-summary">
             총 거래대금 ${(sector.totalTrPrc / 100000000).toLocaleString(undefined, { maximumFractionDigits: 0 })}억원<br>
             종목 수 ${sector.count}개 · 평균 ${sector.avgFltRt.toFixed(2)}%
+            ${sector.relatedExport ? `<br>관련 수출(${escapeHtml(sector.relatedExport.itemNames.join("·"))}) ${sector.relatedExport.changeRatePct === null ? "전년비교 불가" : `<span style="color:${sector.relatedExport.changeRatePct >= 0 ? "#d64545" : "#3366cc"}; font-weight:600;">${sector.relatedExport.changeRatePct >= 0 ? "+" : ""}${sector.relatedExport.changeRatePct.toFixed(1)}%</span>`}` : ""}
           </div>
         </div>
         ${sector.stocks.map(s => `
@@ -1693,6 +1744,168 @@
     sectorHistoryRuns = data;
     statusEl.textContent = `${data.length}건 (최근 200건까지 표시)`;
     renderSectorHistoryList();
+  }
+
+  // 주요 품목별 수출 데이터 — 주도 섹터 분석과 같은 조회/이력 탭 + 목록/상세 구조를 그대로 따름
+  function renderExportStatsCards(result) {
+    return `
+      <div class="sector-card">
+        <div class="sector-card-head">
+          <div class="sector-name">${escapeHtml(result.periodLabel)}</div>
+          <div class="sector-summary">
+            ${result.totalExportAmountUsd != null ? `전체 수출액 ${(result.totalExportAmountUsd / 100000000).toLocaleString(undefined, { maximumFractionDigits: 0 })}억달러<br>` : ""}
+            ${result.hasYearAgoComparison === false ? `전년 동기 데이터가 없어 증감률 비교 불가` : ""}
+          </div>
+        </div>
+        ${result.items.map(item => `
+          <div class="sector-stock-row">
+            <div><span class="sector-stock-name">${escapeHtml(item.name)}</span></div>
+            <div style="text-align:right;">
+              <span class="sector-stock-rate ${item.changeRatePct === null ? "" : (item.changeRatePct >= 0 ? "up" : "down")}">${item.changeRatePct === null ? "비교 불가" : (item.changeRatePct >= 0 ? "+" : "") + item.changeRatePct.toFixed(1) + "%"}</span>
+              <div class="sector-stock-detail">${(item.exportAmountUsd / 100000000).toLocaleString(undefined, { maximumFractionDigits: 1 })}억달러</div>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  document.getElementById("exportstats-run-btn").addEventListener("click", async () => {
+    const statusEl = document.getElementById("exportstats-status");
+    const resultEl = document.getElementById("exportstats-result");
+    statusEl.textContent = "조회 중입니다...";
+    resultEl.innerHTML = "";
+
+    const { data, error } = await supabaseClient.functions.invoke("export-item-stats", { body: {} });
+
+    if (error) {
+      let detail = error.message;
+      try {
+        const body = await error.context.json();
+        if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
+      } catch (_) {}
+      statusEl.textContent = "조회 실패: " + detail;
+      return;
+    }
+    if (data.error) {
+      statusEl.textContent = data.error;
+      return;
+    }
+
+    statusEl.textContent = "";
+    resultEl.innerHTML = renderExportStatsCards(data);
+  });
+
+  document.querySelectorAll("#exportstats-panel [data-exporttab]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#exportstats-panel [data-exporttab]").forEach(b => b.classList.toggle("active", b === btn));
+      document.getElementById("exportstats-search-view").hidden = btn.dataset.exporttab !== "search";
+      document.getElementById("exportstats-history-view").hidden = btn.dataset.exporttab !== "history";
+      if (btn.dataset.exporttab === "history") loadExportStatsHistory();
+    });
+  });
+
+  (() => {
+    const today = new Date();
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    document.getElementById("exportstatshistory-to").value = formatKDate(today);
+    document.getElementById("exportstatshistory-from").value = formatKDate(monthAgo);
+  })();
+
+  [["from", "exportstatshistory-from"], ["to", "exportstatshistory-to"]].forEach(([_, id]) => {
+    const textInput = document.getElementById(id);
+    const picker = document.getElementById(`${id}-picker`);
+    document.getElementById(`${id}-cal-btn`).addEventListener("click", () => {
+      const current = parseKDateInput(textInput.value);
+      if (current) picker.value = current;
+      try { picker.showPicker(); } catch (_) { picker.focus(); }
+    });
+    picker.addEventListener("change", () => {
+      if (picker.value) textInput.value = formatKDate(picker.value);
+    });
+  });
+
+  let exportStatsHistoryRuns = [];
+
+  function showExportStatsHistoryList() {
+    document.getElementById("exportstatshistory-list-view").hidden = false;
+    document.getElementById("exportstatshistory-detail-view").hidden = true;
+  }
+
+  function showExportStatsHistoryDetail(id) {
+    const run = exportStatsHistoryRuns.find(r => r.id === id);
+    document.getElementById("exportstatshistory-detail-content").innerHTML = `
+      <p class="muted">${formatKDateTime(run.calculated_at)} 조회</p>
+      ${renderExportStatsCards({ periodLabel: run.period_label, items: run.items })}
+    `;
+    document.getElementById("exportstatshistory-list-view").hidden = true;
+    document.getElementById("exportstatshistory-detail-view").hidden = false;
+  }
+
+  function renderExportStatsHistoryList() {
+    document.getElementById("exportstatshistory-list").innerHTML = exportStatsHistoryRuns.map(r => `
+      <div class="inquiry-row" data-id="${r.id}">
+        <div>
+          <div>${escapeHtml(r.period_label)}</div>
+          <div class="inquiry-meta">${formatKDateTime(r.calculated_at)} 조회</div>
+        </div>
+      </div>
+    `).join("");
+
+    document.querySelectorAll("#exportstatshistory-list .inquiry-row").forEach(row => {
+      row.addEventListener("click", () => showExportStatsHistoryDetail(row.dataset.id));
+    });
+  }
+
+  document.getElementById("exportstatshistory-back-btn").addEventListener("click", showExportStatsHistoryList);
+  document.getElementById("exportstatshistory-search-btn").addEventListener("click", loadExportStatsHistory);
+
+  async function loadExportStatsHistory() {
+    const statusEl = document.getElementById("exportstatshistory-status");
+    showExportStatsHistoryList();
+    const fromRaw = document.getElementById("exportstatshistory-from").value.trim();
+    const toRaw = document.getElementById("exportstatshistory-to").value.trim();
+    const from = fromRaw ? parseKDateInput(fromRaw) : null;
+    const to = toRaw ? parseKDateInput(toRaw) : null;
+
+    if (fromRaw && !from) {
+      statusEl.textContent = "시작일 형식이 올바르지 않습니다. 2026/08/27 처럼 입력해 주세요.";
+      return;
+    }
+    if (toRaw && !to) {
+      statusEl.textContent = "종료일 형식이 올바르지 않습니다. 2026/09/27 처럼 입력해 주세요.";
+      return;
+    }
+
+    statusEl.textContent = "조회 중...";
+    document.getElementById("exportstatshistory-list").innerHTML = "";
+
+    let query = supabaseClient
+      .from("export_item_stats_history")
+      .select("*")
+      .order("calculated_at", { ascending: false })
+      .limit(200);
+
+    if (from) query = query.gte("calculated_at", `${from}T00:00:00Z`);
+    if (to) query = query.lte("calculated_at", `${to}T23:59:59Z`);
+
+    const { data, error } = await query;
+
+    if (error) {
+      statusEl.textContent = "조회 실패: " + error.message;
+      return;
+    }
+    if (!data.length) {
+      exportStatsHistoryRuns = [];
+      renderExportStatsHistoryList();
+      statusEl.textContent = "조건에 맞는 이력이 없습니다.";
+      return;
+    }
+
+    exportStatsHistoryRuns = data;
+    statusEl.textContent = `${data.length}건 (최근 200건까지 표시)`;
+    renderExportStatsHistoryList();
   }
 
   // 사용자 관리 — user_roles 테이블 기반. "관리자 지정"은 데이터만 저장(실제 권한 확장은 다음
