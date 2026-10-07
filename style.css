@@ -550,6 +550,21 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
   }
 }
 
+/* 월별 주식결제대금처럼 숫자를 월별로 비교해서 보는 표는, 모바일에서 세로 카드 목록으로 바뀌면
+   오히려 비교하기 불편해서(칸 잘림 방지용 전역 규칙의 예외) 가로 스크롤 가능한 표 형태를 유지함 */
+.keep-table-mobile { display: block; overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; }
+.keep-table-mobile thead { display: table-header-group; }
+.keep-table-mobile tbody { display: table-row-group; }
+.keep-table-mobile tr { display: table-row; border-bottom: none; padding: 0; }
+.keep-table-mobile th, .keep-table-mobile td {
+  display: table-cell;
+  width: auto;
+  white-space: nowrap;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.keep-table-mobile td::before { content: none; }
+
 /* 주도 섹터 분석 */
 .sector-card {
   background: var(--bg);

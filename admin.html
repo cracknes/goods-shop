@@ -2193,14 +2193,14 @@
   function renderSettlementCostTable(result) {
     const toJo = (n) => (n / 1_000_000_000_000).toLocaleString(undefined, { maximumFractionDigits: 1 });
     return `
-      <table>
+      <table class="keep-table-mobile">
         <thead><tr><th>기준월</th><th>거래대금(조원)</th><th>결제대금(조원)</th></tr></thead>
         <tbody>
           ${result.monthly.map(m => {
             const totalTrade = m.marketSettleTradeAmt + m.stockSettleTradeAmt + m.kotcTradeAmt;
             const totalSettled = m.marketSettleSettledAmt + m.stockSettleSettledAmt + m.kotcSettledAmt;
             const ym = `${m.yymm.slice(0, 4)}.${m.yymm.slice(4, 6)}`;
-            return `<tr><td data-label="기준월">${ym}</td><td data-label="거래대금">${toJo(totalTrade)}</td><td data-label="결제대금">${toJo(totalSettled)}</td></tr>`;
+            return `<tr><td>${ym}</td><td>${toJo(totalTrade)}</td><td>${toJo(totalSettled)}</td></tr>`;
           }).join("")}
         </tbody>
       </table>
