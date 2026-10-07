@@ -1509,7 +1509,7 @@
         ${sector.stocks.map(s => `
           <div class="sector-stock-row">
             <div>
-              <span class="sector-stock-name">${escapeHtml(s.name)}</span>
+              <a class="sector-stock-name" href="https://m.stock.naver.com/domestic/stock/${escapeHtml(s.code)}/price?domesticStockExchange=KRX" target="_blank" rel="noopener">${escapeHtml(s.name)}</a>
               <span class="sector-stock-detail"> (${escapeHtml(s.code)})</span>
             </div>
             <div style="text-align:right;">

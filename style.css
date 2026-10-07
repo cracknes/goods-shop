@@ -587,7 +587,8 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
   font-size: 14px;
 }
 .sector-stock-row:first-child { border-top: none; }
-.sector-stock-name { font-weight: 600; }
+.sector-stock-name { font-weight: 600; color: inherit; text-decoration: none; }
+.sector-stock-name:hover { text-decoration: underline; }
 .sector-stock-detail { color: var(--text-soft); font-size: 13px; }
 .sector-stock-rate { font-weight: 700; flex-shrink: 0; }
 .sector-stock-rate.up { color: #d64545; }
