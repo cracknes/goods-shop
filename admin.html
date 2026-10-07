@@ -1869,7 +1869,10 @@
         </div>
         ${result.items.map(item => `
           <div class="sector-stock-row">
-            <div><span class="sector-stock-name">${escapeHtml(item.name)}</span></div>
+            <div>
+              <span class="sector-stock-name">${escapeHtml(item.name)}</span>
+              ${item.note ? `<span class="sector-stock-detail"> (${escapeHtml(item.note)})</span>` : ""}
+            </div>
             <div style="text-align:right;">
               <span class="sector-stock-rate ${item.changeRatePct === null ? "" : (item.changeRatePct >= 0 ? "up" : "down")}">${item.changeRatePct === null ? "비교 불가" : (item.changeRatePct >= 0 ? "+" : "") + item.changeRatePct.toFixed(1) + "%"}</span>
               <div class="sector-stock-detail">${(item.exportAmountUsd / 100000000).toLocaleString(undefined, { maximumFractionDigits: 1 })}억달러</div>
