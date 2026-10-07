@@ -2028,7 +2028,7 @@
         ${result.rankings.map(r => `
           <div class="sector-stock-row">
             <div>
-              <span class="sector-stock-name">${r.rank}. ${escapeHtml(r.corpName)}</span>
+              <span class="sector-stock-name" data-naver-url="https://m.stock.naver.com/domestic/stock/${escapeHtml(r.stockCode)}/price?domesticStockExchange=KRX">${r.rank}. ${escapeHtml(r.corpName)}</span>
               <span class="sector-stock-detail"> (${escapeHtml(r.stockCode)}, ${escapeHtml(r.secnKacd)})</span>
             </div>
             <div style="text-align:right;">
@@ -2040,6 +2040,13 @@
       </div>
     `;
   }
+
+  // 종목명 클릭 → 네이버 증권. 주도 섹터 분석과 같은 이유로 window.open/target="_blank" 대신
+  // location.href 사용(홈 화면에 설치한 PWA에서 새 탭이 안 열리는 문제 확인됨).
+  document.getElementById("dividendrank-panel").addEventListener("click", (e) => {
+    const target = e.target.closest(".sector-stock-name[data-naver-url]");
+    if (target) location.href = target.dataset.naverUrl;
+  });
 
   document.getElementById("dividendrank-run-btn").addEventListener("click", async () => {
     const statusEl = document.getElementById("dividendrank-status");
