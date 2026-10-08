@@ -1643,8 +1643,8 @@
 
     const nref = data.naverReference;
     document.getElementById("fairvalue-naver-reference").innerHTML = nref
-      ? `참고(네이버증권 ${escapeHtml(nref.periodLabel)} 확정실적 — 비공식 조회라 안 보일 수도 있음): ` +
-        `EPS ${nref.eps !== null ? Math.round(nref.eps).toLocaleString() + "원" : "-"} · ` +
+      ? `참고(네이버증권 ${escapeHtml(nref.periodLabel)} 확정실적, 비공식 조회라 안 보일 수도 있음): ` +
+        `EPS(최근 4개 분기 합산) ${nref.eps !== null ? Math.round(nref.eps).toLocaleString() + "원" : "-"} · ` +
         `BPS ${nref.bps !== null ? Math.round(nref.bps).toLocaleString() + "원" : "-"} · ` +
         `PER ${nref.per !== null ? nref.per.toFixed(1) + "배" : "-"} · ` +
         `PBR ${nref.pbr !== null ? nref.pbr.toFixed(2) + "배" : "-"} · ` +
