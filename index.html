@@ -303,11 +303,116 @@
     { question: "불이 나면 달려오는 빨간색 차는?", answer: "소방차", hint: "삐뽀삐뽀 소리가 나요" },
     { question: "아픈 사람을 병원에 데려다주는 차는?", answer: "구급차", hint: "사이렌 소리가 나요" },
   ];
+  // 위인 인물퀴즈 - 한국 위인 50명 + 세계 위인 50명, 역사적 사실 한 가지를 힌트로 주고 이름을 맞힘
+  const WIIN_QUIZZES = [
+    { question: "거북선을 만들고 일본 수군을 무찌른 조선의 장군은 누구일까요?", answer: "이순신", hint: "명량해전에서 큰 승리를 거뒀어요" },
+    { question: "한글을 만든 조선의 왕은 누구일까요?", answer: "세종대왕", hint: "집현전 학자들과 함께 만들었어요" },
+    { question: "그림을 잘 그리고 율곡 이이를 키운 조선시대 여성은 누구일까요?", answer: "신사임당", hint: "5만원권 지폐에 나와요" },
+    { question: "3.1 운동 때 만세를 외친 소녀는 누구일까요?", answer: "유관순", hint: "서대문형무소에서 순국했어요" },
+    { question: "이토 히로부미를 저격한 독립운동가는 누구일까요?", answer: "안중근", hint: "'대한독립'이라고 외쳤어요" },
+    { question: "대한민국 임시정부를 이끈 독립운동가는 누구일까요?", answer: "김구", hint: "호가 백범이에요" },
+    { question: "측우기와 자격루를 만든 조선의 과학자는 누구일까요?", answer: "장영실", hint: "노비 출신이었지만 왕의 인정을 받았어요" },
+    { question: "동의보감을 쓴 조선의 의원은 누구일까요?", answer: "허준", hint: "백성들을 위해 의학책을 썼어요" },
+    { question: "목민심서를 쓰고 거중기를 만든 조선의 실학자는 누구일까요?", answer: "정약용", hint: "거중기로 수원화성을 짓는 걸 도왔어요" },
+    { question: "영토를 크게 넓힌 고구려의 왕은 누구일까요?", answer: "광개토대왕", hint: "업적을 새긴 비석이 남아있어요" },
+    { question: "고려를 세운 왕은 누구일까요?", answer: "왕건", hint: "후삼국을 통일했어요" },
+    { question: "조선을 세운 첫 번째 왕은 누구일까요?", answer: "이성계", hint: "위화도에서 군대를 되돌렸어요" },
+    { question: "수나라의 대군을 물리친 고구려의 장군은 누구일까요?", answer: "을지문덕", hint: "살수대첩에서 크게 이겼어요" },
+    { question: "거란의 침입을 물리친 고려의 장군은 누구일까요?", answer: "강감찬", hint: "귀주대첩에서 큰 승리를 거뒀어요" },
+    { question: "신라의 삼국통일을 도운 장군은 누구일까요?", answer: "김유신", hint: "화랑 출신이에요" },
+    { question: "신라 최초의 여왕은 누구일까요?", answer: "선덕여왕", hint: "첨성대를 만들었어요" },
+    { question: "수원화성을 지은 조선의 왕은 누구일까요?", answer: "정조", hint: "아버지 사도세자를 그리워했어요" },
+    { question: "흥사단을 만든 독립운동가는 누구일까요?", answer: "안창호", hint: "호가 도산이에요" },
+    { question: "중국 훙커우 공원에서 폭탄을 던진 독립운동가는 누구일까요?", answer: "윤봉길", hint: "중국 상하이에서 의거를 일으켰어요" },
+    { question: "어린이날을 만든 사람은 누구일까요?", answer: "방정환", hint: "'어린이'라는 말을 널리 쓰게 한 사람이에요" },
+    { question: "한글을 연구한 조선 말의 국어학자는 누구일까요?", answer: "주시경", hint: "한글 보급에 평생을 바쳤어요" },
+    { question: "대동여지도를 만든 조선의 지리학자는 누구일까요?", answer: "김정호", hint: "전국을 직접 돌아다니며 지도를 그렸어요" },
+    { question: "조선시대의 청렴한 재상은 누구일까요?", answer: "황희", hint: "세종대왕을 도운 명재상이에요" },
+    { question: "십만양병설을 주장한 조선의 학자는 누구일까요?", answer: "이이", hint: "호가 율곡이에요" },
+    { question: "조선의 대표적인 성리학자는 누구일까요?", answer: "이황", hint: "호가 퇴계이고 천원권 지폐에 나와요" },
+    { question: "청해진을 설치한 신라의 해상왕은 누구일까요?", answer: "장보고", hint: "바다를 통해 무역을 했어요" },
+    { question: "황산벌에서 끝까지 싸운 백제의 장군은 누구일까요?", answer: "계백", hint: "결사대 오천 명을 이끌었어요" },
+    { question: "고려에 끝까지 충성을 지킨 신하는 누구일까요?", answer: "정몽주", hint: "선죽교에서 죽임을 당했어요" },
+    { question: "임진왜란 때 승병을 이끈 승려는 누구일까요?", answer: "사명대사", hint: "일본에 가서 평화를 위해 협상했어요" },
+    { question: "임진왜란 때 붉은 옷을 입고 의병을 일으킨 장군은 누구일까요?", answer: "곽재우", hint: "홍의장군이라 불렸어요" },
+    { question: "'님의 침묵'을 쓴 독립운동가 시인은 누구일까요?", answer: "한용운", hint: "호가 만해예요" },
+    { question: "'서시'를 쓴 시인은 누구일까요?", answer: "윤동주", hint: "일제강점기에 짧은 생을 살았어요" },
+    { question: "열하일기를 쓴 조선의 실학자는 누구일까요?", answer: "박지원", hint: "청나라를 다녀와서 책을 썼어요" },
+    { question: "지구가 돈다고 주장한 조선의 실학자는 누구일까요?", answer: "홍대용", hint: "지전설을 주장했어요" },
+    { question: "화약을 만들어 왜구를 물리친 고려의 발명가는 누구일까요?", answer: "최무선", hint: "화포를 만들었어요" },
+    { question: "목화씨를 들여온 고려의 학자는 누구일까요?", answer: "문익점", hint: "붓통에 목화씨를 숨겨왔다고 전해져요" },
+    { question: "번 돈을 굶주린 제주도 사람들에게 나눠준 상인은 누구일까요?", answer: "김만덕", hint: "제주도 사람이에요" },
+    { question: "진주성 전투 때 왜장을 끌어안고 강에 뛰어든 여성은 누구일까요?", answer: "논개", hint: "촉석루 아래 강물에 몸을 던졌어요" },
+    { question: "동학농민운동을 이끈 지도자는 누구일까요?", answer: "전봉준", hint: "별명이 녹두장군이에요" },
+    { question: "거란 장수와 담판을 벌여 땅을 얻어낸 고려의 외교관은 누구일까요?", answer: "서희", hint: "말로 적을 물러나게 했어요" },
+    { question: "훈민정음 창제에 참여하고 외교에도 능했던 조선의 학자는 누구일까요?", answer: "신숙주", hint: "여러 나라 말을 잘했어요" },
+    { question: "왕권을 강화해 나라의 기틀을 다진 조선의 3대 왕은 누구일까요?", answer: "태종", hint: "세종대왕의 아버지예요" },
+    { question: "경국대전을 완성한 조선의 왕은 누구일까요?", answer: "성종", hint: "나라의 법을 정리했어요" },
+    { question: "서당, 씨름 같은 풍속화를 그린 조선의 화가는 누구일까요?", answer: "김홍도", hint: "단원이라는 호를 썼어요" },
+    { question: "아름다운 여인 그림을 많이 그린 조선의 화가는 누구일까요?", answer: "신윤복", hint: "혜원이라는 호를 썼어요" },
+    { question: "애국가를 작곡한 음악가는 누구일까요?", answer: "안익태", hint: "우리나라 국가를 만들었어요" },
+    { question: "소 그림으로 유명한 우리나라의 화가는 누구일까요?", answer: "이중섭", hint: "제주도에서 지내며 그림을 그리기도 했어요" },
+    { question: "우리나라 최초의 여성 서양화가는 누구일까요?", answer: "나혜석", hint: "그림과 글을 모두 남겼어요" },
+    { question: "헤이그에 특사로 파견된 독립운동가는 누구일까요?", answer: "이상설", hint: "고종 황제가 보낸 특사였어요" },
+    { question: "전 재산을 팔아 만주에서 독립운동을 도운 사람은 누구일까요?", answer: "이회영", hint: "형제들과 함께 가문의 재산을 바쳤어요" },
+    { question: "모나리자를 그린 화가이자 발명가는 누구일까요?", answer: "레오나르도 다빈치", hint: "이탈리아 사람이에요" },
+    { question: "상대성이론을 만든 과학자는 누구일까요?", answer: "아인슈타인", hint: "혀를 내민 사진으로 유명해요" },
+    { question: "사과가 떨어지는 걸 보고 중력을 발견했다는 과학자는 누구일까요?", answer: "뉴턴", hint: "만유인력의 법칙을 발견했어요" },
+    { question: "전구를 발명한 사람은 누구일까요?", answer: "에디슨", hint: "수많은 실험 끝에 전구를 만들었어요" },
+    { question: "진화론을 주장한 과학자는 누구일까요?", answer: "다윈", hint: "비글호를 타고 여러 섬을 탐험했어요" },
+    { question: "지구가 돈다고 주장한 이탈리아의 과학자는 누구일까요?", answer: "갈릴레이", hint: "망원경으로 하늘을 관찰했어요" },
+    { question: "아메리카 대륙을 발견한 탐험가는 누구일까요?", answer: "콜럼버스", hint: "산타마리아호를 타고 항해했어요" },
+    { question: "동방견문록을 쓴 탐험가는 누구일까요?", answer: "마르코 폴로", hint: "이탈리아에서 동쪽 나라들로 여행했어요" },
+    { question: "프랑스의 황제가 된 장군은 누구일까요?", answer: "나폴레옹", hint: "키가 작다는 오해를 많이 받았어요" },
+    { question: "노예제를 없앤 미국의 대통령은 누구일까요?", answer: "링컨", hint: "높은 모자를 쓴 모습으로 유명해요" },
+    { question: "미국의 초대 대통령은 누구일까요?", answer: "조지 워싱턴", hint: "1달러 지폐에 나와요" },
+    { question: "보지도 듣지도 못했지만 작가가 된 사람은 누구일까요?", answer: "헬렌 켈러", hint: "설리번 선생님이 큰 도움을 줬어요" },
+    { question: "전쟁터에서 밤마다 환자를 돌본 백의의 천사는 누구일까요?", answer: "나이팅게일", hint: "등불을 들고 다녔어요" },
+    { question: "비폭력으로 인도의 독립을 이끈 지도자는 누구일까요?", answer: "간디", hint: "물레를 돌려 직접 옷감을 짰어요" },
+    { question: "아주 큰 제국을 건설한 고대 그리스의 왕은 누구일까요?", answer: "알렉산더 대왕", hint: "아리스토텔레스에게 배웠어요" },
+    { question: "고대 이집트의 유명한 여왕은 누구일까요?", answer: "클레오파트라", hint: "이집트의 마지막 여왕이었어요" },
+    { question: "어릴 때부터 천재였던 오스트리아의 음악가는 누구일까요?", answer: "모차르트", hint: "다섯 살 때부터 곡을 썼어요" },
+    { question: "귀가 안 들려도 작곡을 계속한 음악가는 누구일까요?", answer: "베토벤", hint: "운명 교향곡을 작곡했어요" },
+    { question: "로미오와 줄리엣을 쓴 영국의 작가는 누구일까요?", answer: "셰익스피어", hint: "희곡을 많이 남겼어요" },
+    { question: "처음으로 비행기를 만들어 하늘을 난 형제는 누구일까요?", answer: "라이트 형제", hint: "자전거 가게를 운영하기도 했어요" },
+    { question: "연날리기 실험으로 번개를 연구한 미국의 과학자는 누구일까요?", answer: "벤자민 프랭클린", hint: "100달러 지폐에 나와요" },
+    { question: "라듐을 발견해 노벨상을 두 번 받은 과학자는 누구일까요?", answer: "마리 퀴리", hint: "여성 최초로 노벨상을 받았어요" },
+    { question: "다이너마이트를 발명하고 노벨상을 만든 사람은 누구일까요?", answer: "노벨", hint: "그 이름을 딴 상이 매년 수여돼요" },
+    { question: "곤충을 평생 연구해 곤충기를 쓴 과학자는 누구일까요?", answer: "파브르", hint: "프랑스의 과학자예요" },
+    { question: "인어공주, 미운 오리 새끼를 쓴 동화작가는 누구일까요?", answer: "안데르센", hint: "덴마크 사람이에요" },
+    { question: "백설공주, 신데렐라 같은 동화를 모은 형제는 누구일까요?", answer: "그림 형제", hint: "독일의 형제예요" },
+    { question: "미키마우스를 만든 사람은 누구일까요?", answer: "월트 디즈니", hint: "커다란 놀이공원도 만들었어요" },
+    { question: "독특한 그림체로 유명한 스페인의 화가는 누구일까요?", answer: "피카소", hint: "큐비즘이라는 화풍을 만들었어요" },
+    { question: "시스티나 성당 천장화를 그린 화가이자 조각가는 누구일까요?", answer: "미켈란젤로", hint: "다비드상도 조각했어요" },
+    { question: "인과 예를 가르친 중국의 사상가는 누구일까요?", answer: "공자", hint: "논어라는 책에 그 말씀이 담겨있어요" },
+    { question: "목욕탕에서 '유레카'를 외쳤다는 과학자는 누구일까요?", answer: "아르키메데스", hint: "부력의 원리를 발견했어요" },
+    { question: "직각삼각형의 정리로 유명한 고대 그리스의 수학자는 누구일까요?", answer: "피타고라스", hint: "그 이름을 딴 정리가 수학 교과서에 나와요" },
+    { question: "끊임없이 질문을 던진 고대 그리스의 철학자는 누구일까요?", answer: "소크라테스", hint: "'너 자신을 알라'는 말로 유명해요" },
+    { question: "아카데미를 세운 고대 그리스의 철학자는 누구일까요?", answer: "플라톤", hint: "소크라테스의 제자였어요" },
+    { question: "알렉산더 대왕을 가르친 고대 그리스의 철학자는 누구일까요?", answer: "아리스토텔레스", hint: "플라톤의 제자였어요" },
+    { question: "'나에게는 꿈이 있습니다'라고 연설한 미국의 인권운동가는 누구일까요?", answer: "마틴 루터 킹", hint: "흑인과 백인이 평등하길 바랐어요" },
+    { question: "남아프리카공화국의 인종차별을 없앤 지도자는 누구일까요?", answer: "넬슨 만델라", hint: "오랫동안 감옥에 갇혀 있었어요" },
+    { question: "프랑스를 위기에서 구한 소녀 영웅은 누구일까요?", answer: "잔 다르크", hint: "갑옷을 입고 전쟁에 나갔어요" },
+    { question: "세계일주 항해를 이끈 탐험가는 누구일까요?", answer: "마젤란", hint: "배가 지구를 한 바퀴 돌았어요" },
+    { question: "금속활자 인쇄술을 발명한 독일 사람은 누구일까요?", answer: "구텐베르크", hint: "책을 빠르게 많이 찍어낼 수 있게 했어요" },
+    { question: "저온살균법을 개발한 프랑스의 과학자는 누구일까요?", answer: "파스퇴르", hint: "우유를 안전하게 마실 수 있게 해줬어요" },
+    { question: "곰팡이에서 페니실린을 발견한 과학자는 누구일까요?", answer: "플레밍", hint: "최초의 항생제를 발견했어요" },
+    { question: "완두콩으로 유전의 법칙을 발견한 과학자는 누구일까요?", answer: "멘델", hint: "수도원에서 완두콩을 길렀어요" },
+    { question: "교류 전기를 연구한 과학자는 누구일까요?", answer: "테슬라", hint: "전기자동차 회사의 이름이 되기도 했어요" },
+    { question: "달에 처음 발을 디딘 우주비행사는 누구일까요?", answer: "닐 암스트롱", hint: "'인류의 위대한 도약'이라는 말을 남겼어요" },
+    { question: "인류 최초로 우주를 비행한 사람은 누구일까요?", answer: "유리 가가린", hint: "소련의 우주비행사예요" },
+    { question: "몽골 제국을 세운 정복자는 누구일까요?", answer: "칭기즈칸", hint: "역사상 가장 넓은 땅을 다스렸어요" },
+    { question: "해바라기 그림을 그린 화가는 누구일까요?", answer: "반 고흐", hint: "네덜란드 출신 화가예요" },
+    { question: "트럼펫을 연주한 유명한 재즈 음악가는 누구일까요?", answer: "루이 암스트롱", hint: "허스키한 목소리로 노래도 불렀어요" },
+    { question: "휠체어를 타고 블랙홀을 연구한 과학자는 누구일까요?", answer: "스티븐 호킹", hint: "'시간의 역사'라는 책을 썼어요" },
+  ];
   let gameIndex = 0;
   let gameScore = 0;
-  let hangulMode = "copy"; // "copy" | "quiz"
+  let hangulMode = "copy"; // "copy" | "quiz" | "wiin"
   let quizScore = 0;
   let currentQuiz = null;
+  let wiinScore = 0;
+  let currentWiinQuiz = null;
 
   // 바로 직전 문제와 같은 게 연달아 나오지 않도록 무작위로 다음 퀴즈를 고름
   function pickNextQuiz() {
@@ -319,6 +424,15 @@
     currentQuiz = next;
   }
 
+  function pickNextWiinQuiz() {
+    if (WIIN_QUIZZES.length === 1) { currentWiinQuiz = WIIN_QUIZZES[0]; return; }
+    let next;
+    do {
+      next = WIIN_QUIZZES[Math.floor(Math.random() * WIIN_QUIZZES.length)];
+    } while (next === currentWiinQuiz);
+    currentWiinQuiz = next;
+  }
+
   function renderHangulGame() {
     const container = document.getElementById("products");
     container.style.display = "block"; // 상품 그리드(여러 칸) 대신 한 칸을 꽉 채우게
@@ -326,34 +440,54 @@
     const word = HANGUL_WORDS[gameIndex % HANGUL_WORDS.length];
     if (!currentQuiz) pickNextQuiz();
     const quiz = currentQuiz;
+    if (!currentWiinQuiz) pickNextWiinQuiz();
+    const wiin = currentWiinQuiz;
 
     const tabBar = `
       <div class="tab-bar" style="margin-bottom:16px;">
         <button type="button" data-hangulmode="copy" class="${hangulMode === "copy" ? "active" : ""}">따라쓰기</button>
         <button type="button" data-hangulmode="quiz" class="${hangulMode === "quiz" ? "active" : ""}">퀴즈</button>
+        <button type="button" data-hangulmode="wiin" class="${hangulMode === "wiin" ? "active" : ""}">위인퀴즈</button>
       </div>
     `;
 
-    container.innerHTML = hangulMode === "quiz" ? `
-      <div class="card" style="width:100%;">
-        ${tabBar}
-        <h2 style="margin-top:0;">한글 퀴즈 🧩 <button type="button" id="hangul-hint-btn" class="hint-btn">?</button></h2>
-        <p class="muted" style="text-align:center; font-size:18px; margin:20px 0;">${escapeHtml(quiz.question)}</p>
-        <input id="game-input" type="text" placeholder="정답을 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
-        <button class="primary" id="game-check-btn" style="width:100%;">확인</button>
-        <p class="muted" style="text-align:center;">맞춘 개수: ${quizScore}개</p>
-      </div>
-    ` : `
-      <div class="card" style="width:100%;">
-        ${tabBar}
-        <h2 style="margin-top:0;">한글 놀이 🎈</h2>
-        <p class="muted">아래 글자를 똑같이 따라 입력해보세요!</p>
-        <div style="font-size:40px; font-weight:700; text-align:center; margin:20px 0;">${word}</div>
-        <input id="game-input" type="text" placeholder="여기에 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
-        <button class="primary" id="game-check-btn" style="width:100%;">확인</button>
-        <p class="muted" style="text-align:center;">맞춘 개수: ${gameScore}개</p>
-      </div>
-    `;
+    let content;
+    if (hangulMode === "quiz") {
+      content = `
+        <div class="card" style="width:100%;">
+          ${tabBar}
+          <h2 style="margin-top:0;">한글 퀴즈 🧩 <button type="button" id="hangul-hint-btn" class="hint-btn">?</button></h2>
+          <p class="muted" style="text-align:center; font-size:18px; margin:20px 0;">${escapeHtml(quiz.question)}</p>
+          <input id="game-input" type="text" placeholder="정답을 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
+          <button class="primary" id="game-check-btn" style="width:100%;">확인</button>
+          <p class="muted" style="text-align:center;">맞춘 개수: ${quizScore}개</p>
+        </div>
+      `;
+    } else if (hangulMode === "wiin") {
+      content = `
+        <div class="card" style="width:100%;">
+          ${tabBar}
+          <h2 style="margin-top:0;">위인 퀴즈 🏛️ <button type="button" id="hangul-hint-btn" class="hint-btn">?</button></h2>
+          <p class="muted" style="text-align:center; font-size:18px; margin:20px 0;">${escapeHtml(wiin.question)}</p>
+          <input id="game-input" type="text" placeholder="정답을 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
+          <button class="primary" id="game-check-btn" style="width:100%;">확인</button>
+          <p class="muted" style="text-align:center;">맞춘 개수: ${wiinScore}개</p>
+        </div>
+      `;
+    } else {
+      content = `
+        <div class="card" style="width:100%;">
+          ${tabBar}
+          <h2 style="margin-top:0;">한글 놀이 🎈</h2>
+          <p class="muted">아래 글자를 똑같이 따라 입력해보세요!</p>
+          <div style="font-size:40px; font-weight:700; text-align:center; margin:20px 0;">${word}</div>
+          <input id="game-input" type="text" placeholder="여기에 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
+          <button class="primary" id="game-check-btn" style="width:100%;">확인</button>
+          <p class="muted" style="text-align:center;">맞춘 개수: ${gameScore}개</p>
+        </div>
+      `;
+    }
+    container.innerHTML = content;
 
     document.querySelectorAll("[data-hangulmode]").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -365,9 +499,10 @@
     const input = document.getElementById("game-input");
 
     function checkAnswer() {
-      const correctAnswer = hangulMode === "quiz" ? quiz.answer : word;
+      const correctAnswer = hangulMode === "quiz" ? quiz.answer : hangulMode === "wiin" ? wiin.answer : word;
       if (input.value.trim() === correctAnswer) {
         if (hangulMode === "quiz") { quizScore++; pickNextQuiz(); }
+        else if (hangulMode === "wiin") { wiinScore++; pickNextWiinQuiz(); }
         else { gameScore++; gameIndex++; }
         showCelebration(renderHangulGame);
       } else {
@@ -382,9 +517,10 @@
     const hintBtn = document.getElementById("hangul-hint-btn");
     if (hintBtn) {
       hintBtn.addEventListener("click", () => {
+        const hintText = hangulMode === "wiin" ? wiin.hint : quiz.hint;
         document.getElementById("solution-content").innerHTML = `
           <h3 style="margin-top:0;">힌트</h3>
-          <p style="font-size:18px;">${escapeHtml(quiz.hint)}</p>
+          <p style="font-size:18px;">${escapeHtml(hintText)}</p>
         `;
         document.getElementById("solution-modal").hidden = false;
       });
