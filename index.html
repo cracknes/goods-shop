@@ -480,8 +480,8 @@
     const tabBar = `
       <div class="tab-bar" style="margin-bottom:16px;">
         <button type="button" data-hangulmode="copy" class="${hangulMode === "copy" ? "active" : ""}">따라쓰기</button>
-        <button type="button" data-hangulmode="quiz" class="${hangulMode === "quiz" ? "active" : ""}">한글 문제</button>
-        <button type="button" data-hangulmode="wiin" class="${hangulMode === "wiin" ? "active" : ""}">위인 문제</button>
+        <button type="button" data-hangulmode="quiz" class="${hangulMode === "quiz" ? "active" : ""}">한글 Quiz</button>
+        <button type="button" data-hangulmode="wiin" class="${hangulMode === "wiin" ? "active" : ""}">위인 Quiz</button>
       </div>
     `;
 
@@ -490,7 +490,7 @@
       content = `
         <div class="card" style="width:100%;">
           ${tabBar}
-          <h2 style="margin-top:0;">한글 문제 <span id="hangul-skip-btn">🧩</span> <button type="button" id="hangul-hint-btn" class="hint-btn">?</button></h2>
+          <h2 style="margin-top:0;">한글 Quiz <span id="hangul-skip-btn">🧩</span> <button type="button" id="hangul-hint-btn" class="hint-btn">?</button></h2>
           <p class="muted" style="text-align:center; font-size:18px; margin:20px 0;">${escapeHtml(quiz.question)}</p>
           <input id="game-input" type="text" placeholder="정답을 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
           <button class="primary" id="game-check-btn" style="width:100%;">확인</button>
@@ -510,7 +510,7 @@
         <div class="card" style="width:100%;">
           ${tabBar}
           ${wiinSubTabs}
-          <h2 style="margin-top:0;">위인 문제 <span id="hangul-skip-btn">🏛️</span> <button type="button" id="hangul-hint-btn" class="hint-btn">?</button></h2>
+          <h2 style="margin-top:0;">위인 Quiz <span id="hangul-skip-btn">🏛️</span> <button type="button" id="hangul-hint-btn" class="hint-btn">?</button></h2>
           <p class="muted" style="text-align:center; font-size:18px; margin:20px 0;">${escapeHtml(wiin.question)}</p>
           <input id="game-input" type="text" placeholder="정답을 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
           <button class="primary" id="game-check-btn" style="width:100%;">확인</button>
