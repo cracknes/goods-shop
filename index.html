@@ -549,7 +549,7 @@
       content = `
         <div class="card" style="width:100%;">
           ${tabBar}
-          <h2 style="margin-top:0;">그림판 ✏️</h2>
+          <h2 style="margin-top:0;">그림판 <span id="hangul-skip-btn">✏️</span></h2>
           <p class="muted">안내선을 따라 손가락이나 펜으로 글자를 그려보세요!</p>
           <div style="font-size:28px; font-weight:700; text-align:center; margin:8px 0;">${drawWord}</div>
           <div style="position:relative; width:260px; height:260px; margin:0 auto 12px; touch-action:none;">
@@ -568,7 +568,7 @@
       content = `
         <div class="card" style="width:100%;">
           ${tabBar}
-          <h2 style="margin-top:0;">한글 놀이 🎈</h2>
+          <h2 style="margin-top:0;">한글 놀이 <span id="hangul-skip-btn">🎈</span></h2>
           <p class="muted">아래 글자를 똑같이 따라 입력해보세요!</p>
           <div style="font-size:40px; font-weight:700; text-align:center; margin:12px 0;">${word}</div>
           <p class="muted" style="text-align:center; font-size:15px; letter-spacing:2px; margin-top:0;">${escapeHtml(decomposeHangulTyping(word))}</p>
@@ -609,16 +609,17 @@
       }
     }
 
-    // 모르는 문제는 점수 변동 없이 바로 다음 문제로 넘어감(퀴즈/위인퀴즈 전용 - 따라쓰기는
-    // 정답이 이미 화면에 보이므로 넘기기 기능 자체가 없음). 처음엔 "⏭️" 같은 별도 버튼으로
-    // 만들었는데, 아이가 보자마자 누르고 싶어지는 모양이라 "문제를 끝까지 생각 안 하고 바로
-    // 넘겨버리는" 용도로 아이가 직관적으로 써버릴 수 있다는 지적을 받음 — 대신 제목 옆
-    // 장식용 이모지(🧩/🏛️)를 그냥 누르면 넘어가도록 바꿈. 버튼처럼 안 보이게 `.hint-btn` 같은
-    // 스타일/커서 변경을 일부러 주지 않아서, 아이 눈에는 그냥 그림일 뿐이고 어른이 알고 눌러야만
-    // 쓰이는 숨겨진 기능이 되게 함.
+    // 지금 문제/단어를 점수 변동 없이 바로 다음으로 넘김(네 모드 전부 지원). 처음엔 "⏭️" 같은
+    // 별도 버튼으로 만들었는데, 아이가 보자마자 누르고 싶어지는 모양이라 "문제를 끝까지 생각
+    // 안 하고 바로 넘겨버리는" 용도로 아이가 직관적으로 써버릴 수 있다는 지적을 받음 — 대신
+    // 제목 옆 장식용 이모지(🎈/🧩/🏛️/✏️)를 그냥 누르면 넘어가도록 바꿈. 버튼처럼 안 보이게
+    // `.hint-btn` 같은 스타일/커서 변경을 일부러 주지 않아서, 아이 눈에는 그냥 그림일 뿐이고
+    // 어른이 알고 눌러야만 쓰이는 숨겨진 기능이 되게 함.
     function skipQuestion() {
       if (hangulMode === "quiz") pickNextQuiz();
       else if (hangulMode === "wiin") pickNextWiinQuiz();
+      else if (hangulMode === "copy") gameIndex++;
+      else if (hangulMode === "draw") drawGameIndex++;
       renderHangulGame();
     }
 
