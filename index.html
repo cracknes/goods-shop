@@ -472,6 +472,7 @@
   let wiinCategory = "kr"; // "kr" | "world"
   let drawGameIndex = 0;
   let drawScore = 0;
+  let copySubMode = "keyboard"; // "keyboard" | "pencil" — 따라쓰기 안의 하위 탭(타이핑 연습 / 애플펜슬 따라그리기)
 
   // 바로 직전 문제와 같은 게 연달아 나오지 않도록 무작위로 다음 퀴즈를 고름
   function pickNextQuiz() {
@@ -509,7 +510,6 @@
         <button type="button" data-hangulmode="copy" class="${hangulMode === "copy" ? "active" : ""}">따라쓰기</button>
         <button type="button" data-hangulmode="quiz" class="${hangulMode === "quiz" ? "active" : ""}">한글 Quiz</button>
         <button type="button" data-hangulmode="wiin" class="${hangulMode === "wiin" ? "active" : ""}">위인 Quiz</button>
-        <button type="button" data-hangulmode="draw" class="${hangulMode === "draw" ? "active" : ""}">그림판</button>
       </div>
     `;
 
@@ -545,44 +545,65 @@
           <p class="muted" style="text-align:center;">맞춘 개수: ${wiinScore}개</p>
         </div>
       `;
-    } else if (hangulMode === "draw") {
-      content = `
-        <div class="card" style="width:100%;">
-          ${tabBar}
-          <h2 style="margin-top:0;">그림판 <span id="hangul-skip-btn">✏️</span></h2>
-          <p class="muted">안내선을 따라 손가락이나 펜으로 글자를 그려보세요!</p>
-          <div style="font-size:28px; font-weight:700; text-align:center; margin:8px 0;">${drawWord}</div>
-          <div style="position:relative; width:260px; height:260px; margin:0 auto 12px; touch-action:none;">
-            <canvas id="tracing-guide-canvas" width="260" height="260" style="position:absolute; top:0; left:0; border:2px dashed #ccc; border-radius:12px; background:#fff;"></canvas>
-            <canvas id="tracing-draw-canvas" width="260" height="260" style="position:absolute; top:0; left:0;"></canvas>
-          </div>
-          <div style="display:flex; gap:8px; margin-bottom:8px;">
-            <button type="button" id="tracing-clear-btn" class="muted" style="flex:1; background:var(--bg-soft); border:none; border-radius:999px; padding:10px; font-size:14px;">지우기</button>
-            <button type="button" id="tracing-check-btn" class="primary" style="flex:1; margin-bottom:0;">쓴 글씨 확인</button>
-          </div>
-          <p id="tracing-result" class="muted" style="text-align:center; min-height:20px;"></p>
-          <p class="muted" style="text-align:center;">맞춘 개수: ${drawScore}개</p>
-        </div>
-      `;
     } else {
-      content = `
-        <div class="card" style="width:100%;">
-          ${tabBar}
-          <h2 style="margin-top:0;">한글 놀이 <span id="hangul-skip-btn">🎈</span></h2>
-          <p class="muted">아래 글자를 똑같이 따라 입력해보세요!</p>
-          <div style="font-size:40px; font-weight:700; text-align:center; margin:12px 0;">${word}</div>
-          <p class="muted" style="text-align:center; font-size:15px; letter-spacing:2px; margin-top:0;">${escapeHtml(decomposeHangulTyping(word))}</p>
-          <input id="game-input" type="text" placeholder="여기에 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
-          <button class="primary" id="game-check-btn" style="width:100%;">확인</button>
-          <p class="muted" style="text-align:center;">맞춘 개수: ${gameScore}개</p>
+      // "그림판"을 별도 메뉴로 뒀다가, 사용자가 "따라쓰기 하위에 키보드/애플펜슬 구성"으로
+      // 요청해서 따라쓰기 탭 안의 하위 탭(`copySubMode`)으로 합침(위인 Quiz의 한국/세계 하위
+      // 탭과 같은 패턴). 타이핑 연습과 손글씨 연습은 성격이 달라서 점수(`gameScore`/`drawScore`)와
+      // 진행 중인 단어(`gameIndex`/`drawGameIndex`)는 각자 따로 유지함.
+      const copySubTabs = `
+        <div class="tab-bar" style="margin-bottom:12px;">
+          <button type="button" data-copysubmode="keyboard" class="${copySubMode === "keyboard" ? "active" : ""}">키보드</button>
+          <button type="button" data-copysubmode="pencil" class="${copySubMode === "pencil" ? "active" : ""}">애플펜슬</button>
         </div>
       `;
+      if (copySubMode === "pencil") {
+        content = `
+          <div class="card" style="width:100%;">
+            ${tabBar}
+            ${copySubTabs}
+            <h2 style="margin-top:0;">그림판 <span id="hangul-skip-btn">✏️</span></h2>
+            <p class="muted">안내선을 따라 손가락이나 펜으로 글자를 그려보세요!</p>
+            <div style="font-size:28px; font-weight:700; text-align:center; margin:8px 0;">${drawWord}</div>
+            <div style="position:relative; width:260px; height:260px; margin:0 auto 12px; touch-action:none;">
+              <canvas id="tracing-guide-canvas" width="260" height="260" style="position:absolute; top:0; left:0; border:2px dashed #ccc; border-radius:12px; background:#fff;"></canvas>
+              <canvas id="tracing-draw-canvas" width="260" height="260" style="position:absolute; top:0; left:0;"></canvas>
+            </div>
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+              <button type="button" id="tracing-clear-btn" class="muted" style="flex:1; background:var(--bg-soft); border:none; border-radius:999px; padding:10px; font-size:14px;">지우기</button>
+              <button type="button" id="tracing-check-btn" class="primary" style="flex:1; margin-bottom:0;">쓴 글씨 확인</button>
+            </div>
+            <p id="tracing-result" class="muted" style="text-align:center; min-height:20px;"></p>
+            <p class="muted" style="text-align:center;">맞춘 개수: ${drawScore}개</p>
+          </div>
+        `;
+      } else {
+        content = `
+          <div class="card" style="width:100%;">
+            ${tabBar}
+            ${copySubTabs}
+            <h2 style="margin-top:0;">한글 놀이 <span id="hangul-skip-btn">🎈</span></h2>
+            <p class="muted">아래 글자를 똑같이 따라 입력해보세요!</p>
+            <div style="font-size:40px; font-weight:700; text-align:center; margin:12px 0;">${word}</div>
+            <p class="muted" style="text-align:center; font-size:15px; letter-spacing:2px; margin-top:0;">${escapeHtml(decomposeHangulTyping(word))}</p>
+            <input id="game-input" type="text" placeholder="여기에 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
+            <button class="primary" id="game-check-btn" style="width:100%;">확인</button>
+            <p class="muted" style="text-align:center;">맞춘 개수: ${gameScore}개</p>
+          </div>
+        `;
+      }
     }
     container.innerHTML = content;
 
     document.querySelectorAll("[data-hangulmode]").forEach(btn => {
       btn.addEventListener("click", () => {
         hangulMode = btn.dataset.hangulmode;
+        renderHangulGame();
+      });
+    });
+
+    document.querySelectorAll("[data-copysubmode]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        copySubMode = btn.dataset.copysubmode;
         renderHangulGame();
       });
     });
@@ -618,8 +639,8 @@
     function skipQuestion() {
       if (hangulMode === "quiz") pickNextQuiz();
       else if (hangulMode === "wiin") pickNextWiinQuiz();
-      else if (hangulMode === "copy") gameIndex++;
-      else if (hangulMode === "draw") drawGameIndex++;
+      else if (hangulMode === "copy" && copySubMode === "keyboard") gameIndex++;
+      else if (hangulMode === "copy" && copySubMode === "pencil") drawGameIndex++;
       renderHangulGame();
     }
 
@@ -634,7 +655,7 @@
     // 진짜 손글씨 인식(AI 모델 필요)이 아니라, 안내 글자 모양과 얼마나 겹치게 그렸는지를 픽셀
     // 단위로 비교하는 간단한 방식임 — 정확한 글자 인식은 아니지만, "안내선 위를 잘 따라
     // 그렸는지"는 충분히 확인할 수 있어서 이 수준으로 구현함.
-    if (hangulMode === "draw") {
+    if (hangulMode === "copy" && copySubMode === "pencil") {
       const guideCanvas = document.getElementById("tracing-guide-canvas");
       const drawCanvas = document.getElementById("tracing-draw-canvas");
       const gctx = guideCanvas.getContext("2d");
