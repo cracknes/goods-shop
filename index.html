@@ -192,6 +192,30 @@
 
   // 아이용 한글 놀이: (1) 따라쓰기 - 화면에 뜬 단어를 그대로 입력, (2) 퀴즈 - 6세 아이가 알 만한 간단한 수수께끼
   const HANGUL_WORDS = ["사과", "바나나", "나비", "우유", "고양이", "강아지", "학교", "나무", "하늘", "바다"];
+
+  // 한글 완성형 음절(가~힣)을 초성/중성/종성으로 분해하고, 복합모음(ㅘㅙㅚㅝㅞㅟㅢ)·겹받침
+  // (ㄳㄵㄶㄺㄻㄼㄽㄾㄿㅀㅄ)은 실제 두벌식 키보드에서 누르는 두 번의 타자로 한 번 더 쪼갬
+  // (예: "과" → ㄱ+ㅘ인데, ㅘ는 키보드에 따로 키가 없고 ㅗ와 ㅏ를 순서대로 눌러서 입력하므로
+  // ㄱ·ㅗ·ㅏ 세 번의 타자로 표시) — "타자 치는 순서를 익히게 하고 싶다"는 요청으로 추가함.
+  const HANGUL_CHO = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+  const HANGUL_JUNG = ["ㅏ", "ㅐ", "ㅑ", "ㅒ", "ㅓ", "ㅔ", "ㅕ", "ㅖ", "ㅗ", "ㅘ", "ㅙ", "ㅚ", "ㅛ", "ㅜ", "ㅝ", "ㅞ", "ㅟ", "ㅠ", "ㅡ", "ㅢ", "ㅣ"];
+  const HANGUL_JONG = ["", "ㄱ", "ㄲ", "ㄳ", "ㄴ", "ㄵ", "ㄶ", "ㄷ", "ㄹ", "ㄺ", "ㄻ", "ㄼ", "ㄽ", "ㄾ", "ㄿ", "ㅀ", "ㅁ", "ㅂ", "ㅄ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+  const HANGUL_JUNG_SPLIT = { "ㅘ": ["ㅗ", "ㅏ"], "ㅙ": ["ㅗ", "ㅐ"], "ㅚ": ["ㅗ", "ㅣ"], "ㅝ": ["ㅜ", "ㅓ"], "ㅞ": ["ㅜ", "ㅔ"], "ㅟ": ["ㅜ", "ㅣ"], "ㅢ": ["ㅡ", "ㅣ"] };
+  const HANGUL_JONG_SPLIT = { "ㄳ": ["ㄱ", "ㅅ"], "ㄵ": ["ㄴ", "ㅈ"], "ㄶ": ["ㄴ", "ㅎ"], "ㄺ": ["ㄹ", "ㄱ"], "ㄻ": ["ㄹ", "ㅁ"], "ㄼ": ["ㄹ", "ㅂ"], "ㄽ": ["ㄹ", "ㅅ"], "ㄾ": ["ㄹ", "ㅌ"], "ㄿ": ["ㄹ", "ㅍ"], "ㅀ": ["ㄹ", "ㅎ"], "ㅄ": ["ㅂ", "ㅅ"] };
+
+  function decomposeHangulTyping(word) {
+    const keys = [];
+    for (const ch of word) {
+      const code = ch.charCodeAt(0) - 0xAC00;
+      if (code < 0 || code > 11171) { keys.push(ch); continue; } // 완성형 한글 음절이 아니면 그대로
+      const cho = HANGUL_CHO[Math.floor(code / (21 * 28))];
+      const jung = HANGUL_JUNG[Math.floor((code % (21 * 28)) / 28)];
+      const jong = HANGUL_JONG[code % 28];
+      keys.push(cho, ...(HANGUL_JUNG_SPLIT[jung] ?? [jung]));
+      if (jong) keys.push(...(HANGUL_JONG_SPLIT[jong] ?? [jong]));
+    }
+    return keys.join(" ");
+  }
   const HANGUL_QUIZZES = [
     { question: "얼굴에 있고, 냄새를 맡는 곳은 어디일까요?", answer: "코", hint: "숨을 쉴 때도 써요" },
     { question: "밤하늘에서 반짝반짝 빛나는 것은?", answer: "별", hint: "'반짝반짝 작은~' 동요에 나와요" },
@@ -446,6 +470,8 @@
   let wiinScore = 0;
   let currentWiinQuiz = null;
   let wiinCategory = "kr"; // "kr" | "world"
+  let drawGameIndex = 0;
+  let drawScore = 0;
 
   // 바로 직전 문제와 같은 게 연달아 나오지 않도록 무작위로 다음 퀴즈를 고름
   function pickNextQuiz() {
@@ -472,6 +498,7 @@
     container.style.display = "block"; // 상품 그리드(여러 칸) 대신 한 칸을 꽉 채우게
 
     const word = HANGUL_WORDS[gameIndex % HANGUL_WORDS.length];
+    const drawWord = HANGUL_WORDS[drawGameIndex % HANGUL_WORDS.length];
     if (!currentQuiz) pickNextQuiz();
     const quiz = currentQuiz;
     if (!currentWiinQuiz) pickNextWiinQuiz();
@@ -482,6 +509,7 @@
         <button type="button" data-hangulmode="copy" class="${hangulMode === "copy" ? "active" : ""}">따라쓰기</button>
         <button type="button" data-hangulmode="quiz" class="${hangulMode === "quiz" ? "active" : ""}">한글 Quiz</button>
         <button type="button" data-hangulmode="wiin" class="${hangulMode === "wiin" ? "active" : ""}">위인 Quiz</button>
+        <button type="button" data-hangulmode="draw" class="${hangulMode === "draw" ? "active" : ""}">그림판</button>
       </div>
     `;
 
@@ -517,13 +545,33 @@
           <p class="muted" style="text-align:center;">맞춘 개수: ${wiinScore}개</p>
         </div>
       `;
+    } else if (hangulMode === "draw") {
+      content = `
+        <div class="card" style="width:100%;">
+          ${tabBar}
+          <h2 style="margin-top:0;">그림판 ✏️</h2>
+          <p class="muted">안내선을 따라 손가락이나 펜으로 글자를 그려보세요!</p>
+          <div style="font-size:28px; font-weight:700; text-align:center; margin:8px 0;">${drawWord}</div>
+          <div style="position:relative; width:260px; height:260px; margin:0 auto 12px; touch-action:none;">
+            <canvas id="tracing-guide-canvas" width="260" height="260" style="position:absolute; top:0; left:0; border:2px dashed #ccc; border-radius:12px; background:#fff;"></canvas>
+            <canvas id="tracing-draw-canvas" width="260" height="260" style="position:absolute; top:0; left:0;"></canvas>
+          </div>
+          <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <button type="button" id="tracing-clear-btn" class="muted" style="flex:1; background:var(--bg-soft); border:none; border-radius:999px; padding:10px; font-size:14px;">지우기</button>
+            <button type="button" id="tracing-check-btn" class="primary" style="flex:1; margin-bottom:0;">쓴 글씨 확인</button>
+          </div>
+          <p id="tracing-result" class="muted" style="text-align:center; min-height:20px;"></p>
+          <p class="muted" style="text-align:center;">맞춘 개수: ${drawScore}개</p>
+        </div>
+      `;
     } else {
       content = `
         <div class="card" style="width:100%;">
           ${tabBar}
           <h2 style="margin-top:0;">한글 놀이 🎈</h2>
           <p class="muted">아래 글자를 똑같이 따라 입력해보세요!</p>
-          <div style="font-size:40px; font-weight:700; text-align:center; margin:20px 0;">${word}</div>
+          <div style="font-size:40px; font-weight:700; text-align:center; margin:12px 0;">${word}</div>
+          <p class="muted" style="text-align:center; font-size:15px; letter-spacing:2px; margin-top:0;">${escapeHtml(decomposeHangulTyping(word))}</p>
           <input id="game-input" type="text" placeholder="여기에 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
           <button class="primary" id="game-check-btn" style="width:100%;">확인</button>
           <p class="muted" style="text-align:center;">맞춘 개수: ${gameScore}개</p>
@@ -547,7 +595,7 @@
       });
     });
 
-    const input = document.getElementById("game-input");
+    const input = document.getElementById("game-input"); // "그림판" 모드엔 없음(아래에서 null 체크)
 
     function checkAnswer() {
       const correctAnswer = hangulMode === "quiz" ? quiz.answer : hangulMode === "wiin" ? wiin.answer : word;
@@ -574,9 +622,89 @@
       renderHangulGame();
     }
 
-    document.getElementById("game-check-btn").addEventListener("click", checkAnswer);
-    input.addEventListener("keydown", (e) => { if (e.key === "Enter") checkAnswer(); });
-    input.focus();
+    if (input) {
+      document.getElementById("game-check-btn").addEventListener("click", checkAnswer);
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") checkAnswer(); });
+      input.focus();
+    }
+
+    // 그림판 전용 — 애플펜슬/손가락으로 실제로 글자를 따라 그려볼 수 있게 함(따라쓰기와는
+    // 별도 메뉴로 분리함 — 타이핑 연습과 손글씨 연습을 따로 고를 수 있게). "잘 썼는지 확인"은
+    // 진짜 손글씨 인식(AI 모델 필요)이 아니라, 안내 글자 모양과 얼마나 겹치게 그렸는지를 픽셀
+    // 단위로 비교하는 간단한 방식임 — 정확한 글자 인식은 아니지만, "안내선 위를 잘 따라
+    // 그렸는지"는 충분히 확인할 수 있어서 이 수준으로 구현함.
+    if (hangulMode === "draw") {
+      const guideCanvas = document.getElementById("tracing-guide-canvas");
+      const drawCanvas = document.getElementById("tracing-draw-canvas");
+      const gctx = guideCanvas.getContext("2d");
+      const dctx = drawCanvas.getContext("2d");
+
+      gctx.clearRect(0, 0, guideCanvas.width, guideCanvas.height);
+      gctx.fillStyle = "#d8d8d8";
+      gctx.font = "bold 90px sans-serif";
+      gctx.textAlign = "center";
+      gctx.textBaseline = "middle";
+      gctx.fillText(drawWord, guideCanvas.width / 2, guideCanvas.height / 2);
+      const guideData = gctx.getImageData(0, 0, guideCanvas.width, guideCanvas.height).data;
+
+      dctx.lineWidth = 10;
+      dctx.lineCap = "round";
+      dctx.lineJoin = "round";
+      dctx.strokeStyle = "#2b2b2b";
+
+      let drawing = false;
+      const getPos = (e) => {
+        const rect = drawCanvas.getBoundingClientRect();
+        return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      };
+      drawCanvas.addEventListener("pointerdown", (e) => {
+        drawing = true;
+        drawCanvas.setPointerCapture(e.pointerId);
+        const p = getPos(e);
+        dctx.beginPath();
+        dctx.moveTo(p.x, p.y);
+      });
+      drawCanvas.addEventListener("pointermove", (e) => {
+        if (!drawing) return;
+        const p = getPos(e);
+        dctx.lineTo(p.x, p.y);
+        dctx.stroke();
+      });
+      const stopDrawing = () => { drawing = false; };
+      drawCanvas.addEventListener("pointerup", stopDrawing);
+      drawCanvas.addEventListener("pointercancel", stopDrawing);
+      drawCanvas.addEventListener("pointerleave", stopDrawing);
+
+      const tracingResult = document.getElementById("tracing-result");
+      document.getElementById("tracing-clear-btn").addEventListener("click", () => {
+        dctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+        tracingResult.textContent = "";
+      });
+
+      document.getElementById("tracing-check-btn").addEventListener("click", () => {
+        const drawData = dctx.getImageData(0, 0, drawCanvas.width, drawCanvas.height).data;
+        let guideInk = 0, overlapOnGuide = 0, drawInk = 0, overlapOnDraw = 0;
+        for (let i = 3; i < guideData.length; i += 4) {
+          const isGuide = guideData[i] > 30;
+          const isDraw = drawData[i] > 30;
+          if (isGuide) { guideInk++; if (isDraw) overlapOnGuide++; }
+          if (isDraw) { drawInk++; if (isGuide) overlapOnDraw++; }
+        }
+        const coverage = guideInk > 0 ? overlapOnGuide / guideInk : 0; // 안내 글자를 얼마나 따라 그렸는지
+        const precision = drawInk > 0 ? overlapOnDraw / drawInk : 0; // 그린 것 중 안내선 안쪽 비율
+        if (drawInk < 50) {
+          tracingResult.style.color = "";
+          tracingResult.textContent = "아직 안 그렸어요! 손가락이나 펜으로 위에 따라 그려보세요.";
+        } else if (coverage >= 0.45 && precision >= 0.35) {
+          drawScore++;
+          drawGameIndex++;
+          showCelebration(renderHangulGame);
+        } else {
+          tracingResult.style.color = "#c0392b";
+          tracingResult.textContent = "조금 더 안내선을 따라 그려볼까요?";
+        }
+      });
+    }
 
     const skipBtn = document.getElementById("hangul-skip-btn");
     if (skipBtn) skipBtn.addEventListener("click", skipQuestion);
