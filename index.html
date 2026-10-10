@@ -175,10 +175,12 @@
     `).join("");
   }
 
-  function showWrongAnswerAlert() {
-    document.getElementById("wrong-modal").hidden = false;
+  function showWrongAnswerAlert(message) {
+    const modal = document.getElementById("wrong-modal");
+    modal.querySelector(".celebrate-text").textContent = message || "지후야 다시생각해봐";
+    modal.hidden = false;
     setTimeout(() => {
-      document.getElementById("wrong-modal").hidden = true;
+      modal.hidden = true;
     }, 1300);
   }
 
@@ -564,9 +566,9 @@
             <h2 style="margin-top:0;">그림판 <span id="hangul-skip-btn">✏️</span></h2>
             <p class="muted">안내선을 따라 손가락이나 펜으로 글자를 그려보세요!</p>
             <div style="font-size:28px; font-weight:700; text-align:center; margin:8px 0;">${drawWord}</div>
-            <div style="position:relative; width:260px; height:260px; margin:0 auto 12px; touch-action:none;">
-              <canvas id="tracing-guide-canvas" width="260" height="260" style="position:absolute; top:0; left:0; border:2px dashed #ccc; border-radius:12px; background:#fff;"></canvas>
-              <canvas id="tracing-draw-canvas" width="260" height="260" style="position:absolute; top:0; left:0;"></canvas>
+            <div style="position:relative; width:320px; height:320px; max-width:100%; margin:0 auto 12px; touch-action:none;">
+              <canvas id="tracing-guide-canvas" width="320" height="320" style="position:absolute; top:0; left:0; border:2px dashed #ccc; border-radius:12px; background:#fff;"></canvas>
+              <canvas id="tracing-draw-canvas" width="320" height="320" style="position:absolute; top:0; left:0;"></canvas>
             </div>
             <div style="display:flex; gap:8px; margin-bottom:8px;">
               <button type="button" id="tracing-clear-btn" class="muted" style="flex:1; background:var(--bg-soft); border:none; border-radius:999px; padding:10px; font-size:14px;">지우기</button>
@@ -663,7 +665,7 @@
 
       gctx.clearRect(0, 0, guideCanvas.width, guideCanvas.height);
       gctx.fillStyle = "#d8d8d8";
-      gctx.font = "bold 90px sans-serif";
+      gctx.font = "bold 110px sans-serif";
       gctx.textAlign = "center";
       gctx.textBaseline = "middle";
       gctx.fillText(drawWord, guideCanvas.width / 2, guideCanvas.height / 2);
@@ -722,8 +724,9 @@
           drawGameIndex++;
           showCelebration(renderHangulGame);
         } else {
-          tracingResult.style.color = "#c0392b";
-          tracingResult.textContent = "조금 더 안내선을 따라 그려볼까요?";
+          tracingResult.style.color = "";
+          tracingResult.textContent = "";
+          showWrongAnswerAlert("지후야 다시 따라 그려볼래?");
         }
       });
     }
