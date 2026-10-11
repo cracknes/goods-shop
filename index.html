@@ -808,7 +808,7 @@
     currentProblem = generateNumberProblem();
     container.innerHTML = `
       <div class="card" style="width:100%;">
-        <h2 style="margin-top:0;">숫자 놀이 🔢 <button type="button" id="number-hint-btn" class="hint-btn">?</button></h2>
+        <h2 style="margin-top:0;">숫자 놀이 <span id="number-skip-btn">🔢</span> <button type="button" id="number-hint-btn" class="hint-btn">?</button></h2>
         <p class="muted">문제를 계산해서 정답을 입력해보세요!</p>
         <div style="font-size:40px; font-weight:700; text-align:center; margin:20px 0;">${currentProblem.a} ${currentProblem.op} ${currentProblem.b} = ?</div>
         <input id="number-input" type="number" placeholder="정답을 입력하세요" autocomplete="off" style="font-size:20px; text-align:center;">
@@ -829,6 +829,10 @@
     }
 
     document.getElementById("number-hint-btn").addEventListener("click", () => showSolution(currentProblem));
+
+    // 제목 옆 숫자 이모지(🔢)를 누르면 점수 변동 없이 새 문제로 바로 넘어감(한글놀이와 같은
+    // 패턴 — 버튼처럼 안 보이게 해서 아이가 바로 안 누르고, 어른이 알고 쓰는 숨겨진 기능).
+    document.getElementById("number-skip-btn").addEventListener("click", () => renderNumberGame());
 
     document.getElementById("number-check-btn").addEventListener("click", checkAnswer);
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") checkAnswer(); });
