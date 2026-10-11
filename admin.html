@@ -1582,7 +1582,16 @@
     if (key === "pbr") return `BPS × PBR배수(최근 3개년 실제 평균) = ${won(bps)} × ${a.targetPBR.toFixed(2)}배`;
     const discountLabel = data.wacc ? "WACC" : "요구수익률(WACC 계산 실패, 기본값)";
     if (key === "srim") {
-      return `BPS(${won(bps)})에서 시작해 ROE(${pct(roe)})가 ${a.srimFadeYears}년에 걸쳐 ${discountLabel}(${pct(a.requiredReturn)})로 서서히 낮아진다고 보고, 그 사이 매년 초과이익(잔여이익)의 현재가치를 더함(유보율 ${pct(1 - payoutRatio)} 가정, 배당성향 ${pct(payoutRatio)}) — "ROE가 영원히 유지"된다고 보는 단순 모형보다 보수적인 다단계 모형`;
+      // 실제 계산식: S-RIM = BPS + Σ[(그 해 ROE − 요구수익률) × 그 해 BPS ÷ (1+요구수익률)^연차]
+      // (연차 1~srimFadeYears), ROE는 매년 요구수익률로 선형 수렴하고 BPS는 유보이익만큼 매년
+      // 불어남 — 반복 계산이라 전체를 다 풀어쓰는 대신, 1년차를 실제 숫자로 대입한 예시와 함께
+      // 일반식을 보여줌(dart-valuation.ts의 calcSRIM과 정확히 같은 식).
+      const r = a.requiredReturn;
+      const n = a.srimFadeYears;
+      const fadedRoe1 = roe + (r - roe) * (1 / n);
+      const residual1 = (fadedRoe1 - r) * bps;
+      const pv1 = residual1 / (1 + r);
+      return `BPS + Σ[(그 해 ROE − ${discountLabel}) × 그 해 BPS ÷ (1+${discountLabel})^연차] (1~${n}년차 합산) — ROE가 매년 ${discountLabel}(${pct(r)})로 선형 수렴하고, 유보이익(배당성향 ${pct(payoutRatio)} 제외분)만큼 그 해 BPS가 불어남. 1년차 예시: ROE ${pct(fadedRoe1)} → 잔여이익 (${pct(fadedRoe1)}−${pct(r)})×${won(bps)} = ${won(residual1)} → 현재가치 ${won(residual1)}÷(1+${pct(r)})¹ = ${won(pv1)} (이 계산을 ${n}년 반복한 합계를 BPS(${won(bps)})에 더함)`;
     }
     if (key === "dcf") {
       if (data.isFinancialIndustry) return "금융업은 영업현금흐름 기반 계산이 맞지 않아 제외";
