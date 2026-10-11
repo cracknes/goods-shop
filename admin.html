@@ -1646,7 +1646,8 @@
       `ROE ${(data.metrics.roe * 100).toFixed(1)}%` +
       (data.rawFigures.preferredShares
         ? ` · 우선주 ${data.rawFigures.preferredShares.toLocaleString()}주 있음(EPS는 우선주배당 제외 후 보통주식수로, BPS는 보통주+우선주 합계로 계산)`
-        : "");
+        : "") +
+      (data.fromCache ? " · ⚡오늘 조회한 캐시 결과(빠름)" : "");
 
     const histYears = data.historicalMultiples?.years ?? [];
     document.getElementById("fairvalue-history").textContent = histYears.length
