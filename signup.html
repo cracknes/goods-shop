@@ -42,6 +42,8 @@
       <option value="prefer_not_to_say">선택 안 함</option>
     </select>
     <input id="password" type="password" placeholder="비밀번호 (6자 이상)">
+    <!-- 스팸봇 방지용 허니팟 — 사람 눈에는 안 보이고 자동가입 봇만 채우는 함정 필드 -->
+    <input type="text" name="website" id="website" autocomplete="off" tabindex="-1" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;">
     <button class="primary" id="signup-btn" style="width:100%;">회원가입</button>
     <p id="message" class="error"></p>
   </div>
@@ -57,6 +59,13 @@
 <script>
   const messageEl = document.getElementById("message");
 
+  // 스팸봇 방지: 허니팟 필드(사람 눈엔 안 보이고 봇만 채움) + 너무 빠른 제출 차단(사람이
+  // 이름·전화번호·이메일·비밀번호를 다 채우기엔 비현실적으로 짧은 시간). 가입 자체는 Supabase
+  // Auth API를 직접 호출해서 서버단에 별도 체크를 끼워 넣기 어려우니, 외부 캡차 서비스 없이
+  // 쓸 수 있는 1차 방어선으로 클라이언트 쪽에 둠.
+  const pageLoadedAt = Date.now();
+  const MIN_SUBMIT_SECONDS = 3;
+
   document.getElementById("signup-btn").addEventListener("click", async () => {
     const name = document.getElementById("name").value;
     const phone = document.getElementById("phone").value;
@@ -68,6 +77,11 @@
 
     if (!name || !phone || !email || !gender || !password) {
       messageEl.textContent = "이름, 전화번호, 이메일, 성별, 비밀번호를 모두 입력해 주세요.";
+      return;
+    }
+
+    if (document.getElementById("website").value || (Date.now() - pageLoadedAt) / 1000 < MIN_SUBMIT_SECONDS) {
+      messageEl.textContent = "가입 처리 중 문제가 발생했습니다. 다시 시도해 주세요.";
       return;
     }
 
