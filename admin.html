@@ -226,6 +226,8 @@
               <thead><tr><th>계산법</th><th>적정주가</th><th>계산식</th></tr></thead>
               <tbody id="fairvalue-body"></tbody>
             </table>
+            <h3 style="margin-top:20px; margin-bottom:4px; font-size:15px;">관련 기사</h3>
+            <div id="fairvalue-news" class="muted"></div>
           </div>
           <p id="fairvalue-status" class="muted"></p>
         </div>
@@ -1543,6 +1545,11 @@
     if (url) location.href = url;
   });
 
+  document.getElementById("fairvalue-news").addEventListener("click", (e) => {
+    const row = e.target.closest(".fairvalue-news-row");
+    if (row?.dataset.url) location.href = row.dataset.url;
+  });
+
   async function searchDartCorp(q) {
     const resultsEl = document.getElementById("fairvalue-search-results");
     const { data, error } = await supabaseClient
@@ -1698,6 +1705,20 @@
         `최근 거래량 ${tech.latestVolume !== null ? tech.latestVolume.toLocaleString() + "주" : "-"}` +
         (tech.volumeRatio !== null ? ` (20일 평균 대비 ${tech.volumeRatio.toFixed(2)}배)` : "")
       : "";
+
+    // 관련 기사 — 네이버증권 종목 뉴스 탭을 그대로 가져온 것(비공식 조회라 안 보일 수도 있음).
+    // DART 계산과 무관한 참고용이라 저장은 안 하고 조회할 때마다 그때그때 새로 가져옴.
+    const news = data.relatedNews ?? [];
+    document.getElementById("fairvalue-news").innerHTML = news.length
+      ? news.map(n => {
+          const dt = n.datetime; // "202610181812"
+          const dateLabel = dt.length === 12 ? `${dt.slice(4, 6)}/${dt.slice(6, 8)} ${dt.slice(8, 10)}:${dt.slice(10, 12)}` : "";
+          return `<div class="fairvalue-news-row" data-url="${escapeHtml(n.url)}" style="cursor:pointer; padding:6px 0; border-bottom:1px solid var(--border);">` +
+            `<div>${escapeHtml(n.title)}</div>` +
+            `<div class="inquiry-meta">${escapeHtml(n.officeName)} · ${dateLabel}</div>` +
+          `</div>`;
+        }).join("")
+      : "관련 기사를 찾을 수 없습니다.";
 
     document.getElementById("fairvalue-body").innerHTML = Object.entries(FAIRVALUE_METHOD_LABELS).map(([key, label]) => {
       const value = data.results[key];
