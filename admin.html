@@ -2239,7 +2239,7 @@
             const totalTrade = m.marketSettleTradeAmt + m.stockSettleTradeAmt + m.kotcTradeAmt;
             const totalSettled = m.marketSettleSettledAmt + m.stockSettleSettledAmt + m.kotcSettledAmt;
             const ym = `${m.yymm.slice(0, 4)}.${m.yymm.slice(4, 6)}`;
-            return `<tr data-yymm="${m.yymm}" class="settlementcost-month-row" style="cursor:pointer;" title="클릭하면 일별 거래대금 팝업을 볼 수 있어요"><td><strong style="color:var(--accent);">${ym}</strong></td><td>${toJo(totalTrade)}</td><td>${toJo(totalSettled)}</td></tr>`;
+            return `<tr data-yymm="${m.yymm}" class="settlementcost-month-row" style="cursor:pointer;" title="클릭하면 일별 거래대금 팝업을 볼 수 있어요"><td><strong style="color:#000;">${ym}</strong></td><td>${toJo(totalTrade)}</td><td>${toJo(totalSettled)}</td></tr>`;
           }).join("")}
         </tbody>
       </table>
