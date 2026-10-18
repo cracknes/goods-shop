@@ -501,7 +501,7 @@
 <div id="daily-trading-modal" class="modal-overlay" hidden>
   <div class="modal-box" style="max-width:600px; max-height:85vh; overflow-y:auto;">
     <button type="button" id="daily-trading-modal-close" class="modal-close">&times;</button>
-    <div id="daily-trading-modal-title" style="font-weight:600; font-size:17px; margin-bottom:12px;"></div>
+    <div id="daily-trading-modal-title" style="font-weight:600; font-size:17px; margin-bottom:12px; text-align:center;"></div>
     <div id="daily-trading-modal-content"></div>
   </div>
 </div>
@@ -2249,16 +2249,7 @@
 
   function renderDailyTradingValueChart(days) {
     const toJo = (n) => (n / 1_000_000_000_000).toLocaleString(undefined, { maximumFractionDigits: 2 });
-    const chartHeight = 160;
     const maxVal = Math.max(...days.map(d => d.tradingValue));
-    const barWidth = 100 / days.length;
-
-    const bars = days.map((d, i) => {
-      const h = maxVal > 0 ? (d.tradingValue / maxVal) * chartHeight : 0;
-      const x = i * barWidth;
-      return `<rect x="${x.toFixed(2)}" y="${(chartHeight - h).toFixed(1)}" width="${(barWidth * 0.7).toFixed(2)}" height="${h.toFixed(1)}" fill="#6c63ff"><title>${d.date} · ${toJo(d.tradingValue)}조원</title></rect>`;
-    }).join("");
-
     const avg = days.reduce((s, d) => s + d.tradingValue, 0) / days.length;
 
     const rows = days.map(d => {
@@ -2267,10 +2258,7 @@
     }).join("");
 
     return `
-      <svg viewBox="0 0 100 ${chartHeight}" width="100%" height="${chartHeight}" preserveAspectRatio="none" style="background:#f7f7fb; border-radius:8px;">
-        ${bars}
-      </svg>
-      <p class="muted" style="margin:6px 0 14px;">거래일 ${days.length}일 · 평균 ${toJo(avg)}조원 · 최고 ${toJo(maxVal)}조원</p>
+      <p class="muted" style="margin:0 0 14px; text-align:center;">거래일 ${days.length}일 · 평균 ${toJo(avg)}조원 · 최고 ${toJo(maxVal)}조원</p>
       <table class="keep-table-mobile">
         <thead><tr><th>날짜</th><th>거래대금</th></tr></thead>
         <tbody>${rows}</tbody>
