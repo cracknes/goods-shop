@@ -498,6 +498,14 @@
   </div>
 </div>
 
+<div id="daily-trading-modal" class="modal-overlay" hidden>
+  <div class="modal-box" style="max-width:600px; max-height:85vh; overflow-y:auto;">
+    <button type="button" id="daily-trading-modal-close" class="modal-close">&times;</button>
+    <div id="daily-trading-modal-title" style="font-weight:600; font-size:17px; margin-bottom:12px;"></div>
+    <div id="daily-trading-modal-content"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="supabase-client.js"></script>
 <script src="nav.js"></script>
@@ -2224,26 +2232,23 @@
   function renderSettlementCostTable(result) {
     const toJo = (n) => (n / 1_000_000_000_000).toLocaleString(undefined, { maximumFractionDigits: 1 });
     return `
-      <div class="settlementcost-chart-wrap">
-        <table class="keep-table-mobile">
-          <thead><tr><th>기준월</th><th>거래대금(조원)</th><th>결제대금(조원)</th></tr></thead>
-          <tbody>
-            ${result.monthly.map(m => {
-              const totalTrade = m.marketSettleTradeAmt + m.stockSettleTradeAmt + m.kotcTradeAmt;
-              const totalSettled = m.marketSettleSettledAmt + m.stockSettleSettledAmt + m.kotcSettledAmt;
-              const ym = `${m.yymm.slice(0, 4)}.${m.yymm.slice(4, 6)}`;
-              return `<tr data-yymm="${m.yymm}" style="cursor:pointer;" title="클릭하면 일별 거래대금 그래프를 볼 수 있어요"><td>${ym}</td><td>${toJo(totalTrade)}</td><td>${toJo(totalSettled)}</td></tr>`;
-            }).join("")}
-          </tbody>
-        </table>
-        <p class="muted" style="margin-top:8px;">기준월을 클릭하면 그 달의 일별 거래대금 그래프를 볼 수 있어요. (결제대금은 월 단위로만 제공돼서 일별 그래프엔 거래대금만 나와요)</p>
-        <div class="settlementcost-daily-chart"></div>
-      </div>
+      <table class="keep-table-mobile">
+        <thead><tr><th>기준월</th><th>거래대금(조원)</th><th>결제대금(조원)</th></tr></thead>
+        <tbody>
+          ${result.monthly.map(m => {
+            const totalTrade = m.marketSettleTradeAmt + m.stockSettleTradeAmt + m.kotcTradeAmt;
+            const totalSettled = m.marketSettleSettledAmt + m.stockSettleSettledAmt + m.kotcSettledAmt;
+            const ym = `${m.yymm.slice(0, 4)}.${m.yymm.slice(4, 6)}`;
+            return `<tr data-yymm="${m.yymm}" class="settlementcost-month-row" style="cursor:pointer;" title="클릭하면 일별 거래대금 팝업을 볼 수 있어요"><td>${ym}</td><td>${toJo(totalTrade)}</td><td>${toJo(totalSettled)}</td></tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+      <p class="muted" style="margin-top:8px;">기준월을 클릭하면 그 달의 일별 거래대금을 팝업으로 볼 수 있어요. (결제대금은 월 단위로만 제공돼서 일별 화면엔 거래대금만 나와요)</p>
     `;
   }
 
   function renderDailyTradingValueChart(days) {
-    const toJo = (n) => (n / 1_000_000_000_000).toLocaleString(undefined, { maximumFractionDigits: 1 });
+    const toJo = (n) => (n / 1_000_000_000_000).toLocaleString(undefined, { maximumFractionDigits: 2 });
     const chartHeight = 160;
     const maxVal = Math.max(...days.map(d => d.tradingValue));
     const barWidth = 100 / days.length;
@@ -2256,55 +2261,67 @@
 
     const avg = days.reduce((s, d) => s + d.tradingValue, 0) / days.length;
 
+    const rows = days.map(d => {
+      const weekday = new Date(d.date + "T00:00:00").toLocaleDateString("ko-KR", { weekday: "short" });
+      return `<tr><td>${d.date} (${weekday})</td><td>${toJo(d.tradingValue)}조원</td></tr>`;
+    }).join("");
+
     return `
-      <div style="margin-top:12px;">
-        <svg viewBox="0 0 100 ${chartHeight}" width="100%" height="${chartHeight}" preserveAspectRatio="none" style="background:#f7f7fb; border-radius:8px;">
-          ${bars}
-        </svg>
-        <p class="muted" style="margin-top:6px;">거래일 ${days.length}일 · 평균 ${toJo(avg)}조원 · 최고 ${toJo(maxVal)}조원</p>
-      </div>
+      <svg viewBox="0 0 100 ${chartHeight}" width="100%" height="${chartHeight}" preserveAspectRatio="none" style="background:#f7f7fb; border-radius:8px;">
+        ${bars}
+      </svg>
+      <p class="muted" style="margin:6px 0 14px;">거래일 ${days.length}일 · 평균 ${toJo(avg)}조원 · 최고 ${toJo(maxVal)}조원</p>
+      <table class="keep-table-mobile">
+        <thead><tr><th>날짜</th><th>거래대금</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
     `;
   }
 
-  document.body.addEventListener("click", async (e) => {
-    const tr = e.target.closest(".settlementcost-chart-wrap tr[data-yymm]");
+  function openDailyTradingModal(yymm) {
+    const modal = document.getElementById("daily-trading-modal");
+    const titleEl = document.getElementById("daily-trading-modal-title");
+    const contentEl = document.getElementById("daily-trading-modal-content");
+    const ym = `${yymm.slice(0, 4)}년 ${Number(yymm.slice(4, 6))}월`;
+
+    titleEl.textContent = `${ym} 일별 거래대금`;
+    contentEl.innerHTML = `<p class="muted">조회 중입니다... (처음 조회하는 달은 시간이 좀 걸릴 수 있어요)</p>`;
+    modal.hidden = false;
+
+    supabaseClient.functions.invoke("daily-trading-value", { body: { yymm } }).then(async ({ data, error }) => {
+      if (modal.hidden) return; // 그 사이 닫았으면 무시
+      if (error) {
+        let detail = error.message;
+        try {
+          const body = await error.context.json();
+          if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
+        } catch (_) {}
+        contentEl.innerHTML = `<p class="error">조회 실패: ${detail}</p>`;
+        return;
+      }
+      if (data.error) {
+        contentEl.innerHTML = `<p class="error">${data.error}</p>`;
+        return;
+      }
+      if (!data.days || data.days.length === 0) {
+        contentEl.innerHTML = `<p class="muted">해당 월의 거래일 데이터가 없습니다.</p>`;
+        return;
+      }
+      contentEl.innerHTML = renderDailyTradingValueChart(data.days);
+    });
+  }
+
+  document.body.addEventListener("click", (e) => {
+    const tr = e.target.closest("tr.settlementcost-month-row[data-yymm]");
     if (!tr) return;
-    const wrap = tr.closest(".settlementcost-chart-wrap");
-    const chartEl = wrap.querySelector(".settlementcost-daily-chart");
-    const yymm = tr.dataset.yymm;
+    openDailyTradingModal(tr.dataset.yymm);
+  });
 
-    if (chartEl.dataset.yymm === yymm) {
-      chartEl.innerHTML = "";
-      chartEl.dataset.yymm = "";
-      return;
-    }
-
-    chartEl.dataset.yymm = yymm;
-    chartEl.innerHTML = `<p class="muted">일별 거래대금 조회 중... (처음 조회하는 달은 시간이 좀 걸릴 수 있어요)</p>`;
-
-    const { data, error } = await supabaseClient.functions.invoke("daily-trading-value", { body: { yymm } });
-
-    if (chartEl.dataset.yymm !== yymm) return; // 그 사이 다른 달을 클릭했으면 무시
-
-    if (error) {
-      let detail = error.message;
-      try {
-        const body = await error.context.json();
-        if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
-      } catch (_) {}
-      chartEl.innerHTML = `<p class="error">조회 실패: ${detail}</p>`;
-      return;
-    }
-    if (data.error) {
-      chartEl.innerHTML = `<p class="error">${data.error}</p>`;
-      return;
-    }
-    if (!data.days || data.days.length === 0) {
-      chartEl.innerHTML = `<p class="muted">해당 월의 거래일 데이터가 없습니다.</p>`;
-      return;
-    }
-
-    chartEl.innerHTML = renderDailyTradingValueChart(data.days);
+  document.getElementById("daily-trading-modal-close").addEventListener("click", () => {
+    document.getElementById("daily-trading-modal").hidden = true;
+  });
+  document.getElementById("daily-trading-modal").addEventListener("click", (e) => {
+    if (e.target.id === "daily-trading-modal") document.getElementById("daily-trading-modal").hidden = true;
   });
 
   document.getElementById("settlementcost-run-btn").addEventListener("click", async () => {
