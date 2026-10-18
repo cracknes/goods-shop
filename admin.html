@@ -1612,7 +1612,10 @@
     if (key === "dcf") {
       if (data.isFinancialIndustry) return "금융업은 영업현금흐름 기반 계산이 맞지 않아 제외";
       const { totalBorrowings, netDebt } = data.rawFigures;
-      return `FCF ${won(fcf)}을 연 ${pct(a.dcfGrowthRate)} 성장률로 ${a.dcfProjectionYears}년간 늘려 할인율 ${waccDiscountLabel}(${pct(a.requiredReturn)})로 현재가치 합산 + 영구성장률 ${pct(a.dcfTerminalGrowthRate)}로 잔존가치 계산 = 기업가치 → 순부채(총차입금 ${won(totalBorrowings)} − 현금 ${won(data.rawFigures.cash)} = ${won(netDebt)}) 차감 = 지분가치 → 발행주식수(${data.rawFigures.shares.toLocaleString()}주)로 나눔`;
+      const avgFCF = data.historicalMultiples?.avgFCF ?? null;
+      const dcfBaseFcf = avgFCF ?? fcf;
+      const fcfLabel = avgFCF !== null ? "최근 3개년 평균 FCF" : "FCF(최근 12개월)";
+      return `${fcfLabel} ${won(dcfBaseFcf)}을 연 ${pct(a.dcfGrowthRate)} 성장률로 ${a.dcfProjectionYears}년간 늘려 할인율 ${waccDiscountLabel}(${pct(a.requiredReturn)})로 현재가치 합산 + 영구성장률 ${pct(a.dcfTerminalGrowthRate)}로 잔존가치 계산 = 기업가치 → 순부채(총차입금 ${won(totalBorrowings)} − 현금 ${won(data.rawFigures.cash)} = ${won(netDebt)}) 차감 = 지분가치 → 발행주식수(${data.rawFigures.shares.toLocaleString()}주)로 나눔`;
     }
     if (key === "ddm") {
       if (data.rawFigures.dividendPerShare === null) return "배당을 지급하지 않아 계산 불가";
@@ -1667,11 +1670,12 @@
       (data.fromCache ? " · ⚡오늘 조회한 캐시 결과(빠름)" : "");
 
     const histYears = data.historicalMultiples?.years ?? [];
+    const toJo2 = (n) => (n / 1_000_000_000_000).toLocaleString(undefined, { maximumFractionDigits: 2 }) + "조원";
     document.getElementById("fairvalue-history").textContent = histYears.length
-      ? "PER/PBR 평균에 쓰인 과거 실적: " + histYears.map(y =>
-          `${y.year}년(연말종가 ${y.price.toLocaleString()}원, PER ${y.per !== null ? y.per.toFixed(1) + "배" : "-"}, PBR ${y.pbr !== null ? y.pbr.toFixed(2) + "배" : "-"})`
+      ? "PER/PBR 평균·DCF 기준 FCF에 쓰인 과거 실적: " + histYears.map(y =>
+          `${y.year}년(연말종가 ${y.price.toLocaleString()}원, PER ${y.per !== null ? y.per.toFixed(1) + "배" : "-"}, PBR ${y.pbr !== null ? y.pbr.toFixed(2) + "배" : "-"}, FCF ${y.fcf !== null ? toJo2(y.fcf) : "-"})`
         ).join(" · ")
-      : "과거 데이터가 부족해 PER/PBR 배수는 기본값(10배/1배)을 사용했습니다.";
+      : "과거 데이터가 부족해 PER/PBR 배수는 기본값(10배/1배), DCF는 최근 12개월 FCF를 사용했습니다.";
 
     const w = data.wacc;
     document.getElementById("fairvalue-wacc").textContent = w
