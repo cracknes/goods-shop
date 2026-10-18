@@ -2239,11 +2239,10 @@
             const totalTrade = m.marketSettleTradeAmt + m.stockSettleTradeAmt + m.kotcTradeAmt;
             const totalSettled = m.marketSettleSettledAmt + m.stockSettleSettledAmt + m.kotcSettledAmt;
             const ym = `${m.yymm.slice(0, 4)}.${m.yymm.slice(4, 6)}`;
-            return `<tr data-yymm="${m.yymm}" class="settlementcost-month-row" style="cursor:pointer;" title="클릭하면 일별 거래대금 팝업을 볼 수 있어요"><td>${ym}</td><td>${toJo(totalTrade)}</td><td>${toJo(totalSettled)}</td></tr>`;
+            return `<tr data-yymm="${m.yymm}" class="settlementcost-month-row" style="cursor:pointer;" title="클릭하면 일별 거래대금 팝업을 볼 수 있어요"><td><strong style="color:var(--accent);">${ym}</strong></td><td>${toJo(totalTrade)}</td><td>${toJo(totalSettled)}</td></tr>`;
           }).join("")}
         </tbody>
       </table>
-      <p class="muted" style="margin-top:8px;">기준월을 클릭하면 그 달의 일별 거래대금을 팝업으로 볼 수 있어요. (결제대금은 월 단위로만 제공돼서 일별 화면엔 거래대금만 나와요)</p>
     `;
   }
 
@@ -2273,7 +2272,7 @@
     const ym = `${yymm.slice(0, 4)}년 ${Number(yymm.slice(4, 6))}월`;
 
     titleEl.textContent = `${ym} 일별 거래대금`;
-    contentEl.innerHTML = `<p class="muted">조회 중입니다... (처음 조회하는 달은 시간이 좀 걸릴 수 있어요)</p>`;
+    contentEl.innerHTML = `<p class="muted">조회 중입니다...</p>`;
     modal.hidden = false;
 
     supabaseClient.functions.invoke("daily-trading-value", { body: { yymm } }).then(async ({ data, error }) => {
