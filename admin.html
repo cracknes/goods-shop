@@ -1585,30 +1585,39 @@
     const { eps, bps, roe, fcf, dividendGrowthRate, payoutRatio } = data.metrics;
     const a = data.assumptions;
 
-    if (key === "graham") return `√(22.5 × EPS × BPS) = √(22.5 × ${won(eps)} × ${won(bps)})`;
+    if (key === "graham") {
+      const caveat = data.grahamCaveat
+        ? " ※이 회사의 실제 거래 배수가 공식의 전제(PER 15배×PBR 1.5배, 1950년대 미국 기준)와 크게 달라 참고용으로만 보세요."
+        : "";
+      return `√(22.5 × EPS × BPS) = √(22.5 × ${won(eps)} × ${won(bps)})${caveat}`;
+    }
     if (key === "per") return `EPS × PER배수(최근 3개년 실제 평균) = ${won(eps)} × ${a.targetPER.toFixed(1)}배`;
     if (key === "pbr") return `BPS × PBR배수(최근 3개년 실제 평균) = ${won(bps)} × ${a.targetPBR.toFixed(2)}배`;
-    const discountLabel = data.wacc ? "WACC" : "요구수익률(WACC 계산 실패, 기본값)";
+    // S-RIM/배당할인모형은 주주 몫 현금흐름만 다루는 모형이라 자기자본비용으로 할인하고,
+    // DCF(FCFF)는 회사 전체 현금흐름을 다루므로 부채비용까지 섞인 WACC로 할인함(아래 index.ts 주석 참고).
+    const equityDiscountLabel = data.wacc ? "자기자본비용" : "요구수익률(WACC 계산 실패, 기본값)";
+    const waccDiscountLabel = data.wacc ? "WACC" : "요구수익률(WACC 계산 실패, 기본값)";
     if (key === "srim") {
-      // 실제 계산식: S-RIM = BPS + Σ[(그 해 ROE − 요구수익률) × 그 해 BPS ÷ (1+요구수익률)^연차]
-      // (연차 1~srimFadeYears), ROE는 매년 요구수익률로 선형 수렴하고 BPS는 유보이익만큼 매년
+      // 실제 계산식: S-RIM = BPS + Σ[(그 해 ROE − 자기자본비용) × 그 해 BPS ÷ (1+자기자본비용)^연차]
+      // (연차 1~srimFadeYears), ROE는 매년 자기자본비용으로 선형 수렴하고 BPS는 유보이익만큼 매년
       // 불어남 — 반복 계산이라 전체를 다 풀어쓰는 대신, 1년차를 실제 숫자로 대입한 예시와 함께
       // 일반식을 보여줌(dart-valuation.ts의 calcSRIM과 정확히 같은 식).
-      const r = a.requiredReturn;
+      const r = a.equityRequiredReturn;
       const n = a.srimFadeYears;
       const fadedRoe1 = roe + (r - roe) * (1 / n);
       const residual1 = (fadedRoe1 - r) * bps;
       const pv1 = residual1 / (1 + r);
-      return `BPS + Σ[(그 해 ROE − ${discountLabel}) × 그 해 BPS ÷ (1+${discountLabel})^연차] (1~${n}년차 합산) — ROE가 매년 ${discountLabel}(${pct(r)})로 선형 수렴하고, 유보이익(배당성향 ${pct(payoutRatio)} 제외분)만큼 그 해 BPS가 불어남. 1년차 예시: ROE ${pct(fadedRoe1)} → 잔여이익 (${pct(fadedRoe1)}−${pct(r)})×${won(bps)} = ${won(residual1)} → 현재가치 ${won(residual1)}÷(1+${pct(r)})¹ = ${won(pv1)} (이 계산을 ${n}년 반복한 합계를 BPS(${won(bps)})에 더함)`;
+      return `BPS + Σ[(그 해 ROE − ${equityDiscountLabel}) × 그 해 BPS ÷ (1+${equityDiscountLabel})^연차] (1~${n}년차 합산) — ROE가 매년 ${equityDiscountLabel}(${pct(r)})로 선형 수렴하고, 유보이익(배당성향 ${pct(payoutRatio)} 제외분)만큼 그 해 BPS가 불어남. 1년차 예시: ROE ${pct(fadedRoe1)} → 잔여이익 (${pct(fadedRoe1)}−${pct(r)})×${won(bps)} = ${won(residual1)} → 현재가치 ${won(residual1)}÷(1+${pct(r)})¹ = ${won(pv1)} (이 계산을 ${n}년 반복한 합계를 BPS(${won(bps)})에 더함)`;
     }
     if (key === "dcf") {
       if (data.isFinancialIndustry) return "금융업은 영업현금흐름 기반 계산이 맞지 않아 제외";
       const { totalBorrowings, netDebt } = data.rawFigures;
-      return `FCF ${won(fcf)}을 연 ${pct(a.dcfGrowthRate)} 성장률로 ${a.dcfProjectionYears}년간 늘려 할인율 ${discountLabel}(${pct(a.requiredReturn)})로 현재가치 합산 + 영구성장률 ${pct(a.dcfTerminalGrowthRate)}로 잔존가치 계산 = 기업가치 → 순부채(총차입금 ${won(totalBorrowings)} − 현금 ${won(data.rawFigures.cash)} = ${won(netDebt)}) 차감 = 지분가치 → 발행주식수(${data.rawFigures.shares.toLocaleString()}주)로 나눔`;
+      return `FCF ${won(fcf)}을 연 ${pct(a.dcfGrowthRate)} 성장률로 ${a.dcfProjectionYears}년간 늘려 할인율 ${waccDiscountLabel}(${pct(a.requiredReturn)})로 현재가치 합산 + 영구성장률 ${pct(a.dcfTerminalGrowthRate)}로 잔존가치 계산 = 기업가치 → 순부채(총차입금 ${won(totalBorrowings)} − 현금 ${won(data.rawFigures.cash)} = ${won(netDebt)}) 차감 = 지분가치 → 발행주식수(${data.rawFigures.shares.toLocaleString()}주)로 나눔`;
     }
     if (key === "ddm") {
       if (data.rawFigures.dividendPerShare === null) return "배당을 지급하지 않아 계산 불가";
-      return `DPS × (1+배당성장률) ÷ (${discountLabel}−배당성장률) = ${won(data.rawFigures.dividendPerShare)} × (1+${pct(dividendGrowthRate)}) ÷ (${pct(a.requiredReturn)}−${pct(dividendGrowthRate)})`;
+      const sustainableGrowth = Math.min(dividendGrowthRate, 0.03);
+      return `DPS × (1+영구성장률) ÷ (${equityDiscountLabel}−영구성장률) = ${won(data.rawFigures.dividendPerShare)} × (1+${pct(sustainableGrowth)}) ÷ (${pct(a.equityRequiredReturn)}−${pct(sustainableGrowth)}) ※영구성장률은 최근 배당성장률(${pct(dividendGrowthRate)})과 장기 지속가능 수준(3%) 중 낮은 값`;
     }
     return "";
   }
@@ -1666,7 +1675,7 @@
 
     const w = data.wacc;
     document.getElementById("fairvalue-wacc").textContent = w
-      ? `WACC ${(w.wacc * 100).toFixed(2)}% = 자기자본비용 ${(w.costOfEquity * 100).toFixed(2)}%(베타 ${w.beta.toFixed(2)}, 최근 30거래일 종목·코스피 수익률 기준) × 자기자본비중 ${(w.equityWeight * 100).toFixed(1)}% + 세후 타인자본비용 ${(w.costOfDebt * (1 - data.assumptions.taxRate) * 100).toFixed(2)}% × 부채비중 ${(w.debtWeight * 100).toFixed(1)}%`
+      ? `WACC(DCF용) ${(w.wacc * 100).toFixed(2)}% = 자기자본비용(S-RIM·배당할인모형용) ${(w.costOfEquity * 100).toFixed(2)}%(베타 ${w.beta.toFixed(2)} — 최근 30거래일 원시 베타 ${w.rawBeta.toFixed(2)}를 노이즈 완화를 위해 Blume 조정) × 자기자본비중 ${(w.equityWeight * 100).toFixed(1)}% + 세후 타인자본비용 ${(w.costOfDebt * (1 - data.assumptions.taxRate) * 100).toFixed(2)}% × 부채비중 ${(w.debtWeight * 100).toFixed(1)}%`
       : "베타를 계산할 시세 데이터가 부족해 WACC 대신 기본 요구수익률(8%)을 사용했습니다.";
 
     const nref = data.naverReference;
