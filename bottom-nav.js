@@ -9,6 +9,9 @@ async function renderBottomNav() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   const path = location.pathname.split("/").pop() || "index.html";
   const isActive = (name) => (path === name ? "active" : "");
+  // index.html은 "홈"과 "상품"이 같은 페이지(해시로만 구분)라, 홈 쪽도 해시가 #products일 땐
+  // 꺼줘야 함 — 안 그러면 상품 탭을 눌러도 홈이 계속 같이 켜져 있는 것처럼 보였음.
+  const onProducts = path === "index.html" && location.hash === "#products";
 
   const myHref = user ? "orders.html" : "login.html";
   const myLabel = user ? "마이" : "로그인";
@@ -16,10 +19,10 @@ async function renderBottomNav() {
   const myActive = user ? isActive("orders.html") : isActive("login.html");
 
   el.innerHTML = `
-    <a href="index.html" class="${isActive("index.html")}">
+    <a href="index.html" class="${isActive("index.html") && !onProducts ? "active" : ""}">
       <span class="bottom-nav-icon">🏠</span>홈
     </a>
-    <a href="index.html#products" class="${isActive("index.html") && location.hash === "#products" ? "active" : ""}">
+    <a href="index.html#products" class="${onProducts ? "active" : ""}">
       <span class="bottom-nav-icon">🛍️</span>상품
     </a>
     <a href="contact.html" class="${isActive("contact.html")}">
