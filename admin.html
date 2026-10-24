@@ -51,13 +51,13 @@
       </div>
     </div>
     <div class="shop-content">
-      <div class="card" hidden>
-        <table id="orders-table">
-          <thead>
-            <tr><th>사용자</th><th>상품</th><th>금액</th><th>상태</th><th>결제일시</th></tr>
-          </thead>
-          <tbody id="orders-body"></tbody>
-        </table>
+      <div class="card" id="orders-panel" hidden>
+        <div class="data-grid" id="orders-grid">
+          <div class="data-grid-header">사용자</div>
+          <div class="data-grid-header">상품</div>
+          <div class="data-grid-header">금액</div>
+          <div class="data-grid-header">결제일시</div>
+        </div>
         <p id="orders-empty" class="muted" hidden>결제 내역이 없습니다.</p>
       </div>
 
@@ -556,7 +556,7 @@
       btn.classList.toggle("active", btn.dataset.tab === tab);
     });
     openGroupForTab(tab);
-    document.getElementById("orders-table").closest(".card").hidden = tab !== "orders";
+    document.getElementById("orders-panel").hidden = tab !== "orders";
     document.getElementById("inquiries-panel").hidden = tab !== "inquiries";
     document.getElementById("logins-panel").hidden = tab !== "logins";
     document.getElementById("productstats-panel").hidden = tab !== "productstats";
@@ -586,15 +586,14 @@
       return;
     }
 
-    document.getElementById("orders-body").innerHTML = orders.map(o => `
-      <tr>
-        <td data-label="사용자">${escapeHtml(o.user_email ?? o.user_id)}</td>
-        <td data-label="상품">${escapeHtml(o.product_name)}</td>
-        <td data-label="금액">${o.amount.toLocaleString()}원</td>
-        <td data-label="상태" class="status-paid">${o.status}</td>
-        <td data-label="결제일시">${formatKDateTime(o.created_at)}</td>
-      </tr>
-    `).join("");
+    const grid = document.getElementById("orders-grid");
+    grid.querySelectorAll(".data-grid-row").forEach(el => el.remove());
+    grid.insertAdjacentHTML("beforeend", orders.map(o => `
+      <div class="data-grid-row">${escapeHtml(o.user_email ?? o.user_id)}</div>
+      <div class="data-grid-row">${escapeHtml(o.product_name)}</div>
+      <div class="data-grid-row">${o.amount.toLocaleString()}원</div>
+      <div class="data-grid-row">${formatKDateTime(o.created_at)}</div>
+    `).join(""));
   }
 
   let allInquiries = [];
