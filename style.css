@@ -105,7 +105,11 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
    메인페이지 카테고리 버튼(.category-list button)과 동일함. */
 .category-maingroup { display: flex; flex-wrap: wrap; gap: 8px; }
 .category-group-toggle.active { background: var(--accent); color: #fff; font-weight: 600; }
-.category-group-items { display: flex; flex-wrap: wrap; gap: 4px; }
+.category-group-items { display: flex; flex-wrap: wrap; gap: 4px; touch-action: pan-y; }
+/* display:flex를 직접 지정해두면 브라우저 기본 [hidden]{display:none} 규칙을 덮어써버려서
+   (출처가 다른 스타일 간 우선순위상 author 규칙이 항상 이김) hidden 속성을 줘도 계속 보이는
+   버그가 있었음 — 명시적으로 다시 덮어씀. */
+.category-group-items[hidden] { display: none; }
 
 /* 페이지 내 탭 전환 (예: 문의하기 - 문의 접수하기 / 내 문의내역) */
 .tab-bar { display: flex; gap: 8px; margin-bottom: 16px; }

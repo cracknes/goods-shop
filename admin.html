@@ -549,6 +549,30 @@
     toggle.addEventListener("click", () => showSubgroup(toggle.dataset.group));
   });
 
+  // 하위 메뉴 줄을 좌우로 드래그(스와이프)하면 같은 대분류 안에서 옆 메뉴로 이동함
+  // (대분류 자체는 고정이라 스와이프로는 안 바뀌고, 위의 대분류 버튼을 눌러야만 바뀜).
+  (function setupSubmenuSwipe() {
+    let startX = null;
+    document.querySelector(".category-list").addEventListener("pointerdown", (e) => {
+      startX = e.target.closest(".category-group-items") ? e.clientX : null;
+    });
+    document.addEventListener("pointerup", (e) => {
+      if (startX === null) return;
+      const dx = e.clientX - startX;
+      startX = null;
+      if (Math.abs(dx) < 40) return; // 너무 짧은 움직임은 그냥 클릭으로 취급
+
+      const group = document.querySelector(".category-group-toggle.active")?.dataset.group;
+      if (!group) return;
+      const items = [...document.querySelectorAll(`.category-group-items[data-subgroup="${group}"] button[data-tab]`)];
+      const currentTab = items.find(b => b.classList.contains("active"))?.dataset.tab;
+      const idx = items.findIndex(b => b.dataset.tab === currentTab);
+      if (idx === -1) return;
+      const nextIdx = dx < 0 ? idx + 1 : idx - 1; // 왼쪽으로 스와이프 = 다음 메뉴, 오른쪽 = 이전 메뉴
+      if (nextIdx >= 0 && nextIdx < items.length) switchTab(items[nextIdx].dataset.tab);
+    });
+  })();
+
   function switchTab(tab) {
     document.querySelectorAll(".category-list button[data-tab]").forEach(btn => {
       btn.classList.toggle("active", btn.dataset.tab === tab);
