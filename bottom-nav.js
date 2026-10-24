@@ -1,6 +1,6 @@
 // 모바일 앱처럼 화면 아래 고정되는 공통 하단 탭바. 홈/상품/문의/마이 4개 — 이 사이트에 실제로
 // 있는 페이지로만 연결함(장바구니 기능 자체가 없어서 그 탭은 빼고 "문의하기"로 대체).
-// "마이" 탭은 로그인 전엔 로그인 페이지로, 로그인 후엔 결제내역(가장 "내 정보"에 가까운 페이지)으로 이동.
+// "마이" 탭은 로그인 전엔 로그인 페이지로, 로그인 후엔 내 정보 수정 페이지(profile.html)로 이동.
 //
 // 로그인 여부는 supabaseClient.auth.getUser()로 비동기로 확인해야 해서, 페이지를 넘어갈 때마다
 // 그 응답을 기다리는 짧은 순간 동안 탭바 내용이 비어있었음 — 내용 없이 padding/그림자만 있는
@@ -46,8 +46,8 @@ async function renderBottomNav() {
   const myLink = document.getElementById("bottom-nav-my");
   if (!myLink) return;
   const path = location.pathname.split("/").pop() || "index.html";
-  myLink.href = "orders.html";
-  myLink.className = path === "orders.html" ? "active" : "";
+  myLink.href = "profile.html";
+  myLink.className = path === "profile.html" ? "active" : "";
   myLink.innerHTML = `<span class="bottom-nav-icon">👤</span>마이`;
 }
 renderBottomNav();

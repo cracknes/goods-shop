@@ -84,6 +84,7 @@ async function renderNav() {
     <div class="nav-links">
       ${user && !isAdmin ? `<a href="contact.html">문의하기</a>` : ""}
       ${user && !isAdmin ? `<a href="orders.html">결제내역</a>` : ""}
+      ${user && !isAdmin ? `<a href="profile.html">내 정보</a>` : ""}
       ${isAdmin ? `<a href="admin.html">관리자</a>` : ""}
       ${user ? `<button id="logout-btn">로그아웃(${escapeHtml(user.email)})</button>` : `<a href="login.html">로그인</a>`}
     </div>
