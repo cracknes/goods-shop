@@ -2585,7 +2585,7 @@
               <input type="checkbox" class="user-blocked-toggle" data-id="${u.user_id}" style="width:18px; height:18px;" ${u.blocked ? "checked" : ""} ${isRoot ? "disabled" : ""}>
               <span class="muted">접근 차단</span>
             </label>
-            <button type="button" class="btn-ghost-danger user-delete-btn" data-id="${u.user_id}" data-email="${escapeHtml(u.email)}" style="padding:6px 14px; font-size:13px;" ${isRoot ? "disabled" : ""}>삭제</button>
+            <button type="button" class="icon-delete-btn user-delete-btn" data-id="${u.user_id}" data-email="${escapeHtml(u.email)}" aria-label="삭제" ${isRoot ? "disabled" : ""}>🗑️</button>
           </div>
         </div>
       `;

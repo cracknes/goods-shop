@@ -541,7 +541,8 @@ textarea { resize: vertical; }
   cursor: pointer;
   flex-shrink: 0;
 }
-.icon-delete-btn:hover { background: var(--danger); color: #fff; }
+.icon-delete-btn:hover:not(:disabled) { background: var(--border); color: var(--text); }
+.icon-delete-btn:disabled { opacity: 0.3; cursor: default; }
 
 /* PWA "홈 화면에 추가" 안내 배너 (pwa.js가 필요할 때만 만들어서 붙임) */
 .pwa-install-banner {
