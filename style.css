@@ -1,5 +1,5 @@
 :root {
-  --accent: #4f7a5c;
+  --accent: #6b9080;
   --bg: #ffffff;
   --bg-soft: #f5f6f7;
   --text: #1c1c1c;
@@ -24,7 +24,7 @@ body {
 a { color: var(--accent); }
 
 .hero {
-  background: linear-gradient(135deg, var(--accent), #2f6e4f);
+  background: linear-gradient(135deg, var(--accent), #4a7363);
   color: #fff;
   padding: 48px 32px;
   border-radius: 28px;
@@ -90,6 +90,20 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
 .category-list button:hover { background: var(--bg-soft); }
 .category-list button.active { background: var(--accent); color: #fff; font-weight: 600; }
 .shop-content { flex: 1; min-width: 0; }
+
+/* 관리자 메뉴 대분류 아코디언(주식/상품/메뉴/사용자) — 한 번에 하나만 펼쳐짐 */
+.category-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+.category-group-arrow { font-size: 11px; transition: transform 0.15s ease; }
+.category-group.open .category-group-arrow { transform: rotate(180deg); }
+.category-group-items { display: none; flex-direction: column; gap: 2px; padding-left: 10px; margin-top: 2px; }
+.category-group.open .category-group-items { display: flex; }
 
 /* 페이지 내 탭 전환 (예: 문의하기 - 문의 접수하기 / 내 문의내역) */
 .tab-bar { display: flex; gap: 8px; margin-bottom: 16px; }
@@ -520,6 +534,11 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
     gap: 8px;
   }
   .category-list button { flex: 1 1 auto; text-align: center; }
+  /* 관리자 메뉴 아코디언은 상품 카테고리 필터(가로로 늘어선 칩)와 달리 세로로 쌓여야 함 —
+     위 공용 규칙(.category-list { flex-direction: row })보다 우선하도록 더 구체적으로 지정함 */
+  #admin-body .category-list { flex-direction: column; }
+  #admin-body .category-list button,
+  #admin-body .category-group-toggle { flex: none; text-align: left; }
   .shop-content { width: 100%; }
   .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .product-card .body { padding: 12px 10px; }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#4f7a5c">
+<meta name="theme-color" content="#6b9080">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,21 +19,41 @@
 
   <div id="admin-body" class="shop-layout" hidden>
     <div class="category-list">
-      <button data-tab="orders" class="active">결제내역</button>
-      <button data-tab="inquiries">문의내역</button>
-      <button data-tab="logins">로그인이력</button>
-      <button data-tab="productstats">상품통계</button>
-      <button data-tab="addproduct">상품관리</button>
-      <button data-tab="menus">메뉴관리</button>
-      <button data-tab="newslinks">오늘의뉴스 관리</button>
-      <button data-tab="push">PUSH관리</button>
-      <button data-tab="fairvalue">주가 분석</button>
-      <button data-tab="sector">주도 섹터 분석</button>
-      <button data-tab="exportstats">주요 품목별 수출</button>
-      <button data-tab="dividendrank">배당순위</button>
-      <button data-tab="settlementcost">월별 주식결제대금</button>
-      <button data-tab="users">사용자 관리</button>
-      <button data-tab="errorlogs">오류 로그</button>
+      <div class="category-group">
+        <button type="button" class="category-group-toggle" data-group="stock">주식 <span class="category-group-arrow">▾</span></button>
+        <div class="category-group-items">
+          <button data-tab="fairvalue">주가 분석</button>
+          <button data-tab="sector">주도 섹터 분석</button>
+          <button data-tab="exportstats">주요 품목별 수출</button>
+          <button data-tab="dividendrank">배당순위</button>
+          <button data-tab="settlementcost">월별 주식결제대금</button>
+        </div>
+      </div>
+      <div class="category-group">
+        <button type="button" class="category-group-toggle" data-group="product">상품 <span class="category-group-arrow">▾</span></button>
+        <div class="category-group-items">
+          <button data-tab="productstats">상품통계</button>
+          <button data-tab="addproduct">상품관리</button>
+        </div>
+      </div>
+      <div class="category-group">
+        <button type="button" class="category-group-toggle" data-group="menu">메뉴 <span class="category-group-arrow">▾</span></button>
+        <div class="category-group-items">
+          <button data-tab="newslinks">오늘의뉴스 관리</button>
+          <button data-tab="menus">메뉴관리</button>
+          <button data-tab="errorlogs">오류 로그</button>
+        </div>
+      </div>
+      <div class="category-group">
+        <button type="button" class="category-group-toggle" data-group="user">사용자 <span class="category-group-arrow">▾</span></button>
+        <div class="category-group-items">
+          <button data-tab="orders" class="active">결제내역</button>
+          <button data-tab="inquiries">문의내역</button>
+          <button data-tab="logins">로그인이력</button>
+          <button data-tab="push">PUSH관리</button>
+          <button data-tab="users">사용자 관리</button>
+        </div>
+      </div>
     </div>
     <div class="shop-content">
       <div class="card">
@@ -515,10 +535,27 @@
 <script>
   const ADMIN_EMAIL = "admin@admin.com";
 
+  // 메뉴를 4개 대분류(주식/상품/메뉴/사용자)로 묶은 아코디언 — 한 번에 하나의 대분류만 펼쳐짐.
+  function openGroupForTab(tab) {
+    const activeBtn = document.querySelector(`.category-list button[data-tab="${tab}"]`);
+    const targetGroup = activeBtn?.closest(".category-group");
+    document.querySelectorAll(".category-group").forEach(g => g.classList.toggle("open", g === targetGroup));
+  }
+
+  document.querySelectorAll(".category-group-toggle").forEach(toggle => {
+    toggle.addEventListener("click", () => {
+      const group = toggle.closest(".category-group");
+      const willOpen = !group.classList.contains("open");
+      document.querySelectorAll(".category-group").forEach(g => g.classList.remove("open"));
+      if (willOpen) group.classList.add("open");
+    });
+  });
+
   function switchTab(tab) {
-    document.querySelectorAll(".category-list button").forEach(btn => {
+    document.querySelectorAll(".category-list button[data-tab]").forEach(btn => {
       btn.classList.toggle("active", btn.dataset.tab === tab);
     });
+    openGroupForTab(tab);
     document.getElementById("orders-table").closest(".card").hidden = tab !== "orders";
     document.getElementById("inquiries-panel").hidden = tab !== "inquiries";
     document.getElementById("logins-panel").hidden = tab !== "logins";
@@ -2662,6 +2699,7 @@
     document.querySelectorAll(".category-list button[data-tab]").forEach(btn => {
       btn.addEventListener("click", () => switchTab(btn.dataset.tab));
     });
+    openGroupForTab("orders"); // 기본으로 열려있는 탭(결제내역)이 속한 대분류를 펼쳐둠
 
     await loadMenusAdmin();
     await loadNewsLinksAdmin();
