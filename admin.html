@@ -2303,21 +2303,27 @@
     renderDividendRankHistoryList();
   }
 
-  // 월별 주식결제대금 — 같은 패턴
+  // 월별 주식결제대금 — 표/그리드 대신 주요 품목별 수출과 같은 sector-card 카드+리스트 스타일을 씀
+  // (표는 투박해 보인다는 피드백, 이미 쓰던 공용 카드 컴포넌트를 재사용)
   function renderSettlementCostTable(result) {
     const toJo = (n) => (n / 1_000_000_000_000).toLocaleString(undefined, { maximumFractionDigits: 1 });
     return `
-      <table class="keep-table-mobile">
-        <thead><tr><th>기준월</th><th>거래대금(조원)</th><th>결제대금(조원)</th></tr></thead>
-        <tbody>
-          ${result.monthly.map(m => {
-            const totalTrade = m.marketSettleTradeAmt + m.stockSettleTradeAmt + m.kotcTradeAmt;
-            const totalSettled = m.marketSettleSettledAmt + m.stockSettleSettledAmt + m.kotcSettledAmt;
-            const ym = `${m.yymm.slice(0, 4)}.${m.yymm.slice(4, 6)}`;
-            return `<tr data-yymm="${m.yymm}" class="settlementcost-month-row" style="cursor:pointer;" title="클릭하면 일별 거래대금 팝업을 볼 수 있어요"><td><strong style="color:#000;">${ym}</strong></td><td>${toJo(totalTrade)}</td><td>${toJo(totalSettled)}</td></tr>`;
-          }).join("")}
-        </tbody>
-      </table>
+      <div class="sector-card">
+        ${result.monthly.map(m => {
+          const totalTrade = m.marketSettleTradeAmt + m.stockSettleTradeAmt + m.kotcTradeAmt;
+          const totalSettled = m.marketSettleSettledAmt + m.stockSettleSettledAmt + m.kotcSettledAmt;
+          const ym = `${m.yymm.slice(0, 4)}.${m.yymm.slice(4, 6)}`;
+          return `
+            <div class="sector-stock-row settlementcost-month-row" data-yymm="${m.yymm}" style="cursor:pointer;" title="클릭하면 일별 거래대금 팝업을 볼 수 있어요">
+              <span class="sector-stock-name">${ym}</span>
+              <div style="text-align:right;">
+                <span class="sector-stock-rate">거래대금 ${toJo(totalTrade)}조원</span>
+                <div class="sector-stock-detail">결제대금 ${toJo(totalSettled)}조원</div>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
     `;
   }
 
@@ -2328,15 +2334,17 @@
 
     const rows = days.map(d => {
       const weekday = new Date(d.date + "T00:00:00").toLocaleDateString("ko-KR", { weekday: "short" });
-      return `<tr><td>${d.date} (${weekday})</td><td>${toJo(d.tradingValue)}조원</td></tr>`;
+      return `
+        <div class="sector-stock-row">
+          <span>${d.date} (${weekday})</span>
+          <span class="sector-stock-rate">${toJo(d.tradingValue)}조원</span>
+        </div>
+      `;
     }).join("");
 
     return `
       <p class="muted" style="margin:0 0 14px; text-align:center;">거래일 ${days.length}일 · 평균 ${toJo(avg)}조원 · 최고 ${toJo(maxVal)}조원</p>
-      <table class="keep-table-mobile">
-        <thead><tr><th>날짜</th><th>거래대금</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
+      <div class="sector-card">${rows}</div>
     `;
   }
 
@@ -2374,9 +2382,9 @@
   }
 
   document.body.addEventListener("click", (e) => {
-    const tr = e.target.closest("tr.settlementcost-month-row[data-yymm]");
-    if (!tr) return;
-    openDailyTradingModal(tr.dataset.yymm);
+    const row = e.target.closest(".settlementcost-month-row[data-yymm]");
+    if (!row) return;
+    openDailyTradingModal(row.dataset.yymm);
   });
 
   document.getElementById("daily-trading-modal-close").addEventListener("click", () => {
