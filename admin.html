@@ -21,9 +21,9 @@
   <div id="admin-body" class="shop-layout" hidden>
     <div class="category-list">
       <div class="category-maingroup">
+        <button type="button" class="category-group-toggle" data-group="menu">메뉴</button>
         <button type="button" class="category-group-toggle" data-group="stock">주식</button>
         <button type="button" class="category-group-toggle" data-group="product">상품</button>
-        <button type="button" class="category-group-toggle" data-group="menu">메뉴</button>
         <button type="button" class="category-group-toggle" data-group="user">사용자</button>
       </div>
       <div class="category-group-items" data-subgroup="stock">
@@ -548,7 +548,12 @@
   }
 
   document.querySelectorAll(".category-group-toggle").forEach(toggle => {
-    toggle.addEventListener("click", () => showSubgroup(toggle.dataset.group));
+    toggle.addEventListener("click", () => {
+      // 대분류만 누르고 하위 메뉴는 아직 안 눌렀을 때, 이전에 보던 다른 대분류의 화면이 그대로
+      // 남아있지 않도록 그 대분류의 첫 번째 하위 메뉴를 바로 보여줌.
+      const firstTabBtn = document.querySelector(`.category-group-items[data-subgroup="${toggle.dataset.group}"] button[data-tab]`);
+      if (firstTabBtn) switchTab(firstTabBtn.dataset.tab);
+    });
   });
 
   function switchTab(tab) {
