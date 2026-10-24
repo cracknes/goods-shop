@@ -92,7 +92,8 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
 .shop-content { flex: 1; min-width: 0; }
 
 /* 관리자 메뉴 대분류 아코디언(주식/상품/메뉴/사용자) — 한 번에 하나만 펼쳐짐 */
-.category-group-toggle {
+.category-group-toggle,
+.admin-home-link {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -104,6 +105,31 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
 .category-group.open .category-group-arrow { transform: rotate(180deg); }
 .category-group-items { display: none; flex-direction: column; gap: 2px; padding-left: 10px; margin-top: 2px; }
 .category-group.open .category-group-items { display: flex; }
+#admin-home-btn { margin-bottom: 8px; }
+
+/* 관리자 페이지 첫 화면(홈) — 메인페이지 카테고리처럼 큰 카드 4개로 대분류를 보여줌 */
+.admin-home-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.admin-home-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  padding: 24px 20px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg);
+  font-family: inherit;
+  cursor: pointer;
+}
+.admin-home-card:hover { border-color: var(--accent); }
+.admin-home-card-icon { font-size: 28px; }
+.admin-home-card-title { font-size: 17px; font-weight: 700; }
+.admin-home-card-desc { font-size: 13px; color: var(--text-soft); line-height: 1.5; }
 
 /* 페이지 내 탭 전환 (예: 문의하기 - 문의 접수하기 / 내 문의내역) */
 .tab-bar { display: flex; gap: 8px; margin-bottom: 16px; }
@@ -538,7 +564,9 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
      위 공용 규칙(.category-list { flex-direction: row })보다 우선하도록 더 구체적으로 지정함 */
   #admin-body .category-list { flex-direction: column; }
   #admin-body .category-list button,
-  #admin-body .category-group-toggle { flex: none; text-align: left; }
+  #admin-body .category-group-toggle,
+  #admin-body .admin-home-link { flex: none; text-align: left; }
+  .admin-home-grid { grid-template-columns: 1fr; }
   .shop-content { width: 100%; }
   .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .product-card .body { padding: 12px 10px; }

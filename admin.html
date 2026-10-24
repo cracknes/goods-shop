@@ -14,11 +14,11 @@
 <body>
 <nav id="nav"></nav>
 <div class="wrap wrap-wide">
-  <h1>관리자</h1>
   <p id="denied" class="error" hidden>관리자만 볼 수 있는 페이지입니다. (admin@admin.com 계정으로 로그인하세요)</p>
 
   <div id="admin-body" class="shop-layout" hidden>
     <div class="category-list">
+      <button type="button" class="admin-home-link" id="admin-home-btn">🏠 홈</button>
       <div class="category-group">
         <button type="button" class="category-group-toggle" data-group="stock">주식 <span class="category-group-arrow">▾</span></button>
         <div class="category-group-items">
@@ -47,7 +47,7 @@
       <div class="category-group">
         <button type="button" class="category-group-toggle" data-group="user">사용자 <span class="category-group-arrow">▾</span></button>
         <div class="category-group-items">
-          <button data-tab="orders" class="active">결제내역</button>
+          <button data-tab="orders">결제내역</button>
           <button data-tab="inquiries">문의내역</button>
           <button data-tab="logins">로그인이력</button>
           <button data-tab="push">PUSH관리</button>
@@ -56,7 +56,32 @@
       </div>
     </div>
     <div class="shop-content">
-      <div class="card">
+      <div class="card" id="home-panel">
+        <div class="admin-home-grid">
+          <button type="button" class="admin-home-card" data-home-tab="fairvalue">
+            <span class="admin-home-card-icon">📈</span>
+            <span class="admin-home-card-title">주식</span>
+            <span class="admin-home-card-desc">주가 분석 · 주도 섹터 분석 · 수출 · 배당순위 · 결제대금</span>
+          </button>
+          <button type="button" class="admin-home-card" data-home-tab="productstats">
+            <span class="admin-home-card-icon">🛍️</span>
+            <span class="admin-home-card-title">상품</span>
+            <span class="admin-home-card-desc">상품통계 · 상품관리</span>
+          </button>
+          <button type="button" class="admin-home-card" data-home-tab="newslinks">
+            <span class="admin-home-card-icon">📰</span>
+            <span class="admin-home-card-title">메뉴</span>
+            <span class="admin-home-card-desc">오늘의뉴스 관리 · 메뉴관리 · 오류 로그</span>
+          </button>
+          <button type="button" class="admin-home-card" data-home-tab="orders">
+            <span class="admin-home-card-icon">👥</span>
+            <span class="admin-home-card-title">사용자</span>
+            <span class="admin-home-card-desc">결제내역 · 문의내역 · 로그인이력 · PUSH관리 · 사용자 관리</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card" hidden>
         <table id="orders-table">
           <thead>
             <tr><th>사용자</th><th>상품</th><th>금액</th><th>상태</th><th>결제일시</th></tr>
@@ -556,6 +581,7 @@
       btn.classList.toggle("active", btn.dataset.tab === tab);
     });
     openGroupForTab(tab);
+    document.getElementById("home-panel").hidden = tab !== "home";
     document.getElementById("orders-table").closest(".card").hidden = tab !== "orders";
     document.getElementById("inquiries-panel").hidden = tab !== "inquiries";
     document.getElementById("logins-panel").hidden = tab !== "logins";
@@ -2699,7 +2725,11 @@
     document.querySelectorAll(".category-list button[data-tab]").forEach(btn => {
       btn.addEventListener("click", () => switchTab(btn.dataset.tab));
     });
-    openGroupForTab("orders"); // 기본으로 열려있는 탭(결제내역)이 속한 대분류를 펼쳐둠
+    document.getElementById("admin-home-btn").addEventListener("click", () => switchTab("home"));
+    document.querySelectorAll(".admin-home-card").forEach(card => {
+      card.addEventListener("click", () => switchTab(card.dataset.homeTab));
+    });
+    switchTab("home"); // 메인페이지처럼 4개 대분류 카드부터 보여줌
 
     await loadMenusAdmin();
     await loadNewsLinksAdmin();
