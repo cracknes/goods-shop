@@ -111,7 +111,19 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
 /* 하위 메뉴와 구분되도록 대분류 글씨를 더 크고 진하게 함 */
 .category-group-toggle { font-size: 16px; font-weight: 700; }
 .category-group-toggle.active { background: var(--accent); color: #fff; }
-.category-group-items { display: flex; flex-wrap: wrap; gap: 4px; touch-action: pan-y; }
+/* 하위 메뉴는 줄바꿈하지 않고 한 줄로 두고 가로 스크롤(스와이프)로 넘기게 함 — 직접 만든
+   스와이프 동작 감지는 휴대폰마다 인식이 들쭉날쭉해서(실제로 잘 안 먹히는 걸 확인함), 브라우저가
+   원래 잘 처리하는 가로 스크롤을 그대로 쓰는 쪽으로 바꿈. */
+.category-group-items {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.category-group-items::-webkit-scrollbar { display: none; }
+.category-group-items button { flex: 0 0 auto; }
 /* display:flex를 직접 지정해두면 브라우저 기본 [hidden]{display:none} 규칙을 덮어써버려서
    (출처가 다른 스타일 간 우선순위상 author 규칙이 항상 이김) hidden 속성을 줘도 계속 보이는
    버그가 있었음 — 명시적으로 다시 덮어씀. */
@@ -546,6 +558,9 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
     gap: 8px;
   }
   .category-list button { flex: 1 1 auto; text-align: center; }
+  /* 위 공용 모바일 규칙이 하위 메뉴 버튼까지 늘려버려서 가로 스크롤 줄이 깨지므로,
+     하위 메뉴 버튼은 원래 크기 그대로 유지되도록 다시 되돌림 */
+  .category-group-items button { flex: 0 0 auto; text-align: left; }
   .shop-content { width: 100%; }
   .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .product-card .body { padding: 12px 10px; }
