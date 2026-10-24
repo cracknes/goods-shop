@@ -96,22 +96,16 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
 #admin-body { flex-direction: column; }
 #admin-body .category-list {
   width: 100%;
-  flex-direction: row;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
 }
 
-/* 관리자 메뉴 대분류(주식/상품/메뉴/사용자) — 메인페이지 카테고리 버튼(.category-list button)과
-   똑같은 모양을 그대로 물려받는 단순한 버튼. 누르면 하위 메뉴가 같은 모양으로 바로 아래 펼쳐짐
-   (한 번에 하나만 펼쳐짐) */
-.category-group.open > .category-group-toggle { background: var(--accent); color: #fff; font-weight: 600; }
-.category-group-items {
-  display: none;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
-}
-.category-group.open .category-group-items { display: flex; }
+/* 대분류(주식/상품/메뉴/사용자)는 항상 고정된 한 줄 — 하위 메뉴가 바뀌어도 이 줄의 위치/간격은
+   그대로 유지됨. 하위 메뉴는 그 아래 한 줄에서 선택된 대분류에 맞는 것만 통째로 바뀜. 버튼 모양은
+   메인페이지 카테고리 버튼(.category-list button)과 동일함. */
+.category-maingroup { display: flex; flex-wrap: wrap; gap: 8px; }
+.category-group-toggle.active { background: var(--accent); color: #fff; font-weight: 600; }
+.category-group-items { display: flex; flex-wrap: wrap; gap: 4px; }
 
 /* 페이지 내 탭 전환 (예: 문의하기 - 문의 접수하기 / 내 문의내역) */
 .tab-bar { display: flex; gap: 8px; margin-bottom: 16px; }
