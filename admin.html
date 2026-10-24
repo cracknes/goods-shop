@@ -52,7 +52,7 @@
     </div>
     <div class="shop-content">
       <div class="card" id="orders-panel" hidden>
-        <div class="data-grid" id="orders-grid">
+        <div class="data-grid data-grid--orders" id="orders-grid">
           <div class="data-grid-header">사용자</div>
           <div class="data-grid-header">상품</div>
           <div class="data-grid-header">금액</div>
@@ -84,23 +84,23 @@
 
       <div class="card" id="productstats-panel" hidden>
         <div id="productstats-list-view">
-          <table id="productstats-table">
-            <thead>
-              <tr><th>상품</th><th>조회 수</th><th>평균 조회시간</th><th>총 조회시간</th></tr>
-            </thead>
-            <tbody id="productstats-body"></tbody>
-          </table>
+          <div class="data-grid" id="productstats-grid">
+            <div class="data-grid-header">상품</div>
+            <div class="data-grid-header">조회 수</div>
+            <div class="data-grid-header">평균 조회시간</div>
+            <div class="data-grid-header">총 조회시간</div>
+          </div>
           <p id="productstats-empty" class="muted" hidden>조회 기록이 없습니다.</p>
         </div>
         <div id="productstats-detail-view" hidden>
           <button type="button" id="productstats-back-btn" class="muted" style="background:none; border:none; cursor:pointer; padding:0; margin-bottom:12px;">&larr; 목록으로</button>
           <h3 id="productstats-detail-title" style="margin-bottom:12px;"></h3>
-          <table>
-            <thead>
-              <tr><th>날짜</th><th>아이디</th><th>조회 횟수</th><th>조회시간</th></tr>
-            </thead>
-            <tbody id="productstats-detail-body"></tbody>
-          </table>
+          <div class="data-grid" id="productstats-detail-grid">
+            <div class="data-grid-header">날짜</div>
+            <div class="data-grid-header">아이디</div>
+            <div class="data-grid-header">조회 횟수</div>
+            <div class="data-grid-header">조회시간</div>
+          </div>
         </div>
       </div>
 
@@ -726,17 +726,17 @@
     });
 
     const rows = Object.entries(byProduct).sort((a, b) => b[1].count - a[1].count);
-    document.getElementById("productstats-body").innerHTML = rows.map(([name, stat]) => `
-      <tr data-name="${escapeHtml(name)}" style="cursor:pointer;">
-        <td data-label="상품">${escapeHtml(name)}</td>
-        <td data-label="조회 수">${stat.count}회</td>
-        <td data-label="평균 조회시간">${Math.round(stat.total / stat.count)}초</td>
-        <td data-label="총 조회시간">${stat.total}초</td>
-      </tr>
-    `).join("");
+    const grid = document.getElementById("productstats-grid");
+    grid.querySelectorAll(".data-grid-row").forEach(el => el.remove());
+    grid.insertAdjacentHTML("beforeend", rows.map(([name, stat]) => `
+      <div class="data-grid-row" data-name="${escapeHtml(name)}" data-clickable>${escapeHtml(name)}</div>
+      <div class="data-grid-row" data-name="${escapeHtml(name)}" data-clickable>${stat.count}회</div>
+      <div class="data-grid-row" data-name="${escapeHtml(name)}" data-clickable>${Math.round(stat.total / stat.count)}초</div>
+      <div class="data-grid-row" data-name="${escapeHtml(name)}" data-clickable>${stat.total}초</div>
+    `).join(""));
 
-    document.querySelectorAll("#productstats-body tr").forEach(tr => {
-      tr.addEventListener("click", () => showProductStatsDetail(tr.dataset.name));
+    grid.querySelectorAll(".data-grid-row[data-name]").forEach(el => {
+      el.addEventListener("click", () => showProductStatsDetail(el.dataset.name));
     });
   }
 
@@ -764,14 +764,14 @@
     );
 
     document.getElementById("productstats-detail-title").textContent = productName;
-    document.getElementById("productstats-detail-body").innerHTML = sorted.map(g => `
-      <tr>
-        <td data-label="날짜">${escapeHtml(g.date)}</td>
-        <td data-label="아이디">${escapeHtml(g.who)}</td>
-        <td data-label="조회 횟수">${g.count}회</td>
-        <td data-label="조회시간">${g.total}초</td>
-      </tr>
-    `).join("");
+    const detailGrid = document.getElementById("productstats-detail-grid");
+    detailGrid.querySelectorAll(".data-grid-row").forEach(el => el.remove());
+    detailGrid.insertAdjacentHTML("beforeend", sorted.map(g => `
+      <div class="data-grid-row">${escapeHtml(g.date)}</div>
+      <div class="data-grid-row">${escapeHtml(g.who)}</div>
+      <div class="data-grid-row">${g.count}회</div>
+      <div class="data-grid-row">${g.total}초</div>
+    `).join(""));
 
     document.getElementById("productstats-list-view").hidden = true;
     document.getElementById("productstats-detail-view").hidden = false;
