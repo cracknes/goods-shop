@@ -19,7 +19,7 @@
   <div id="admin-body" class="shop-layout" hidden>
     <div class="category-list">
       <div class="category-group">
-        <button type="button" class="category-group-toggle" data-group="stock">주식 <span class="category-group-arrow">▾</span></button>
+        <button type="button" class="category-group-toggle" data-group="stock">주식</button>
         <div class="category-group-items">
           <button data-tab="fairvalue">주가 분석</button>
           <button data-tab="sector">주도 섹터 분석</button>
@@ -29,14 +29,14 @@
         </div>
       </div>
       <div class="category-group">
-        <button type="button" class="category-group-toggle" data-group="product">상품 <span class="category-group-arrow">▾</span></button>
+        <button type="button" class="category-group-toggle" data-group="product">상품</button>
         <div class="category-group-items">
           <button data-tab="productstats">상품통계</button>
           <button data-tab="addproduct">상품관리</button>
         </div>
       </div>
       <div class="category-group">
-        <button type="button" class="category-group-toggle" data-group="menu">메뉴 <span class="category-group-arrow">▾</span></button>
+        <button type="button" class="category-group-toggle" data-group="menu">메뉴</button>
         <div class="category-group-items">
           <button data-tab="newslinks">오늘의뉴스 관리</button>
           <button data-tab="menus">메뉴관리</button>
@@ -44,7 +44,7 @@
         </div>
       </div>
       <div class="category-group">
-        <button type="button" class="category-group-toggle" data-group="user">사용자 <span class="category-group-arrow">▾</span></button>
+        <button type="button" class="category-group-toggle" data-group="user">사용자</button>
         <div class="category-group-items">
           <button data-tab="orders">결제내역</button>
           <button data-tab="inquiries">문의내역</button>
@@ -55,31 +55,6 @@
       </div>
     </div>
     <div class="shop-content">
-      <div class="card" id="home-panel">
-        <div class="admin-home-grid">
-          <button type="button" class="admin-home-card" data-home-tab="fairvalue">
-            <span class="admin-home-card-icon">📈</span>
-            <span class="admin-home-card-title">주식</span>
-            <span class="admin-home-card-desc">주가 분석 · 주도 섹터 분석 · 수출 · 배당순위 · 결제대금</span>
-          </button>
-          <button type="button" class="admin-home-card" data-home-tab="productstats">
-            <span class="admin-home-card-icon">🛍️</span>
-            <span class="admin-home-card-title">상품</span>
-            <span class="admin-home-card-desc">상품통계 · 상품관리</span>
-          </button>
-          <button type="button" class="admin-home-card" data-home-tab="newslinks">
-            <span class="admin-home-card-icon">📰</span>
-            <span class="admin-home-card-title">메뉴</span>
-            <span class="admin-home-card-desc">오늘의뉴스 관리 · 메뉴관리 · 오류 로그</span>
-          </button>
-          <button type="button" class="admin-home-card" data-home-tab="orders">
-            <span class="admin-home-card-icon">👥</span>
-            <span class="admin-home-card-title">사용자</span>
-            <span class="admin-home-card-desc">결제내역 · 문의내역 · 로그인이력 · PUSH관리 · 사용자 관리</span>
-          </button>
-        </div>
-      </div>
-
       <div class="card" hidden>
         <table id="orders-table">
           <thead>
@@ -580,7 +555,6 @@
       btn.classList.toggle("active", btn.dataset.tab === tab);
     });
     openGroupForTab(tab);
-    document.getElementById("home-panel").hidden = tab !== "home";
     document.getElementById("orders-table").closest(".card").hidden = tab !== "orders";
     document.getElementById("inquiries-panel").hidden = tab !== "inquiries";
     document.getElementById("logins-panel").hidden = tab !== "logins";
@@ -2724,10 +2698,7 @@
     document.querySelectorAll(".category-list button[data-tab]").forEach(btn => {
       btn.addEventListener("click", () => switchTab(btn.dataset.tab));
     });
-    document.querySelectorAll(".admin-home-card").forEach(card => {
-      card.addEventListener("click", () => switchTab(card.dataset.homeTab));
-    });
-    switchTab("home"); // 메인페이지처럼 4개 대분류 카드부터 보여줌
+    switchTab("fairvalue"); // 첫 번째 대분류(주식)의 첫 메뉴를 기본으로 보여줌
 
     await loadMenusAdmin();
     await loadNewsLinksAdmin();
