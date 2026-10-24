@@ -160,7 +160,9 @@ h1 { font-size: 22px; font-weight: 800; }
   align-items: center;
   justify-content: center;
   padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-  z-index: 100;
+  /* 하단 탭바(.bottom-nav, z-index:150)보다 위에 떠야 함 — 안 그러면 모달 하단의 버튼(특히
+     "구매하기")이 탭바에 가려지거나 클릭이 가로채여짐(실제로 겪은 문제) */
+  z-index: 160;
 }
 .modal-overlay[hidden] { display: none; }
 .modal-box {

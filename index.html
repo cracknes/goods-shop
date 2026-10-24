@@ -983,13 +983,23 @@
     sessionStorage.setItem("pendingProductName", product.name);
 
     const tossPayments = TossPayments(TOSS_CLIENT_KEY);
-    tossPayments.requestPayment("카드", {
-      amount: product.price,
-      orderId,
-      orderName: product.name,
-      successUrl: new URL("success.html", location.href).href,
-      failUrl: new URL("fail.html", location.href).href,
-    });
+    try {
+      await tossPayments.requestPayment("카드", {
+        amount: product.price,
+        orderId,
+        orderName: product.name,
+        successUrl: new URL("success.html", location.href).href,
+        failUrl: new URL("fail.html", location.href).href,
+      });
+    } catch (err) {
+      // 지금까지는 결제창 호출이 실패해도 아무 에러 처리가 없어서 "눌러도 아무 반응 없음"
+      // 상태가 돼버렸음(콘솔에만 에러가 찍히고 사용자는 못 봄) — 실패 이유를 바로 보여줘서
+      // 다음부턴 원인을 바로 알 수 있게 함. 사용자가 결제창에서 직접 "취소"를 누른 경우도
+      // 이 catch로 들어오므로 그 경우엔 조용히 넘어감.
+      if (err?.code !== "USER_CANCEL") {
+        alert("결제창을 여는 데 실패했습니다: " + (err?.message || err));
+      }
+    }
   }
 
   // 관리자가 상품추가 탭에서 등록/수정/삭제한 상품을 카테고리별로 불러옴
