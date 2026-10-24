@@ -669,7 +669,6 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
 .keep-table-mobile tr { display: table-row; border-bottom: none; padding: 0; }
 .keep-table-mobile th, .keep-table-mobile td {
   display: table-cell;
-  width: 33.33%;
   text-align: center;
   white-space: nowrap;
   padding: 8px 10px;
