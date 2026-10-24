@@ -26,9 +26,18 @@
       <option value="prefer_not_to_say">선택 안 함</option>
     </select>
     <p class="form-section-label">비밀번호 변경</p>
-    <input id="current-password" type="password" placeholder="현재 비밀번호" autocomplete="current-password">
-    <input id="new-password" type="password" placeholder="새 비밀번호 (6자 이상)" autocomplete="new-password">
-    <input id="new-password-confirm" type="password" placeholder="새 비밀번호 확인" autocomplete="new-password">
+    <div class="field-row">
+      <label for="current-password">현재 비밀번호</label>
+      <input id="current-password" type="password" autocomplete="current-password">
+    </div>
+    <div class="field-row">
+      <label for="new-password">새 비밀번호</label>
+      <input id="new-password" type="password" placeholder="6자 이상" autocomplete="new-password">
+    </div>
+    <div class="field-row">
+      <label for="new-password-confirm">비밀번호 확인</label>
+      <input id="new-password-confirm" type="password" autocomplete="new-password">
+    </div>
     <button class="primary" id="save-btn" style="width:100%;">저장</button>
     <p id="message" class="error"></p>
   </div>
