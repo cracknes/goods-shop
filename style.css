@@ -11,7 +11,11 @@
 html { overflow-x: hidden; }
 body {
   margin: 0;
-  font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  /* "Pretendard"는 계속 폴백으로 적어뒀지만 실제로 로드해 쓴 적이 없어서(링크/설치 안 돼있음)
+     기기에 깔려있을 때만 가끔 쓰였고 거의 항상 시스템 기본 고딕(맑은 고딕/Apple SD Gothic Neo)이
+     보였음 — 그게 "폰트가 칙칙하다"고 느껴진 이유. 원티드가 공개한 브랜드 폰트 "Wanted Sans"를
+     CDN으로 실제로 불러와서(각 HTML head의 <link> 참고) 맨 앞에 둠. */
+  font-family: "Wanted Sans", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   color: var(--text);
   background: var(--bg-soft);
   line-height: 1.6;
