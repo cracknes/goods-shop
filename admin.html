@@ -2315,9 +2315,9 @@
           const ym = `${m.yymm.slice(0, 4)}.${m.yymm.slice(4, 6)}`;
           return `
             <div class="sector-stock-row settlementcost-month-row" data-yymm="${m.yymm}" style="cursor:pointer;" title="클릭하면 일별 거래대금 팝업을 볼 수 있어요">
-              <span class="sector-stock-name" style="color: var(--accent);">${ym} &rsaquo;</span>
+              <span class="sector-stock-name">${ym}</span>
               <div style="text-align:right;">
-                <span class="sector-stock-detail">거래대금 ${toJo(totalTrade)}조원</span>
+                <span class="sector-stock-rate" style="font-size:16px;">거래대금 ${toJo(totalTrade)}조원</span>
                 <div class="sector-stock-detail">결제대금 ${toJo(totalSettled)}조원</div>
               </div>
             </div>
