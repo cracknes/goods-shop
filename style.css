@@ -428,7 +428,7 @@ textarea { resize: vertical; }
 /* 입력칸 왼쪽에 라벨을 붙여서 보여주는 줄(placeholder만으로는 뭘 쓰는 칸인지 입력 중엔 안 보여서) */
 .field-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .field-row label { flex: 0 0 92px; font-size: 14px; color: var(--text-soft); }
-.field-row input { flex: 1; margin-bottom: 0; min-width: 0; }
+.field-row input, .field-row select { flex: 1; margin-bottom: 0; min-width: 0; }
 .image-preview-box {
   display: flex;
   flex-wrap: wrap;

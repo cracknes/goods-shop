@@ -16,15 +16,27 @@
 <nav id="bottom-nav" class="bottom-nav"></nav>
 <div class="wrap">
   <div class="card">
-    <p class="muted" id="email-display"></p>
-    <input id="name" type="text" placeholder="이름">
-    <input id="phone" type="tel" placeholder="전화번호 (예: 010-1234-5678)">
-    <select id="gender">
-      <option value="">성별 선택</option>
-      <option value="male">남성</option>
-      <option value="female">여성</option>
-      <option value="prefer_not_to_say">선택 안 함</option>
-    </select>
+    <div class="field-row">
+      <label for="email-display">이메일</label>
+      <input id="email-display" type="email" disabled>
+    </div>
+    <div class="field-row">
+      <label for="name">이름</label>
+      <input id="name" type="text">
+    </div>
+    <div class="field-row">
+      <label for="phone">전화번호</label>
+      <input id="phone" type="tel" placeholder="010-1234-5678">
+    </div>
+    <div class="field-row">
+      <label for="gender">성별</label>
+      <select id="gender">
+        <option value="">선택</option>
+        <option value="male">남성</option>
+        <option value="female">여성</option>
+        <option value="prefer_not_to_say">선택 안 함</option>
+      </select>
+    </div>
     <p class="form-section-label">비밀번호 변경</p>
     <div class="field-row">
       <label for="current-password">현재 비밀번호</label>
@@ -60,7 +72,7 @@
     }
     currentUser = user;
 
-    document.getElementById("email-display").textContent = `이메일: ${user.email}`;
+    document.getElementById("email-display").value = user.email;
     document.getElementById("name").value = user.user_metadata?.name ?? "";
     document.getElementById("phone").value = user.user_metadata?.phone ?? "";
     document.getElementById("gender").value = user.user_metadata?.gender ?? "";
