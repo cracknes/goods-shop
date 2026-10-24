@@ -414,6 +414,26 @@ textarea { resize: vertical; }
 .inquiry-row:last-child { border-bottom: none; }
 .inquiry-row:hover { opacity: 0.85; }
 
+/* 마이 메뉴 — 카드형 */
+.mypage-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mypage-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 16px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg);
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+  text-align: center;
+}
+.mypage-card:hover { border-color: var(--accent); }
+.mypage-card-icon { font-size: 32px; }
+
 .list-thumb {
   width: 36px;
   height: 36px;
