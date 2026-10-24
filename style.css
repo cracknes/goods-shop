@@ -101,7 +101,13 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
 
 /* 관리자페이지는 상품 페이지와 달리 왼쪽 사이드바 대신 위쪽 가로 메뉴로 대분류를 보여줌
    (화면 크기와 무관하게 항상 가로 정렬 — 모바일에서도 그대로 유지) */
-#admin-body { flex-direction: column; }
+/* .shop-layout은 원래 좌측 사이드바 레이아웃용이라 align-items:flex-start로 내용 너비에 맞춰
+   줄어드는데, 관리자페이지는 세로 배치(flex-direction:column)라 이게 "가로" 폭에 적용되면서
+   콘텐츠 영역(.shop-content)이 화면 전체 너비로 안 늘어나고 내용물 크기에 맞춰 줄어드는 문제가
+   있었음(상품/사용자 패널은 폭이 좁아 보이고, 오늘의뉴스 관리는 줄바꿈 안 되는 URL 텍스트 때문에
+   오히려 더 넓어져서 화면 밖으로 잘리고 — html/body가 overflow-x:hidden이라 스크롤도 안 됨).
+   stretch로 되돌려서 항상 전체 폭을 채우게 고침. */
+#admin-body { flex-direction: column; align-items: stretch; }
 #admin-body .category-list {
   width: 100%;
   flex-direction: column;
@@ -522,6 +528,20 @@ textarea { resize: vertical; }
 }
 .reorder-btn:disabled { opacity: 0.3; cursor: default; }
 .reorder-btn:hover:not(:disabled) { background: var(--accent); color: #fff; }
+
+.icon-delete-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: var(--bg-soft);
+  color: var(--text-soft);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.icon-delete-btn:hover { background: var(--danger); color: #fff; }
 
 /* PWA "홈 화면에 추가" 안내 배너 (pwa.js가 필요할 때만 만들어서 붙임) */
 .pwa-install-banner {

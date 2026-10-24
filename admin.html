@@ -1010,7 +1010,7 @@
             <input type="checkbox" class="menu-visible-toggle" data-id="${m.id}" ${m.visible ? "checked" : ""}>
             <span class="toggle-track"></span>
           </label>
-          ${m.type === "category" ? `<button type="button" class="danger-btn menu-delete-btn" data-id="${m.id}" style="width:auto; padding:6px 14px; font-size:13px;">삭제</button>` : ""}
+          ${m.type === "category" ? `<button type="button" class="icon-delete-btn menu-delete-btn" data-id="${m.id}" aria-label="삭제">🗑️</button>` : ""}
         </div>
       </div>
     `).join("");
