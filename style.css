@@ -703,6 +703,31 @@ body.has-bottom-nav { padding-bottom: calc(env(safe-area-inset-bottom) + 92px); 
   z-index: 150;
 }
 .bottom-nav[hidden] { display: none; }
+
+/* 좌우로 넘기는 토글 스위치 — 목록에서 "노출" 여부처럼 글씨 없이 on/off만 직관적으로 보여줄 때 씀 */
+.toggle-switch { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; cursor: pointer; }
+.toggle-switch input { position: absolute; width: 0; height: 0; opacity: 0; margin: 0; }
+.toggle-switch .toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--border);
+  border-radius: 999px;
+  transition: background 0.15s ease;
+}
+.toggle-switch .toggle-track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+.toggle-switch input:checked + .toggle-track { background: var(--accent); }
+.toggle-switch input:checked + .toggle-track::after { transform: translateX(18px); }
 .bottom-nav a {
   flex: 1;
   display: flex;

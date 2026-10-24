@@ -119,11 +119,10 @@
             <div class="inquiry-meta" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(n.url)}</div>
           </div>
         </div>
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex-shrink:0;">
-          <input type="checkbox" class="newslink-visible-toggle" data-id="${n.id}" style="width:18px; height:18px;" ${n.visible ? "checked" : ""}>
-          <span class="muted">노출</span>
+        <label class="toggle-switch">
+          <input type="checkbox" class="newslink-visible-toggle" data-id="${n.id}" ${n.visible ? "checked" : ""}>
+          <span class="toggle-track"></span>
         </label>
-        <button type="button" class="danger-btn newslink-delete-btn" data-id="${n.id}" style="width:auto; padding:6px 10px; font-size:12px; flex-shrink:0;">삭제</button>
       </div>
     `).join("");
 
@@ -147,17 +146,6 @@
     });
     document.querySelectorAll(".newslink-down-btn").forEach(btn => {
       btn.addEventListener("click", () => moveNewsLink(btn.dataset.id, "down"));
-    });
-    document.querySelectorAll(".newslink-delete-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("정말 삭제하시겠어요?")) return;
-        const { error } = await supabaseClient.from("user_news_links").delete().eq("id", btn.dataset.id);
-        if (error) {
-          alert("삭제 실패: " + error.message);
-          return;
-        }
-        await loadNewsLinks();
-      });
     });
   }
 
