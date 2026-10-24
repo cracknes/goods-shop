@@ -202,7 +202,7 @@
       <div class="inquiry-meta">${formatKDateTime(item.created_at)}</div>
       <input id="edit-subject" type="text" value="${escapeHtml(item.subject)}">
       <textarea id="edit-message" rows="6">${escapeHtml(item.message)}</textarea>
-      <button class="primary" id="edit-save-btn">수정 저장</button>
+      <button class="primary" id="edit-save-btn">수정하기</button>
       <p id="edit-status" class="muted"></p>
       ${item.reply
         ? `<div class="inquiry-reply-done"><strong>답변</strong> (${formatKDateTime(item.replied_at)})<br>${escapeHtml(item.reply)}</div>`
