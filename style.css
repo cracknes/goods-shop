@@ -724,7 +724,7 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
 
 /* 월별 주식결제대금은 좌우 끝까지 꽉 차 보여서 기준월/금액을 양쪽에서 살짝씩만 안쪽으로 당김
    (space-between 자체는 유지 — 완전히 붙이지는 않음) */
-.settlementcost-month-row { padding-left: 64px; padding-right: 64px; }
+.settlementcost-month-row { padding-left: 30px; padding-right: 30px; }
 
 /* 하단 탭바 — 화면 아래에 둥둥 떠있는 알약 모양으로, bottom-nav.js가 로그인 상태에 따라 내용을 채움 */
 body.has-bottom-nav { padding-bottom: calc(env(safe-area-inset-bottom) + 92px); }
