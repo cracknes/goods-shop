@@ -722,6 +722,10 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
 .sector-stock-rate.up { color: #d64545; }
 .sector-stock-rate.down { color: #3366cc; }
 
+/* 월별 주식결제대금의 기준월-금액 간격이 카드 폭만큼 벌어져 보여서, 이 줄만 폭을 제한해 붙임 */
+.settlementcost-month-row { justify-content: flex-start; }
+.settlementcost-month-row > div { margin-left: 16px; }
+
 /* 하단 탭바 — 화면 아래에 둥둥 떠있는 알약 모양으로, bottom-nav.js가 로그인 상태에 따라 내용을 채움 */
 body.has-bottom-nav { padding-bottom: calc(env(safe-area-inset-bottom) + 92px); }
 .bottom-nav {
