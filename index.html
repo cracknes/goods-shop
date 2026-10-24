@@ -650,10 +650,9 @@
     if (input) {
       document.getElementById("game-check-btn").addEventListener("click", checkAnswer);
       input.addEventListener("keydown", (e) => { if (e.key === "Enter") checkAnswer(); });
-      // focus()만 호출하면 브라우저가 이 입력칸을 화면에 보이게 하려고 자동으로 스크롤을
-      // 움직여서, 한글놀이로 들어오거나 문제가 넘어갈 때마다 화면 위치가 미묘하게 바뀌었음 —
-      // preventScroll로 포커스는 그대로 주되 스크롤 위치는 안 건드리게 함.
-      input.focus({ preventScroll: true });
+      // 예전엔 여기서 input.focus()를 호출했는데, preventScroll을 줘도 모바일에서는 키보드가
+      // 올라오면서 브라우저가 화면을 다시 움직여서 스크롤 위치가 계속 바뀌었음 — 자동 포커스
+      // 자체를 없애서(사용자가 직접 입력칸을 눌러야 키보드가 뜸) 스크롤이 전혀 안 움직이게 함.
     }
 
     // 그림판 전용 — 애플펜슬/손가락으로 실제로 글자를 따라 그려볼 수 있게 함(따라쓰기와는
@@ -839,7 +838,7 @@
 
     document.getElementById("number-check-btn").addEventListener("click", checkAnswer);
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") checkAnswer(); });
-    input.focus({ preventScroll: true }); // 한글놀이와 같은 이유로 스크롤 위치는 안 건드리게 함
+    // 한글놀이와 같은 이유로 자동 포커스를 없앰(모바일 키보드가 올라오면서 스크롤이 계속 움직이던 문제)
   }
 
   function renderProducts() {
