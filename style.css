@@ -46,6 +46,10 @@ nav a, nav button {
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
+  /* <a>는 body의 line-height:1.6을 물려받는데 <button>은 브라우저마다 기본 line-height가
+     달라서(폼 요소라 inherit 안 되는 경우가 있음), 그 차이 때문에 로그아웃 버튼이 다른 링크들과
+     상하로 미세하게 안 맞아 보였음 — 명시적으로 똑같이 맞춰줌 */
+  line-height: 1;
   background: none;
   border: none;
   cursor: pointer;
@@ -104,7 +108,9 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
    그대로 유지됨. 하위 메뉴는 그 아래 한 줄에서 선택된 대분류에 맞는 것만 통째로 바뀜. 버튼 모양은
    메인페이지 카테고리 버튼(.category-list button)과 동일함. */
 .category-maingroup { display: flex; flex-wrap: wrap; gap: 8px; }
-.category-group-toggle.active { background: var(--accent); color: #fff; font-weight: 600; }
+/* 하위 메뉴와 구분되도록 대분류 글씨를 더 크고 진하게 함 */
+.category-group-toggle { font-size: 16px; font-weight: 700; }
+.category-group-toggle.active { background: var(--accent); color: #fff; }
 .category-group-items { display: flex; flex-wrap: wrap; gap: 4px; touch-action: pan-y; }
 /* display:flex를 직접 지정해두면 브라우저 기본 [hidden]{display:none} 규칙을 덮어써버려서
    (출처가 다른 스타일 간 우선순위상 author 규칙이 항상 이김) hidden 속성을 줘도 계속 보이는

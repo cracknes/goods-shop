@@ -553,13 +553,13 @@
   // (대분류 자체는 고정이라 스와이프로는 안 바뀌고, 위의 대분류 버튼을 눌러야만 바뀜).
   (function setupSubmenuSwipe() {
     let startX = null;
-    document.querySelector(".category-list").addEventListener("pointerdown", (e) => {
-      startX = e.target.closest(".category-group-items") ? e.clientX : null;
-    });
-    document.addEventListener("pointerup", (e) => {
-      if (startX === null) return;
-      const dx = e.clientX - startX;
-      startX = null;
+    let lastX = null;
+    let tracking = false;
+
+    function finishSwipe() {
+      if (!tracking) return;
+      tracking = false;
+      const dx = lastX - startX;
       if (Math.abs(dx) < 40) return; // 너무 짧은 움직임은 그냥 클릭으로 취급
 
       const group = document.querySelector(".category-group-toggle.active")?.dataset.group;
@@ -570,7 +570,23 @@
       if (idx === -1) return;
       const nextIdx = dx < 0 ? idx + 1 : idx - 1; // 왼쪽으로 스와이프 = 다음 메뉴, 오른쪽 = 이전 메뉴
       if (nextIdx >= 0 && nextIdx < items.length) switchTab(items[nextIdx].dataset.tab);
+    }
+
+    document.querySelector(".category-list").addEventListener("pointerdown", (e) => {
+      if (!e.target.closest(".category-group-items")) return;
+      startX = e.clientX;
+      lastX = e.clientX;
+      tracking = true;
     });
+    // 드래그 도중 계속 위치를 추적해둠 — 모바일에서는 브라우저가 중간에 스크롤 제스처로
+    // 판단해서 pointerup 대신 pointercancel을 보낼 때가 많아서, pointerup만 보고 있으면
+    // 스와이프가 거의 안 먹힌 것처럼 보였음(실제로 겪은 문제) — 마지막으로 추적된 위치를
+    // pointercancel에서도 그대로 써서 판정함.
+    document.addEventListener("pointermove", (e) => {
+      if (tracking) lastX = e.clientX;
+    });
+    document.addEventListener("pointerup", finishSwipe);
+    document.addEventListener("pointercancel", finishSwipe);
   })();
 
   function switchTab(tab) {
