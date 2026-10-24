@@ -25,9 +25,14 @@ function setupIdleLogout() {
       location.href = "login.html";
     }, IDLE_TIMEOUT_MS);
   };
-  ["mousemove", "keydown", "click", "scroll", "touchstart"].forEach(evt => {
+  // "scroll"은 버블링이 안 되는 이벤트라, document에 그냥 등록하면 페이지 전체 스크롤(window)만
+  // 감지되고 .card/table처럼 내부에 자체 스크롤이 있는 영역(가로 스크롤 메뉴, 긴 목록 등)을
+  // 스크롤하는 동작은 활동으로 안 잡혀서 자동로그아웃 타이머가 안 풀렸음 — capture 단계에서
+  // 등록하면 어디서 스크롤이 나든 다 감지됨.
+  ["mousemove", "keydown", "click", "touchstart"].forEach(evt => {
     document.addEventListener(evt, resetIdleTimer);
   });
+  document.addEventListener("scroll", resetIdleTimer, true);
   resetIdleTimer();
 }
 
