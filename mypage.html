@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#6b9080">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>마이 | 지후네 하우스</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav id="nav"></nav>
+<nav id="bottom-nav" class="bottom-nav"></nav>
+<div class="wrap">
+  <div class="card">
+    <a class="inquiry-row" href="profile.html" style="text-decoration:none; color:inherit;">
+      <div>회원정보 수정</div>
+      <div class="muted">&rsaquo;</div>
+    </a>
+    <a class="inquiry-row" href="orders.html" style="text-decoration:none; color:inherit;">
+      <div>결제내역</div>
+      <div class="muted">&rsaquo;</div>
+    </a>
+    <a class="inquiry-row" href="contact.html?tab=mine" style="text-decoration:none; color:inherit;">
+      <div>문의내역</div>
+      <div class="muted">&rsaquo;</div>
+    </a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<script src="nav.js"></script>
+<script src="bottom-nav.js"></script>
+<script src="pwa.js"></script>
+<script>
+  (async function initPage() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) location.href = "login.html";
+  })();
+</script>
+</body>
+</html>

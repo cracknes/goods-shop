@@ -81,10 +81,7 @@
 
     if (inquiryId && token) {
       if (user) {
-        document.querySelectorAll(".tab-bar button").forEach(b => b.classList.toggle("active", b.dataset.tab === "mine"));
-        document.getElementById("write-view").hidden = true;
-        document.getElementById("mine-view").hidden = false;
-        myInquiriesLoaded = true;
+        switchContactTab("mine");
         await loadMyInquiries();
         showInquiryDetail(inquiryId);
         return;
@@ -93,7 +90,13 @@
       return;
     }
 
-    if (!user) location.href = "index.html";
+    if (!user) {
+      location.href = "index.html";
+      return;
+    }
+
+    // 마이페이지에서 "문의내역"으로 바로 들어올 수 있게 ?tab=mine 쿼리로 시작 탭을 지정할 수 있게 함
+    if (params.get("tab") === "mine") switchContactTab("mine");
   })();
 
   async function showTokenInquiryView(inquiryId, token) {
@@ -172,17 +175,18 @@
   // 탭 전환
   let myInquiriesLoaded = false;
 
+  function switchContactTab(tab) {
+    document.querySelectorAll(".tab-bar button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+    document.getElementById("write-view").hidden = tab !== "write";
+    document.getElementById("mine-view").hidden = tab !== "mine";
+    if (tab === "mine" && !myInquiriesLoaded) {
+      myInquiriesLoaded = true;
+      loadMyInquiries();
+    }
+  }
+
   document.querySelectorAll(".tab-bar button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tab-bar button").forEach(b => b.classList.toggle("active", b === btn));
-      const tab = btn.dataset.tab;
-      document.getElementById("write-view").hidden = tab !== "write";
-      document.getElementById("mine-view").hidden = tab !== "mine";
-      if (tab === "mine" && !myInquiriesLoaded) {
-        myInquiriesLoaded = true;
-        loadMyInquiries();
-      }
-    });
+    btn.addEventListener("click", () => switchContactTab(btn.dataset.tab));
   });
 
   let myInquiries = [];

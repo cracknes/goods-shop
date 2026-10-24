@@ -46,8 +46,11 @@ async function renderBottomNav() {
   const myLink = document.getElementById("bottom-nav-my");
   if (!myLink) return;
   const path = location.pathname.split("/").pop() || "index.html";
-  myLink.href = "profile.html";
-  myLink.className = path === "profile.html" ? "active" : "";
+  // 마이페이지(mypage.html)에서 들어가는 회원정보 수정/결제내역 화면에 있을 때도 "마이" 탭이
+  // 켜져 있어야 자연스러움 — 문의내역(contact.html)은 "문의" 탭과 겹쳐서 거긴 제외함.
+  const myPages = ["mypage.html", "profile.html", "orders.html"];
+  myLink.href = "mypage.html";
+  myLink.className = myPages.includes(path) ? "active" : "";
   myLink.innerHTML = `<span class="bottom-nav-icon">👤</span>마이`;
 }
 renderBottomNav();
