@@ -1,5 +1,6 @@
-// 모바일 앱처럼 화면 아래 고정되는 공통 하단 탭바. 홈/상품/문의/마이 4개 — 이 사이트에 실제로
+// 모바일 앱처럼 화면 아래 고정되는 공통 하단 탭바. 홈/날씨/문의/마이 4개 — 이 사이트에 실제로
 // 있는 페이지로만 연결함(장바구니 기능 자체가 없어서 그 탭은 빼고 "문의하기"로 대체).
+// "날씨"는 네이버 날씨 페이지로 바로 연결(외부 사이트라 새 탭으로 염).
 // "마이" 탭은 로그인 전엔 로그인 페이지로, 로그인 후엔 내 정보 수정 페이지(profile.html)로 이동.
 //
 // 로그인 여부는 supabaseClient.auth.getUser()로 비동기로 확인해야 해서, 페이지를 넘어갈 때마다
@@ -15,16 +16,13 @@ function renderBottomNavSkeleton() {
 
   const path = location.pathname.split("/").pop() || "index.html";
   const isActive = (name) => (path === name ? "active" : "");
-  // index.html은 "홈"과 "상품"이 같은 페이지(해시로만 구분)라, 홈 쪽도 해시가 #products일 땐
-  // 꺼줘야 함 — 안 그러면 상품 탭을 눌러도 홈이 계속 같이 켜져 있는 것처럼 보였음.
-  const onProducts = path === "index.html" && location.hash === "#products";
 
   el.innerHTML = `
-    <a href="index.html" class="${isActive("index.html") && !onProducts ? "active" : ""}">
+    <a href="index.html" class="${isActive("index.html")}">
       <span class="bottom-nav-icon">🏠</span>홈
     </a>
-    <a href="index.html#products" class="${onProducts ? "active" : ""}">
-      <span class="bottom-nav-icon">🛍️</span>상품
+    <a href="https://weather.naver.com/today/09740690" target="_blank" rel="noopener noreferrer">
+      <span class="bottom-nav-icon">🌤️</span>날씨
     </a>
     <a href="contact.html" class="${isActive("contact.html")}">
       <span class="bottom-nav-icon">💬</span>문의
@@ -54,6 +52,3 @@ async function renderBottomNav() {
   myLink.innerHTML = `<span class="bottom-nav-icon">👤</span>마이`;
 }
 renderBottomNav();
-// index.html 안에서 "상품" 탭을 누르면 페이지 이동 없이 해시만 바뀌어서(#products) 다시
-// 그려주지 않으면 활성 표시가 안 바뀜 — 해시가 바뀔 때마다 다시 그려서 바로 반영되게 함.
-window.addEventListener("hashchange", renderBottomNav);
