@@ -149,19 +149,29 @@
   }
 
   // 오늘의뉴스: 신문사별 지면보기 + 한국거래소 시세정보 + DART 전자공시 바로가기 등.
-  // 관리자페이지에서 직접 추가/수정/삭제할 수 있도록 news_links 테이블에서 불러옴(하드코딩 아님).
-  // 네이버 지면보기처럼 새 창으로 열면 일부 모바일 브라우저/앱에서 데스크탑 모드로 열리는 경우가
-  // 있는 링크는 같은 탭에서 이동하도록(same_tab) 관리자가 켤 수 있음.
+  // 비로그인 사용자는 개인화가 불가능해서 지면보기 3곳(한국경제/매일경제/코리아중앙데일리)만
+  // 고정으로 보여줌. 로그인한 사용자는 각자의 user_news_links(마이 > 오늘의 뉴스 관리에서
+  // 본인이 직접 추가/수정/삭제/순서변경 가능)를 불러와서 보여줌 — 가입 시점에 그 당시의
+  // news_links(관리자 공용 목록)를 그대로 복사해서 시작하도록 가입 트리거로 채워둠.
+  const GUEST_NEWSPAPERS = [
+    { name: "한국경제", url: "https://media.naver.com/press/015/newspaper", gradient: "linear-gradient(135deg, #cfe0ff, #9db8f5)", same_tab: true },
+    { name: "매일경제", url: "https://media.naver.com/press/009/newspaper", gradient: "linear-gradient(135deg, #ffe3c2, #ffbf7a)", same_tab: true },
+    { name: "코리아중앙데일리", url: "https://media.naver.com/press/640/newspaper", gradient: "linear-gradient(135deg, #d7f0e6, #a3ddc4)", same_tab: true },
+  ];
   let NEWSPAPERS = [];
 
   async function loadNewsLinks() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      NEWSPAPERS = GUEST_NEWSPAPERS;
+      return;
+    }
     const { data, error } = await supabaseClient
-      .from("news_links")
+      .from("user_news_links")
       .select("*")
       .eq("visible", true)
       .order("sort_order");
-    if (error || !data) return;
-    NEWSPAPERS = data;
+    NEWSPAPERS = error || !data ? [] : data;
   }
 
   function renderNewsMenu() {
