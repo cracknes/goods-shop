@@ -91,21 +91,44 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
 .category-list button.active { background: var(--accent); color: #fff; font-weight: 600; }
 .shop-content { flex: 1; min-width: 0; }
 
-/* 관리자 메뉴 대분류 아코디언(주식/상품/메뉴/사용자) — 한 번에 하나만 펼쳐짐 */
-.category-group-toggle,
-.admin-home-link {
+/* 관리자페이지는 상품 페이지와 달리 왼쪽 사이드바 대신 위쪽 가로 탭으로 대분류를 보여줌
+   (화면 크기와 무관하게 항상 가로 정렬 — 모바일에서도 그대로 유지) */
+#admin-body { flex-direction: column; }
+#admin-body .category-list {
+  width: 100%;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#admin-body .category-group { flex: 1 1 160px; }
+
+/* 관리자 메뉴 대분류(주식/상품/메뉴/사용자) — 가로로 나열된 탭, 누르면 그 아래로 하위 메뉴가 펼쳐짐
+   (한 번에 하나의 대분류만 펼쳐짐) */
+.category-group-toggle {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 4px;
   width: 100%;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: var(--bg-soft);
   font-weight: 700;
-  color: var(--text-soft);
+  color: var(--text);
 }
+.category-group.open .category-group-toggle { background: var(--accent); color: #fff; }
 .category-group-arrow { font-size: 11px; transition: transform 0.15s ease; }
 .category-group.open .category-group-arrow { transform: rotate(180deg); }
-.category-group-items { display: none; flex-direction: column; gap: 2px; padding-left: 10px; margin-top: 2px; }
+.category-group-items {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 8px;
+  background: var(--bg-soft);
+  border-radius: 14px;
+}
 .category-group.open .category-group-items { display: flex; }
-#admin-home-btn { margin-bottom: 8px; }
 
 /* 관리자 페이지 첫 화면(홈) — 메인페이지 카테고리처럼 큰 카드 4개로 대분류를 보여줌 */
 .admin-home-grid {
@@ -560,12 +583,6 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
     gap: 8px;
   }
   .category-list button { flex: 1 1 auto; text-align: center; }
-  /* 관리자 메뉴 아코디언은 상품 카테고리 필터(가로로 늘어선 칩)와 달리 세로로 쌓여야 함 —
-     위 공용 규칙(.category-list { flex-direction: row })보다 우선하도록 더 구체적으로 지정함 */
-  #admin-body .category-list { flex-direction: column; }
-  #admin-body .category-list button,
-  #admin-body .category-group-toggle,
-  #admin-body .admin-home-link { flex: none; text-align: left; }
   .admin-home-grid { grid-template-columns: 1fr; }
   .shop-content { width: 100%; }
   .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
