@@ -2589,13 +2589,19 @@
             <div class="inquiry-meta">가입일 ${formatKDate(u.created_at)}</div>
           </div>
           <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; flex-shrink:0;">
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex-shrink:0;">
-              <input type="checkbox" class="user-admin-toggle" data-id="${u.user_id}" style="width:18px; height:18px; flex-shrink:0;" ${u.role === "admin" ? "checked" : ""} ${isRoot ? "disabled" : ""}>
-              <span class="muted" style="line-height:1;">관리자 지정</span>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; flex-shrink:0;">
+              <span class="muted">관리자 지정</span>
+              <span class="toggle-switch">
+                <input type="checkbox" class="user-admin-toggle" data-id="${u.user_id}" ${u.role === "admin" ? "checked" : ""} ${isRoot ? "disabled" : ""}>
+                <span class="toggle-track"></span>
+              </span>
             </label>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex-shrink:0;">
-              <input type="checkbox" class="user-blocked-toggle" data-id="${u.user_id}" style="width:18px; height:18px; flex-shrink:0;" ${u.blocked ? "checked" : ""} ${isRoot ? "disabled" : ""}>
-              <span class="muted" style="line-height:1;">접근 차단</span>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; flex-shrink:0;">
+              <span class="muted">접근 차단</span>
+              <span class="toggle-switch">
+                <input type="checkbox" class="user-blocked-toggle" data-id="${u.user_id}" ${u.blocked ? "checked" : ""} ${isRoot ? "disabled" : ""}>
+                <span class="toggle-track"></span>
+              </span>
             </label>
             <button type="button" class="icon-delete-btn user-delete-btn" data-id="${u.user_id}" data-email="${escapeHtml(u.email)}" aria-label="삭제" ${isRoot ? "disabled" : ""}>🗑️</button>
           </div>
