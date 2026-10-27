@@ -742,8 +742,11 @@ body.has-bottom-nav { padding-bottom: calc(env(safe-area-inset-bottom) + 92px); 
   padding: 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
   z-index: 150;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 .bottom-nav[hidden] { display: none; }
+/* 스크롤 중(맨 위/맨 아래가 아닐 때)엔 살짝 내려가면서 흐려지게 — 탭이 안 눌리도록 pointer-events도 끔 */
+.bottom-nav.bottom-nav-hide { opacity: 0; transform: translateY(12px); pointer-events: none; }
 
 /* 좌우로 넘기는 토글 스위치 — 목록에서 "노출" 여부처럼 글씨 없이 on/off만 직관적으로 보여줄 때 씀 */
 .toggle-switch { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; cursor: pointer; }

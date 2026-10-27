@@ -40,4 +40,13 @@ async function renderBottomNav() {
     </a>
   `;
 }
-renderBottomNav();
+// 스크롤 중에는 하단바를 숨기고, 맨 위/맨 아래에 도달했을 때만 다시 보여줌(콘텐츠를 덜 가리게).
+function updateBottomNavScrollVisibility() {
+  const el = document.getElementById("bottom-nav");
+  if (!el || el.hidden) return;
+  const atTop = window.scrollY <= 10;
+  const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 10;
+  el.classList.toggle("bottom-nav-hide", !(atTop || atBottom));
+}
+window.addEventListener("scroll", updateBottomNavScrollVisibility, { passive: true });
+renderBottomNav().then(updateBottomNavScrollVisibility);
