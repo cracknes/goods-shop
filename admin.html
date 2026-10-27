@@ -32,6 +32,8 @@
         <button data-tab="fairvalue">주가 분석</button>
         <button data-tab="exportstats">주요 품목별 수출</button>
         <button data-tab="dividendrank">배당순위</button>
+        <button data-tab="slbrank">주식대차 종목순위</button>
+        <button data-tab="slbdealing">종목별 대차거래현황</button>
       </div>
       <div class="category-group-items" data-subgroup="product">
         <button data-tab="productstats">상품통계</button>
@@ -438,6 +440,73 @@
         </div>
       </div>
 
+      <div class="card" id="slbrank-panel" hidden>
+        <div class="tab-bar">
+          <button type="button" data-slbranktab="search" class="active">조회</button>
+          <button type="button" data-slbranktab="history">이력</button>
+        </div>
+
+        <div id="slbrank-search-view">
+          <p class="muted">예탁결제원 증권대차서비스로 종목별 대차 현황 상위 100개를 조회해요.</p>
+          <label class="form-section-label" for="slbrank-type" style="margin-top:0;">정렬 기준</label>
+          <select id="slbrank-type">
+            <option value="1">대차잔고금액</option>
+            <option value="2">체결금액</option>
+            <option value="3">상환금액</option>
+            <option value="4">일잔고변동율</option>
+          </select>
+          <button class="primary" id="slbrank-run-btn" style="width:100%;">조회 실행</button>
+          <p id="slbrank-status" class="muted"></p>
+          <div id="slbrank-result"></div>
+        </div>
+
+        <div id="slbrank-history-view" hidden>
+          <p class="muted">조회할 때마다 그 결과가 자동으로 저장돼요.</p>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1;">
+              <label class="form-section-label" for="slbrankhistory-from" style="margin-top:0;">시작일</label>
+              <div style="position:relative;">
+                <input id="slbrankhistory-from" type="text" inputmode="numeric" placeholder="2026/08/27" style="width:100%; padding-right:36px; text-align:center;">
+                <button type="button" id="slbrankhistory-from-cal-btn" aria-label="달력에서 시작일 선택"
+                  style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; padding:4px;">📅</button>
+                <input id="slbrankhistory-from-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
+            </div>
+            <div style="flex:1;">
+              <label class="form-section-label" for="slbrankhistory-to" style="margin-top:0;">종료일</label>
+              <div style="position:relative;">
+                <input id="slbrankhistory-to" type="text" inputmode="numeric" placeholder="2026/09/27" style="width:100%; padding-right:36px; text-align:center;">
+                <button type="button" id="slbrankhistory-to-cal-btn" aria-label="달력에서 종료일 선택"
+                  style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; padding:4px;">📅</button>
+                <input id="slbrankhistory-to-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
+            </div>
+          </div>
+          <button class="primary" id="slbrankhistory-search-btn" style="width:100%;">이력 검색</button>
+          <p id="slbrankhistory-status" class="muted"></p>
+
+          <div id="slbrankhistory-list-view">
+            <div id="slbrankhistory-list"></div>
+          </div>
+          <div id="slbrankhistory-detail-view" hidden>
+            <button type="button" id="slbrankhistory-back-btn" class="muted" style="background:none; border:none; cursor:pointer; padding:0; margin-bottom:12px;">&larr; 목록으로</button>
+            <div id="slbrankhistory-detail-content"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="slbdealing-panel" hidden>
+        <p class="muted">종목명으로 검색해서 최근 거래일별 대차거래현황(잔고/체결/상환 수량)을 조회해요. "주식대차 종목순위"에서 한 번 조회된 적 있는 종목만 바로 검색할 수 있어요.</p>
+        <label class="form-section-label" for="slbdealing-search" style="margin-top:0;">회사명 검색</label>
+        <input id="slbdealing-search" type="text" placeholder="예: 삼성전자">
+        <div id="slbdealing-search-results"></div>
+        <div id="slbdealing-result-view" hidden style="margin-top:16px;">
+          <h3 id="slbdealing-corp-name" style="margin-bottom:12px;"></h3>
+          <div id="slbdealing-result"></div>
+        </div>
+        <p id="slbdealing-status" class="muted"></p>
+      </div>
+
       <div class="card" id="settlementcost-panel" hidden>
         <div class="tab-bar">
           <button type="button" data-settlementcosttab="search" class="active">조회</button>
@@ -573,6 +642,8 @@
     document.getElementById("sector-panel").hidden = tab !== "sector";
     document.getElementById("exportstats-panel").hidden = tab !== "exportstats";
     document.getElementById("dividendrank-panel").hidden = tab !== "dividendrank";
+    document.getElementById("slbrank-panel").hidden = tab !== "slbrank";
+    document.getElementById("slbdealing-panel").hidden = tab !== "slbdealing";
     document.getElementById("settlementcost-panel").hidden = tab !== "settlementcost";
     document.getElementById("users-panel").hidden = tab !== "users";
     document.getElementById("errorlogs-panel").hidden = tab !== "errorlogs";
@@ -2301,6 +2372,259 @@
     dividendRankHistoryRuns = data;
     statusEl.textContent = `${data.length}건 (최근 200건까지 표시)`;
     renderDividendRankHistoryList();
+  }
+
+  // 주식대차 종목순위 — 배당순위와 같은 패턴(조회/이력)
+  const SLB_RANK_TYPE_LABELS = { "1": "대차잔고금액", "2": "체결금액", "3": "상환금액", "4": "일잔고변동율" };
+
+  function renderSlbRankCards(result) {
+    return `
+      <div class="sector-card">
+        <div class="sector-card-head">
+          <div class="sector-name">${escapeHtml(result.stdDt)} 기준 · ${escapeHtml(SLB_RANK_TYPE_LABELS[result.rankTpcd] ?? "")} 순</div>
+        </div>
+        ${result.rankings.map(r => `
+          <div class="sector-stock-row">
+            <div>
+              <span class="sector-stock-name" data-naver-url="https://m.stock.naver.com/domestic/stock/${escapeHtml(r.stockCode)}/price?domesticStockExchange=KRX">${r.rank}. ${escapeHtml(r.corpName)}</span>
+              <span class="sector-stock-detail"> (${escapeHtml(r.stockCode)})</span>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:14px; font-weight:400;">잔고금액 ${Math.round(r.remAmt / 100000000).toLocaleString()}억원</span>
+              <div class="sector-stock-detail">잔고수량 ${r.slbTrRemQty.toLocaleString()} · 체결 ${r.matcQty.toLocaleString()} · 상환 ${r.redQty.toLocaleString()}</div>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  document.getElementById("slbrank-panel").addEventListener("click", (e) => {
+    const target = e.target.closest(".sector-stock-name[data-naver-url]");
+    if (target) location.href = target.dataset.naverUrl;
+  });
+
+  document.getElementById("slbrank-run-btn").addEventListener("click", async () => {
+    const statusEl = document.getElementById("slbrank-status");
+    const resultEl = document.getElementById("slbrank-result");
+    statusEl.textContent = "조회 중입니다...";
+    resultEl.innerHTML = "";
+
+    const rankTpcd = document.getElementById("slbrank-type").value;
+    const { data, error } = await supabaseClient.functions.invoke("slb-stock-rank", { body: { rankTpcd } });
+
+    if (error) {
+      let detail = error.message;
+      try {
+        const body = await error.context.json();
+        if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
+      } catch (_) {}
+      statusEl.textContent = "조회 실패: " + detail;
+      return;
+    }
+    if (data.error) {
+      statusEl.textContent = data.error;
+      return;
+    }
+
+    statusEl.textContent = "";
+    resultEl.innerHTML = renderSlbRankCards(data);
+  });
+
+  document.querySelectorAll("#slbrank-panel [data-slbranktab]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#slbrank-panel [data-slbranktab]").forEach(b => b.classList.toggle("active", b === btn));
+      document.getElementById("slbrank-search-view").hidden = btn.dataset.slbranktab !== "search";
+      document.getElementById("slbrank-history-view").hidden = btn.dataset.slbranktab !== "history";
+      if (btn.dataset.slbranktab === "history") loadSlbRankHistory();
+    });
+  });
+
+  (() => {
+    const today = new Date();
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    document.getElementById("slbrankhistory-to").value = formatKDate(today);
+    document.getElementById("slbrankhistory-from").value = formatKDate(monthAgo);
+  })();
+
+  [["from", "slbrankhistory-from"], ["to", "slbrankhistory-to"]].forEach(([_, id]) => {
+    const textInput = document.getElementById(id);
+    const picker = document.getElementById(`${id}-picker`);
+    document.getElementById(`${id}-cal-btn`).addEventListener("click", () => {
+      const current = parseKDateInput(textInput.value);
+      if (current) picker.value = current;
+      try { picker.showPicker(); } catch (_) { picker.focus(); }
+    });
+    picker.addEventListener("change", () => {
+      if (picker.value) textInput.value = formatKDate(picker.value);
+    });
+  });
+
+  let slbRankHistoryRuns = [];
+
+  function showSlbRankHistoryList() {
+    document.getElementById("slbrankhistory-list-view").hidden = false;
+    document.getElementById("slbrankhistory-detail-view").hidden = true;
+  }
+
+  function showSlbRankHistoryDetail(id) {
+    const run = slbRankHistoryRuns.find(r => r.id === id);
+    document.getElementById("slbrankhistory-detail-content").innerHTML = `
+      <p class="muted">${formatKDateTime(run.calculated_at)} 조회</p>
+      ${renderSlbRankCards({ stdDt: run.std_dt, rankTpcd: run.rank_tpcd, rankings: run.rankings })}
+    `;
+    document.getElementById("slbrankhistory-list-view").hidden = true;
+    document.getElementById("slbrankhistory-detail-view").hidden = false;
+  }
+
+  function renderSlbRankHistoryList() {
+    document.getElementById("slbrankhistory-list").innerHTML = slbRankHistoryRuns.map(r => `
+      <div class="inquiry-row" data-id="${r.id}">
+        <div>
+          <div>${escapeHtml(r.std_dt)} · ${escapeHtml(SLB_RANK_TYPE_LABELS[r.rank_tpcd] ?? "")} 순</div>
+          <div class="inquiry-meta">${formatKDateTime(r.calculated_at)} 조회</div>
+        </div>
+      </div>
+    `).join("");
+
+    document.querySelectorAll("#slbrankhistory-list .inquiry-row").forEach(row => {
+      row.addEventListener("click", () => showSlbRankHistoryDetail(row.dataset.id));
+    });
+  }
+
+  document.getElementById("slbrankhistory-back-btn").addEventListener("click", showSlbRankHistoryList);
+  document.getElementById("slbrankhistory-search-btn").addEventListener("click", loadSlbRankHistory);
+
+  async function loadSlbRankHistory() {
+    const statusEl = document.getElementById("slbrankhistory-status");
+    showSlbRankHistoryList();
+    const fromRaw = document.getElementById("slbrankhistory-from").value.trim();
+    const toRaw = document.getElementById("slbrankhistory-to").value.trim();
+    const from = fromRaw ? parseKDateInput(fromRaw) : null;
+    const to = toRaw ? parseKDateInput(toRaw) : null;
+
+    if (fromRaw && !from) {
+      statusEl.textContent = "시작일 형식이 올바르지 않습니다. 2026/08/27 처럼 입력해 주세요.";
+      return;
+    }
+    if (toRaw && !to) {
+      statusEl.textContent = "종료일 형식이 올바르지 않습니다. 2026/09/27 처럼 입력해 주세요.";
+      return;
+    }
+
+    statusEl.textContent = "조회 중...";
+    document.getElementById("slbrankhistory-list").innerHTML = "";
+
+    let query = supabaseClient
+      .from("slb_rank_history")
+      .select("*")
+      .order("calculated_at", { ascending: false })
+      .limit(200);
+
+    if (from) query = query.gte("calculated_at", `${from}T00:00:00Z`);
+    if (to) query = query.lte("calculated_at", `${to}T23:59:59Z`);
+
+    const { data, error } = await query;
+
+    if (error) {
+      statusEl.textContent = "조회 실패: " + error.message;
+      return;
+    }
+    if (!data.length) {
+      slbRankHistoryRuns = [];
+      renderSlbRankHistoryList();
+      statusEl.textContent = "조건에 맞는 이력이 없습니다.";
+      return;
+    }
+
+    slbRankHistoryRuns = data;
+    statusEl.textContent = `${data.length}건 (최근 200건까지 표시)`;
+    renderSlbRankHistoryList();
+  }
+
+  // 종목별 대차거래현황 — 적정주가와 같은 회사명 검색 패턴
+  let slbDealingSearchTimer = null;
+  document.getElementById("slbdealing-search").addEventListener("input", (e) => {
+    clearTimeout(slbDealingSearchTimer);
+    const q = e.target.value.trim();
+    const resultsEl = document.getElementById("slbdealing-search-results");
+    document.getElementById("slbdealing-result-view").hidden = true;
+    if (!q) {
+      resultsEl.innerHTML = "";
+      return;
+    }
+    slbDealingSearchTimer = setTimeout(() => searchSlbDealingCorp(q), 300);
+  });
+
+  async function searchSlbDealingCorp(q) {
+    const resultsEl = document.getElementById("slbdealing-search-results");
+    const { data, error } = await supabaseClient
+      .from("dart_corp_codes")
+      .select("corp_name, stock_code")
+      .ilike("corp_name", `%${q}%`)
+      .not("stock_code", "is", null)
+      .order("corp_name")
+      .limit(10);
+
+    if (error || !data || !data.length) {
+      resultsEl.innerHTML = `<p class="muted">검색 결과가 없습니다.</p>`;
+      return;
+    }
+
+    resultsEl.innerHTML = data.map(c => `
+      <div class="inquiry-row" data-stock-code="${escapeHtml(c.stock_code)}" data-corp-name="${escapeHtml(c.corp_name)}" style="cursor:pointer;">
+        <div>${escapeHtml(c.corp_name)}</div>
+        <div class="inquiry-meta">${escapeHtml(c.stock_code)}</div>
+      </div>
+    `).join("");
+
+    resultsEl.querySelectorAll(".inquiry-row").forEach(row => {
+      row.addEventListener("click", () => loadSlbDealing(row.dataset.stockCode, row.dataset.corpName));
+    });
+  }
+
+  async function loadSlbDealing(stockCode, corpName) {
+    const statusEl = document.getElementById("slbdealing-status");
+    const resultEl = document.getElementById("slbdealing-result");
+    document.getElementById("slbdealing-search-results").innerHTML = "";
+    document.getElementById("slbdealing-search").value = corpName;
+    document.getElementById("slbdealing-result-view").hidden = true;
+    statusEl.textContent = "조회 중입니다...";
+    resultEl.innerHTML = "";
+
+    const { data, error } = await supabaseClient.functions.invoke("slb-dealing-by-stock", { body: { stockCode } });
+
+    if (error) {
+      let detail = error.message;
+      try {
+        const body = await error.context.json();
+        if (body?.error) detail = body.error;
+      } catch (_) {}
+      statusEl.textContent = "조회 실패: " + detail;
+      return;
+    }
+    if (data.error) {
+      statusEl.textContent = data.error;
+      return;
+    }
+
+    statusEl.textContent = "";
+    document.getElementById("slbdealing-corp-name").textContent = `${data.corpName} (${data.stockCode})`;
+    resultEl.innerHTML = `
+      <div class="sector-card">
+        ${data.days.map(d => `
+          <div class="sector-stock-row">
+            <span>${d.stdDt.slice(0, 4)}.${d.stdDt.slice(4, 6)}.${d.stdDt.slice(6, 8)}</span>
+            <div style="text-align:right;">
+              <span style="font-size:14px; font-weight:400;">잔고수량 ${d.slbTrRemQty.toLocaleString()}</span>
+              <div class="sector-stock-detail">체결 ${d.matcQty.toLocaleString()} · 상환 ${d.redQty.toLocaleString()}</div>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+    document.getElementById("slbdealing-result-view").hidden = false;
   }
 
   // 월별 주식결제대금 — 표/그리드 대신 주요 품목별 수출과 같은 sector-card 카드+리스트 스타일을 씀
