@@ -40,12 +40,26 @@ async function renderBottomNav() {
     </a>
   `;
 }
+// 임시 디버그 배지 — 실제 기기에서 스크롤 수치를 확인하기 위함(확인 끝나면 삭제 예정)
+function renderScrollDebugBadge(scrollY, innerH, scrollH, atTop, atBottom) {
+  let badge = document.getElementById("scroll-debug-badge");
+  if (!badge) {
+    badge = document.createElement("div");
+    badge.id = "scroll-debug-badge";
+    badge.style.cssText = "position:fixed; top:8px; left:8px; z-index:9999; background:rgba(0,0,0,0.75); color:#fff; font-size:11px; padding:6px 8px; border-radius:8px; line-height:1.4; pointer-events:none; font-family:monospace;";
+    document.body.appendChild(badge);
+  }
+  badge.textContent = `scrollY:${Math.round(scrollY)} innerH:${Math.round(innerH)} scrollH:${Math.round(scrollH)} top:${atTop} bottom:${atBottom}`;
+}
+
 // 스크롤 중에는 하단바를 숨기고, 맨 위/맨 아래에 도달했을 때만 다시 보여줌(콘텐츠를 덜 가리게).
 function updateBottomNavScrollVisibility() {
   const el = document.getElementById("bottom-nav");
-  if (!el || el.hidden) return;
+  const scroller = document.scrollingElement || document.documentElement;
   const atTop = window.scrollY <= 10;
-  const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 10;
+  const atBottom = window.scrollY + window.innerHeight >= scroller.scrollHeight - 10;
+  renderScrollDebugBadge(window.scrollY, window.innerHeight, scroller.scrollHeight, atTop, atBottom);
+  if (!el || el.hidden) return;
   el.classList.toggle("bottom-nav-hide", !(atTop || atBottom));
 }
 window.addEventListener("scroll", updateBottomNavScrollVisibility, { passive: true });
