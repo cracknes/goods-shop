@@ -3,8 +3,21 @@
 // 로그아웃하고 다른 계정으로 로그인했어도 뒤로가기 하면 예전 로그인 상태(예: 관리자)가
 // 그대로 보이는 문제가 생김. pageshow 이벤트의 persisted 값으로 bfcache 복원을 감지해서
 // 페이지를 새로고침하면, 실제 로그인 상태를 다시 정확히 불러오게 됨.
+//
+// (2026-10-31 수정) 안드로이드에서 <input type="file">로 사진 선택기를 열었다가 돌아올 때도
+// 일부 브라우저/기기에서 이 pageshow(persisted:true)가 똑같이 발생해서, 관리자가 배너/상품
+// 사진을 고르는 도중 작성 중이던 내용이 전부 날아가고 목록 화면으로 리셋되는 문제가 있었음
+// (실제 사용자 리포트로 발견) — 사진 선택기를 연 직후 60초 동안은 이 새로고침을 건너뜀.
+let recentFilePickerOpen = false;
+document.addEventListener("click", (e) => {
+  if (e.target.closest('input[type="file"]')) {
+    recentFilePickerOpen = true;
+    setTimeout(() => { recentFilePickerOpen = false; }, 60000);
+  }
+}, true);
+
 window.addEventListener("pageshow", (event) => {
-  if (event.persisted) location.reload();
+  if (event.persisted && !recentFilePickerOpen) location.reload();
 });
 
 // 로그인한 사용자가 5분 동안 아무 동작(마우스/키보드/터치/스크롤)도 안 하면 자동 로그아웃
