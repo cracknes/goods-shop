@@ -469,6 +469,11 @@ textarea { resize: vertical; }
 .inquiry-row:last-child { border-bottom: none; }
 .inquiry-row:hover { opacity: 0.85; }
 
+/* 마이 메뉴 — 상단 인사말 */
+.mypage-hello { margin-bottom: 18px; }
+.mypage-hello-greet { font-size: 19px; font-weight: 800; margin: 0 0 4px; }
+.mypage-hello-sub { font-size: 13px; color: var(--text-soft); margin: 0; }
+
 /* 마이 메뉴 — 카드형 (2026-10-31: 동행복권 참고 리디자인 — 아이콘을 연한 포인트색 원형 배지 안에
    넣고, 왼쪽 정렬 + 설명 한 줄을 추가해서 덜 밋밋하게 함) */
 .mypage-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -782,9 +787,6 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
 .sector-stock-rate.up { color: #d64545; }
 .sector-stock-rate.down { color: #3366cc; }
 
-/* 월별 주식결제대금은 좌우 끝까지 꽉 차 보여서 기준월/금액을 양쪽에서 살짝씩만 안쪽으로 당김
-   (space-between 자체는 유지 — 완전히 붙이지는 않음) */
-.settlementcost-month-row { padding-left: 30px; padding-right: 30px; }
 
 /* 하단 탭바 — 화면 아래에 둥둥 떠있는 알약 모양으로, bottom-nav.js가 로그인 상태에 따라 내용을 채움 */
 body.has-bottom-nav { padding-bottom: calc(env(safe-area-inset-bottom) + 92px); }
