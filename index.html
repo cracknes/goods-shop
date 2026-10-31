@@ -24,6 +24,17 @@
       <p>우리 가족 항상 행복하길 지후야 사랑해</p>
     </div>
   </div>
+  <script>
+    // 배너가 등록돼 있는데도 fetch가 끝나기 전까지 기본 문구("지후야 사랑해")가 잠깐 보였다가
+    // 캐러셀로 바뀌는 깜빡임을 막기 위함 — 지난 방문 때 배너가 있었다는 걸 캐시로 알고 있으면
+    // 최신 데이터를 받아오기 전까지 기본 문구를 미리 숨겨둠(실제 교체는 아래 renderHeroCarousel에서).
+    try {
+      var cachedHeroBanners = JSON.parse(localStorage.getItem("heroBannersCache") || "null");
+      if (cachedHeroBanners && cachedHeroBanners.length) {
+        document.getElementById("hero-area").style.visibility = "hidden";
+      }
+    } catch (_) {}
+  </script>
   <div class="card" id="push-subscribe-card" hidden>
     <h2 style="margin-top:0;">알림 받기 🔔</h2>
     <p class="muted">새로운 소식을 알림으로 받아보세요.</p>
@@ -1047,7 +1058,10 @@
   let heroAutoAdvanceTimer = null;
   function renderHeroCarousel(banners) {
     const area = document.getElementById("hero-area");
-    if (!banners.length) return; // 기본 문구 유지(hero-area의 기존 마크업 그대로 둠)
+    if (!banners.length) {
+      area.style.visibility = "visible"; // 기본 문구 유지(hero-area의 기존 마크업 그대로 둠)
+      return;
+    }
 
     area.innerHTML = `
       <div class="hero-carousel">
@@ -1070,6 +1084,7 @@
         ` : ""}
       </div>
     `;
+    area.style.visibility = "visible";
 
     if (banners.length <= 1) return;
 
@@ -1120,7 +1135,11 @@
       .select("*")
       .eq("visible", true)
       .order("sort_order");
-    if (error || !data) return;
+    if (error || !data) {
+      document.getElementById("hero-area").style.visibility = "visible"; // 조회 실패해도 숨긴 채로 두지 않음
+      return;
+    }
+    try { localStorage.setItem("heroBannersCache", JSON.stringify(data)); } catch (_) {}
     renderHeroCarousel(data);
   }
   loadHeroBanners();
