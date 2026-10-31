@@ -57,7 +57,7 @@ a { color: var(--accent); }
 .hero-carousel-track::-webkit-scrollbar { display: none; }
 .hero-carousel-slide { flex: 0 0 100%; scroll-snap-align: center; min-width: 0; }
 .hero-carousel-slide a, .hero-carousel-slide .hero-carousel-img-wrap { display: block; }
-.hero-carousel-slide img { width: 100%; aspect-ratio: 21/9; object-fit: cover; display: block; background: var(--bg-soft); }
+.hero-carousel-slide img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: var(--bg-soft); }
 .hero-carousel-controls {
   position: absolute;
   right: 12px;
