@@ -32,6 +32,7 @@
         <button data-tab="fairvalue">주가 분석</button>
         <button data-tab="exportstats">주요 품목별 수출</button>
         <button data-tab="dividendrank">배당순위</button>
+        <button data-tab="topmovers">전종목 등락률 상위</button>
         <button data-tab="slbrank">주식대차 종목순위</button>
         <button data-tab="slbdealing">종목별 대차거래현황</button>
       </div>
@@ -463,6 +464,54 @@
         </div>
       </div>
 
+      <div class="card" id="topmovers-panel" hidden>
+        <div class="tab-bar">
+          <button type="button" data-topmoverstab="search" class="active">조회</button>
+          <button type="button" data-topmoverstab="history">이력</button>
+        </div>
+
+        <div id="topmovers-search-view">
+          <p class="muted">KRX 자료로 코스피 전종목(거래대금 1억원 이상) 중 등락률 상위/하위 20개를 조회해요.</p>
+          <button class="primary" id="topmovers-run-btn" style="width:100%;">조회 실행</button>
+          <p id="topmovers-status" class="muted"></p>
+          <div id="topmovers-result"></div>
+        </div>
+
+        <div id="topmovers-history-view" hidden>
+          <p class="muted">조회할 때마다 그 결과가 자동으로 저장돼요.</p>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1;">
+              <label class="form-section-label" for="topmovershistory-from" style="margin-top:0;">시작일</label>
+              <div style="position:relative;">
+                <input id="topmovershistory-from" type="text" inputmode="numeric" placeholder="2026/08/27" style="width:100%; padding-right:36px; text-align:center;">
+                <button type="button" id="topmovershistory-from-cal-btn" aria-label="달력에서 시작일 선택"
+                  style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; padding:4px;">📅</button>
+                <input id="topmovershistory-from-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
+            </div>
+            <div style="flex:1;">
+              <label class="form-section-label" for="topmovershistory-to" style="margin-top:0;">종료일</label>
+              <div style="position:relative;">
+                <input id="topmovershistory-to" type="text" inputmode="numeric" placeholder="2026/09/27" style="width:100%; padding-right:36px; text-align:center;">
+                <button type="button" id="topmovershistory-to-cal-btn" aria-label="달력에서 종료일 선택"
+                  style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; padding:4px;">📅</button>
+                <input id="topmovershistory-to-picker" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" tabindex="-1">
+              </div>
+            </div>
+          </div>
+          <button class="primary" id="topmovershistory-search-btn" style="width:100%;">이력 검색</button>
+          <p id="topmovershistory-status" class="muted"></p>
+
+          <div id="topmovershistory-list-view">
+            <div id="topmovershistory-list"></div>
+          </div>
+          <div id="topmovershistory-detail-view" hidden>
+            <button type="button" id="topmovershistory-back-btn" class="muted" style="background:none; border:none; cursor:pointer; padding:0; margin-bottom:12px;">&larr; 목록으로</button>
+            <div id="topmovershistory-detail-content"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="card" id="slbrank-panel" hidden>
         <div class="tab-bar">
           <button type="button" data-slbranktab="search" class="active">조회</button>
@@ -666,6 +715,7 @@
     document.getElementById("sector-panel").hidden = tab !== "sector";
     document.getElementById("exportstats-panel").hidden = tab !== "exportstats";
     document.getElementById("dividendrank-panel").hidden = tab !== "dividendrank";
+    document.getElementById("topmovers-panel").hidden = tab !== "topmovers";
     document.getElementById("slbrank-panel").hidden = tab !== "slbrank";
     document.getElementById("slbdealing-panel").hidden = tab !== "slbdealing";
     document.getElementById("settlementcost-panel").hidden = tab !== "settlementcost";
@@ -2568,6 +2618,173 @@
     dividendRankHistoryRuns = data;
     statusEl.textContent = `${data.length}건 (최근 200건까지 표시)`;
     renderDividendRankHistoryList();
+  }
+
+  // 전종목 등락률 상위 — 배당순위와 같은 패턴(조회/이력). 상승/하락 두 묶음을 한 카드씩 보여줌.
+  function renderTopMoversCards(result) {
+    const renderGroup = (title, cls, list) => `
+      <div class="sector-card">
+        <div class="sector-card-head">
+          <div class="sector-name">${title} (${escapeHtml(result.basDd)} 기준)</div>
+        </div>
+        ${list.map(r => `
+          <div class="sector-stock-row">
+            <div>
+              <span class="sector-stock-name" data-naver-url="https://m.stock.naver.com/domestic/stock/${escapeHtml(r.stockCode)}/price?domesticStockExchange=KRX">${escapeHtml(r.stockName)}</span>
+              <span class="sector-stock-detail"> (${escapeHtml(r.stockCode)})</span>
+            </div>
+            <div style="text-align:right;">
+              <span class="sector-stock-rate ${cls}">${r.changeRatePct > 0 ? "+" : ""}${r.changeRatePct.toFixed(2)}%</span>
+              <div class="sector-stock-detail">${r.closePrice.toLocaleString()}원 · 거래대금 ${Math.round(r.tradingValue / 100000000).toLocaleString()}억원</div>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+    return renderGroup("상승률 상위", "up", result.gainers) + renderGroup("하락률 상위", "down", result.losers);
+  }
+
+  document.getElementById("topmovers-panel").addEventListener("click", (e) => {
+    const target = e.target.closest(".sector-stock-name[data-naver-url]");
+    if (target) location.href = target.dataset.naverUrl;
+  });
+
+  document.getElementById("topmovers-run-btn").addEventListener("click", async () => {
+    const statusEl = document.getElementById("topmovers-status");
+    const resultEl = document.getElementById("topmovers-result");
+    statusEl.textContent = "조회 중입니다...";
+    resultEl.innerHTML = "";
+
+    const { data, error } = await supabaseClient.functions.invoke("krx-top-movers", { body: {} });
+
+    if (error) {
+      let detail = error.message;
+      try {
+        const body = await error.context.json();
+        if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
+      } catch (_) {}
+      statusEl.textContent = "조회 실패: " + detail;
+      return;
+    }
+    if (data.error) {
+      statusEl.textContent = data.error;
+      return;
+    }
+
+    statusEl.textContent = "";
+    resultEl.innerHTML = renderTopMoversCards(data);
+  });
+
+  document.querySelectorAll("#topmovers-panel [data-topmoverstab]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#topmovers-panel [data-topmoverstab]").forEach(b => b.classList.toggle("active", b === btn));
+      document.getElementById("topmovers-search-view").hidden = btn.dataset.topmoverstab !== "search";
+      document.getElementById("topmovers-history-view").hidden = btn.dataset.topmoverstab !== "history";
+      if (btn.dataset.topmoverstab === "history") loadTopMoversHistory();
+    });
+  });
+
+  (() => {
+    const today = new Date();
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    document.getElementById("topmovershistory-to").value = formatKDate(today);
+    document.getElementById("topmovershistory-from").value = formatKDate(monthAgo);
+  })();
+
+  [["from", "topmovershistory-from"], ["to", "topmovershistory-to"]].forEach(([_, id]) => {
+    const textInput = document.getElementById(id);
+    const picker = document.getElementById(`${id}-picker`);
+    document.getElementById(`${id}-cal-btn`).addEventListener("click", () => {
+      const current = parseKDateInput(textInput.value);
+      if (current) picker.value = current;
+      try { picker.showPicker(); } catch (_) { picker.focus(); }
+    });
+    picker.addEventListener("change", () => {
+      if (picker.value) textInput.value = formatKDate(picker.value);
+    });
+  });
+
+  let topMoversHistoryRuns = [];
+
+  function showTopMoversHistoryList() {
+    document.getElementById("topmovershistory-list-view").hidden = false;
+    document.getElementById("topmovershistory-detail-view").hidden = true;
+  }
+
+  function showTopMoversHistoryDetail(id) {
+    const run = topMoversHistoryRuns.find(r => r.id === id);
+    document.getElementById("topmovershistory-detail-content").innerHTML = `
+      <p class="muted">${formatKDateTime(run.calculated_at)} 조회</p>
+      ${renderTopMoversCards({ basDd: run.bas_dd, gainers: run.gainers, losers: run.losers })}
+    `;
+    document.getElementById("topmovershistory-list-view").hidden = true;
+    document.getElementById("topmovershistory-detail-view").hidden = false;
+  }
+
+  function renderTopMoversHistoryList() {
+    document.getElementById("topmovershistory-list").innerHTML = topMoversHistoryRuns.map(r => `
+      <div class="inquiry-row" data-id="${r.id}">
+        <div>
+          <div>${escapeHtml(r.bas_dd)} 기준 등락률 상위</div>
+          <div class="inquiry-meta">${formatKDateTime(r.calculated_at)} 조회</div>
+        </div>
+      </div>
+    `).join("");
+
+    document.querySelectorAll("#topmovershistory-list .inquiry-row").forEach(row => {
+      row.addEventListener("click", () => showTopMoversHistoryDetail(row.dataset.id));
+    });
+  }
+
+  document.getElementById("topmovershistory-back-btn").addEventListener("click", showTopMoversHistoryList);
+  document.getElementById("topmovershistory-search-btn").addEventListener("click", loadTopMoversHistory);
+
+  async function loadTopMoversHistory() {
+    const statusEl = document.getElementById("topmovershistory-status");
+    showTopMoversHistoryList();
+    const fromRaw = document.getElementById("topmovershistory-from").value.trim();
+    const toRaw = document.getElementById("topmovershistory-to").value.trim();
+    const from = fromRaw ? parseKDateInput(fromRaw) : null;
+    const to = toRaw ? parseKDateInput(toRaw) : null;
+
+    if (fromRaw && !from) {
+      statusEl.textContent = "시작일 형식이 올바르지 않습니다. 2026/08/27 처럼 입력해 주세요.";
+      return;
+    }
+    if (toRaw && !to) {
+      statusEl.textContent = "종료일 형식이 올바르지 않습니다. 2026/09/27 처럼 입력해 주세요.";
+      return;
+    }
+
+    statusEl.textContent = "조회 중...";
+    document.getElementById("topmovershistory-list").innerHTML = "";
+
+    let query = supabaseClient
+      .from("krx_top_movers_history")
+      .select("*")
+      .order("calculated_at", { ascending: false })
+      .limit(200);
+
+    if (from) query = query.gte("calculated_at", `${from}T00:00:00Z`);
+    if (to) query = query.lte("calculated_at", `${to}T23:59:59Z`);
+
+    const { data, error } = await query;
+
+    if (error) {
+      statusEl.textContent = "조회 실패: " + error.message;
+      return;
+    }
+    if (!data.length) {
+      topMoversHistoryRuns = [];
+      renderTopMoversHistoryList();
+      statusEl.textContent = "조건에 맞는 이력이 없습니다.";
+      return;
+    }
+
+    topMoversHistoryRuns = data;
+    statusEl.textContent = `${data.length}건 (최근 200건까지 표시)`;
+    renderTopMoversHistoryList();
   }
 
   // 주식대차 종목순위 — 배당순위와 같은 패턴(조회/이력)
