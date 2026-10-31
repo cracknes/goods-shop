@@ -1,5 +1,11 @@
 :root {
-  --accent: #6b9080;
+  /* 2026-10-31: 동행복권 모바일 페이지를 참고해서 더 맑고 또렷한 청록 계열로 교체(기존엔 채도 낮은
+     세이지 그린 #6b9080) — 포인트색 하나(--accent)만 바꾸면 거의 전부 자동으로 따라감(아래 두 개,
+     --accent-deep/--accent-soft만 하드코딩된 곳이 있어서 같이 추가함: 히어로 그라데이션의 어두운
+     쪽 끝 색, 그리고 하단바/뱃지의 연한 배경색). */
+  --accent: #1b9e92;
+  --accent-deep: #137a71;
+  --accent-soft: #e3f5f2;
   --bg: #ffffff;
   --bg-soft: #f5f6f7;
   --text: #1c1c1c;
@@ -28,7 +34,7 @@ body {
 a { color: var(--accent); }
 
 .hero {
-  background: linear-gradient(135deg, var(--accent), #4a7363);
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
   color: #fff;
   padding: 48px 32px;
   border-radius: 28px;
@@ -36,6 +42,49 @@ a { color: var(--accent); }
 }
 .hero h1 { color: #fff; margin: 0 0 8px; font-size: 30px; }
 .hero p { margin: 0; opacity: 0.9; font-size: 16px; }
+
+/* 메인 배너 캐러셀(2026-10-31, 동행복권 참고) — 손가락 스와이프 감지를 직접 짜는 대신 브라우저
+   기본 가로 스크롤 + scroll-snap을 씀(이번 세션에 겪은 교훈: 직접 만든 스와이프 감지는 실기기에서
+   잘 안 먹힘, 네이티브 스크롤이 훨씬 안정적). 자동 넘김은 JS에서 scrollTo로 구현. */
+.hero-carousel { position: relative; border-radius: 28px; overflow: hidden; margin-bottom: 24px; }
+.hero-carousel-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.hero-carousel-track::-webkit-scrollbar { display: none; }
+.hero-carousel-slide { flex: 0 0 100%; scroll-snap-align: center; min-width: 0; }
+.hero-carousel-slide a, .hero-carousel-slide .hero-carousel-img-wrap { display: block; }
+.hero-carousel-slide img { width: 100%; aspect-ratio: 21/9; object-fit: cover; display: block; background: var(--bg-soft); }
+.hero-carousel-controls {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 999px;
+  padding: 4px 6px;
+}
+.hero-carousel-counter { color: #fff; font-size: 12px; font-weight: 600; padding: 0 6px; font-variant-numeric: tabular-nums; }
+.hero-carousel-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.hero-carousel-btn:hover { background: rgba(255, 255, 255, 0.35); }
 
 nav {
   display: flex;
@@ -420,25 +469,36 @@ textarea { resize: vertical; }
 .inquiry-row:last-child { border-bottom: none; }
 .inquiry-row:hover { opacity: 0.85; }
 
-/* 마이 메뉴 — 카드형 */
+/* 마이 메뉴 — 카드형 (2026-10-31: 동행복권 참고 리디자인 — 아이콘을 연한 포인트색 원형 배지 안에
+   넣고, 왼쪽 정렬 + 설명 한 줄을 추가해서 덜 밋밋하게 함) */
 .mypage-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .mypage-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 32px 16px;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 16px;
   border: 1px solid var(--border);
   border-radius: 20px;
   background: var(--bg);
   text-decoration: none;
   color: var(--text);
-  font-weight: 600;
-  text-align: center;
+  text-align: left;
 }
 .mypage-card:hover { border-color: var(--accent); }
-.mypage-card-icon { font-size: 32px; }
+.mypage-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.mypage-card-label { font-size: 14px; font-weight: 700; }
+.mypage-card-desc { font-size: 11.5px; color: var(--text-soft); margin-top: -10px; }
 
 .list-thumb {
   width: 36px;
@@ -791,4 +851,4 @@ body.has-bottom-nav { padding-bottom: calc(env(safe-area-inset-bottom) + 92px); 
   transition: background 0.15s ease, color 0.15s ease;
 }
 .bottom-nav a .bottom-nav-icon { font-size: 20px; line-height: 1; }
-.bottom-nav a.active { color: var(--accent); font-weight: 700; background: #e9f0ec; }
+.bottom-nav a.active { color: var(--accent); font-weight: 700; background: var(--accent-soft); }

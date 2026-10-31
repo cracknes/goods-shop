@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#6b9080">
+<meta name="theme-color" content="#1b9e92">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,9 +18,11 @@
 <nav id="nav"></nav>
 <nav id="bottom-nav" class="bottom-nav"></nav>
 <div class="wrap wrap-wide">
-  <div class="hero">
-    <h1>지후네 하우스</h1>
-    <p>우리 가족 항상 행복하길 지후야 사랑해</p>
+  <div id="hero-area">
+    <div class="hero">
+      <h1>지후네 하우스</h1>
+      <p>우리 가족 항상 행복하길 지후야 사랑해</p>
+    </div>
   </div>
   <div class="card" id="push-subscribe-card" hidden>
     <h2 style="margin-top:0;">알림 받기 🔔</h2>
@@ -1040,6 +1042,88 @@
   }).then(() => {
     renderMainContent();
   });
+
+  // 메인 배너 캐러셀 — 관리자가 등록한 배너가 있으면 자동 넘김 슬라이드로, 없으면 기존 문구 그대로.
+  let heroAutoAdvanceTimer = null;
+  function renderHeroCarousel(banners) {
+    const area = document.getElementById("hero-area");
+    if (!banners.length) return; // 기본 문구 유지(hero-area의 기존 마크업 그대로 둠)
+
+    area.innerHTML = `
+      <div class="hero-carousel">
+        <div class="hero-carousel-track" id="hero-carousel-track">
+          ${banners.map(b => `
+            <div class="hero-carousel-slide">
+              ${b.link_url
+                ? `<a href="${escapeHtml(b.link_url)}" target="_blank" rel="noopener"><img src="${escapeHtml(b.image_url)}" alt=""></a>`
+                : `<div class="hero-carousel-img-wrap"><img src="${escapeHtml(b.image_url)}" alt=""></div>`}
+            </div>
+          `).join("")}
+        </div>
+        ${banners.length > 1 ? `
+          <div class="hero-carousel-controls">
+            <button type="button" class="hero-carousel-btn" id="hero-carousel-prev" aria-label="이전">&lsaquo;</button>
+            <span class="hero-carousel-counter" id="hero-carousel-counter">1/${banners.length}</span>
+            <button type="button" class="hero-carousel-btn" id="hero-carousel-pause" aria-label="일시정지">⏸</button>
+            <button type="button" class="hero-carousel-btn" id="hero-carousel-next" aria-label="다음">&rsaquo;</button>
+          </div>
+        ` : ""}
+      </div>
+    `;
+
+    if (banners.length <= 1) return;
+
+    const track = document.getElementById("hero-carousel-track");
+    const counterEl = document.getElementById("hero-carousel-counter");
+    const pauseBtn = document.getElementById("hero-carousel-pause");
+    let current = 0;
+    let playing = true;
+
+    function goTo(index) {
+      current = (index + banners.length) % banners.length;
+      track.scrollTo({ left: track.clientWidth * current, behavior: "smooth" });
+      counterEl.textContent = `${current + 1}/${banners.length}`;
+    }
+    function startAutoAdvance() {
+      clearInterval(heroAutoAdvanceTimer);
+      heroAutoAdvanceTimer = setInterval(() => goTo(current + 1), 4000);
+    }
+    function stopAutoAdvance() {
+      clearInterval(heroAutoAdvanceTimer);
+      heroAutoAdvanceTimer = null;
+    }
+
+    document.getElementById("hero-carousel-prev").addEventListener("click", () => goTo(current - 1));
+    document.getElementById("hero-carousel-next").addEventListener("click", () => goTo(current + 1));
+    pauseBtn.addEventListener("click", () => {
+      playing = !playing;
+      pauseBtn.textContent = playing ? "⏸" : "▶";
+      if (playing) startAutoAdvance(); else stopAutoAdvance();
+    });
+
+    // 손가락으로 직접 넘겼을 때도(네이티브 스크롤) 숫자 표시가 맞게 따라가도록 스크롤 위치로 현재 슬라이드를 추정함
+    let scrollDebounce = null;
+    track.addEventListener("scroll", () => {
+      clearTimeout(scrollDebounce);
+      scrollDebounce = setTimeout(() => {
+        current = Math.round(track.scrollLeft / track.clientWidth);
+        counterEl.textContent = `${current + 1}/${banners.length}`;
+      }, 100);
+    }, { passive: true });
+
+    startAutoAdvance();
+  }
+
+  async function loadHeroBanners() {
+    const { data, error } = await supabaseClient
+      .from("hero_banners")
+      .select("*")
+      .eq("visible", true)
+      .order("sort_order");
+    if (error || !data) return;
+    renderHeroCarousel(data);
+  }
+  loadHeroBanners();
 
   // 알림 받기(동의) 버튼: 한 번 눌러서 결정하고 나면(허용/거부 상관없이) 다시 안 보이게 함
   // ("홈 화면에 추가" 배너와 동일한 1회성 노출 패턴)

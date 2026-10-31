@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#6b9080">
+<meta name="theme-color" content="#1b9e92">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -40,6 +40,7 @@
         <button data-tab="addproduct">상품관리</button>
       </div>
       <div class="category-group-items" data-subgroup="menu">
+        <button data-tab="banners">메인 배너 관리</button>
         <button data-tab="newslinks">오늘의뉴스 관리</button>
         <button data-tab="menus">메뉴관리</button>
         <button data-tab="errorlogs">오류 로그</button>
@@ -149,6 +150,28 @@
         <input id="new-menu-name" type="text" placeholder="카테고리 이름 (예: 가전제품)">
         <button class="primary" id="new-menu-submit" style="width:100%;">카테고리 추가</button>
         <p id="new-menu-status" class="muted"></p>
+      </div>
+
+      <div class="card" id="banners-panel" hidden>
+        <h2 style="margin-top:0;">메인 배너 관리</h2>
+        <p class="muted">메인 화면 맨 위(지후네 하우스 소개 자리)에 보여줄 배너 이미지예요. 1개 이상 등록하면 자동으로 넘어가는 슬라이드로 바뀌고, 하나도 없으면 기존 문구가 그대로 나와요.</p>
+        <div id="banners-list-view">
+          <button type="button" class="primary" id="banners-new-btn" style="width:100%; margin-bottom:12px;">+ 새 배너 추가</button>
+          <div id="banners-list"></div>
+          <p id="banners-empty" class="muted" hidden>등록된 배너가 없습니다.</p>
+        </div>
+        <div id="banners-detail-view" hidden>
+          <button type="button" id="banners-back-btn" class="muted" style="background:none; border:none; cursor:pointer; padding:0; margin-bottom:12px;">&larr; 목록으로</button>
+          <h3 id="banners-form-title" style="margin-top:0;">배너 추가</h3>
+          <label class="form-section-label" style="margin-top:0;">배너 이미지</label>
+          <div class="image-preview-box" id="banners-image-preview"></div>
+          <input type="file" id="banners-image-input" accept="image/*" style="margin-bottom:12px;">
+          <label class="form-section-label" for="banners-link">연결 주소 (선택)</label>
+          <input id="banners-link" type="text" placeholder="https://... (누르면 이동할 주소, 비워두면 그냥 이미지만)">
+          <button class="primary" id="banners-submit" style="width:100%; margin-top:8px;">저장</button>
+          <button type="button" class="danger-btn" id="banners-delete-btn" hidden style="width:100%; margin-top:8px;">삭제</button>
+          <p id="banners-status" class="muted"></p>
+        </div>
       </div>
 
       <div class="card" id="newslinks-panel" hidden>
@@ -636,6 +659,7 @@
     document.getElementById("productstats-panel").hidden = tab !== "productstats";
     document.getElementById("addproduct-panel").hidden = tab !== "addproduct";
     document.getElementById("menus-panel").hidden = tab !== "menus";
+    document.getElementById("banners-panel").hidden = tab !== "banners";
     document.getElementById("newslinks-panel").hidden = tab !== "newslinks";
     document.getElementById("push-panel").hidden = tab !== "push";
     document.getElementById("fairvalue-panel").hidden = tab !== "fairvalue";
@@ -1188,6 +1212,178 @@
     document.getElementById("new-menu-name").value = "";
     statusEl.textContent = "카테고리가 추가되었습니다.";
     await loadMenusAdmin();
+  });
+
+  // 메인 배너 관리 — 메인 화면 맨 위(지후네 하우스 소개 자리)에 보여줄 배너 이미지 목록
+  // (hero_banners 테이블). 뉴스관리와 같은 목록/상세 구조 + 상품관리와 같은 이미지 업로드를 씀.
+  let allBanners = [];
+  let editingBannerId = null;
+  let editingBannerImageUrl = null;
+
+  async function uploadBannerImage(file) {
+    const ext = file.name.split(".").pop();
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabaseClient.storage.from("banner-images").upload(path, file);
+    if (error) throw error;
+    const { data } = supabaseClient.storage.from("banner-images").getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  function extractBannerStoragePath(url) {
+    const marker = "/banner-images/";
+    const idx = url.indexOf(marker);
+    return idx === -1 ? null : url.slice(idx + marker.length);
+  }
+
+  function showBannersList() {
+    document.getElementById("banners-list-view").hidden = false;
+    document.getElementById("banners-detail-view").hidden = true;
+  }
+
+  function showBannerForm(banner) {
+    editingBannerId = banner ? banner.id : null;
+    editingBannerImageUrl = banner ? banner.image_url : null;
+    document.getElementById("banners-form-title").textContent = banner ? "배너 수정" : "배너 추가";
+    document.getElementById("banners-image-preview").innerHTML = banner
+      ? `<img src="${banner.image_url}" style="width:100%; border-radius:12px;">`
+      : "";
+    document.getElementById("banners-image-input").value = "";
+    document.getElementById("banners-link").value = banner?.link_url ?? "";
+    document.getElementById("banners-delete-btn").hidden = !banner;
+    document.getElementById("banners-status").textContent = "";
+    document.getElementById("banners-list-view").hidden = true;
+    document.getElementById("banners-detail-view").hidden = false;
+  }
+
+  document.getElementById("banners-new-btn").addEventListener("click", () => showBannerForm(null));
+  document.getElementById("banners-back-btn").addEventListener("click", showBannersList);
+
+  document.getElementById("banners-image-input").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      document.getElementById("banners-image-preview").innerHTML = `<img src="${reader.result}" style="width:100%; border-radius:12px;">`;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function renderBannersList() {
+    document.getElementById("banners-empty").hidden = allBanners.length > 0;
+    document.getElementById("banners-list").innerHTML = allBanners.map((b, i) => `
+      <div class="inquiry-row" data-id="${b.id}">
+        <div style="display:flex; align-items:center; gap:10px; cursor:pointer; min-width:0; flex:1;" data-edit="${b.id}">
+          <div style="display:flex; flex-direction:column; gap:2px; flex-shrink:0;">
+            <button type="button" class="reorder-btn banner-up-btn" data-id="${b.id}" ${i === 0 ? "disabled" : ""} aria-label="위로">&uarr;</button>
+            <button type="button" class="reorder-btn banner-down-btn" data-id="${b.id}" ${i === allBanners.length - 1 ? "disabled" : ""} aria-label="아래로">&darr;</button>
+          </div>
+          <img src="${b.image_url}" style="width:56px; height:32px; object-fit:cover; border-radius:8px; flex-shrink:0;">
+          <div class="inquiry-meta" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${b.link_url ? escapeHtml(b.link_url) : "연결 주소 없음"}</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" class="banner-visible-toggle" data-id="${b.id}" ${b.visible ? "checked" : ""}>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+    `).join("");
+
+    document.querySelectorAll("#banners-list [data-edit]").forEach(el => {
+      el.addEventListener("click", () => showBannerForm(allBanners.find(b => b.id === el.dataset.edit)));
+    });
+    document.querySelectorAll(".banner-visible-toggle").forEach(cb => {
+      cb.addEventListener("change", async () => {
+        const { error } = await supabaseClient.from("hero_banners").update({ visible: cb.checked }).eq("id", cb.dataset.id);
+        if (error) {
+          alert("변경 실패: " + error.message);
+          cb.checked = !cb.checked;
+          return;
+        }
+        const banner = allBanners.find(b => b.id === cb.dataset.id);
+        if (banner) banner.visible = cb.checked;
+      });
+    });
+    document.querySelectorAll(".banner-up-btn").forEach(btn => {
+      btn.addEventListener("click", () => moveBanner(btn.dataset.id, "up"));
+    });
+    document.querySelectorAll(".banner-down-btn").forEach(btn => {
+      btn.addEventListener("click", () => moveBanner(btn.dataset.id, "down"));
+    });
+  }
+
+  async function moveBanner(id, direction) {
+    const index = allBanners.findIndex(b => b.id === id);
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (index === -1 || targetIndex < 0 || targetIndex >= allBanners.length) return;
+
+    const current = allBanners[index];
+    const target = allBanners[targetIndex];
+    const [{ error: e1 }, { error: e2 }] = await Promise.all([
+      supabaseClient.from("hero_banners").update({ sort_order: target.sort_order }).eq("id", current.id),
+      supabaseClient.from("hero_banners").update({ sort_order: current.sort_order }).eq("id", target.id),
+    ]);
+    if (e1 || e2) {
+      alert("순서 변경 실패: " + (e1 || e2).message);
+      return;
+    }
+    await loadBannersAdmin();
+  }
+
+  async function loadBannersAdmin() {
+    const { data, error } = await supabaseClient.from("hero_banners").select("*").order("sort_order");
+    allBanners = error ? [] : data;
+    renderBannersList();
+  }
+
+  document.getElementById("banners-submit").addEventListener("click", async () => {
+    const statusEl = document.getElementById("banners-status");
+    const file = document.getElementById("banners-image-input").files[0];
+    if (!file && !editingBannerImageUrl) {
+      statusEl.textContent = "배너 이미지를 선택해 주세요.";
+      return;
+    }
+
+    statusEl.textContent = "저장 중...";
+    let imageUrl = editingBannerImageUrl;
+    try {
+      if (file) imageUrl = await uploadBannerImage(file);
+    } catch (err) {
+      statusEl.textContent = "이미지 업로드 실패: " + err.message;
+      return;
+    }
+
+    const linkUrl = document.getElementById("banners-link").value.trim();
+    const row = { image_url: imageUrl, link_url: linkUrl || null };
+
+    let error;
+    if (editingBannerId) {
+      ({ error } = await supabaseClient.from("hero_banners").update(row).eq("id", editingBannerId));
+    } else {
+      const maxOrder = allBanners.reduce((max, b) => Math.max(max, b.sort_order), 0);
+      ({ error } = await supabaseClient.from("hero_banners").insert({ ...row, visible: true, sort_order: maxOrder + 1 }));
+    }
+    if (error) {
+      statusEl.textContent = "저장 실패: " + error.message;
+      return;
+    }
+
+    await loadBannersAdmin();
+    showBannersList();
+  });
+
+  document.getElementById("banners-delete-btn").addEventListener("click", async () => {
+    if (!editingBannerId) return;
+    if (!confirm("정말 삭제하시겠어요?")) return;
+    const { error } = await supabaseClient.from("hero_banners").delete().eq("id", editingBannerId);
+    if (error) {
+      alert("삭제 실패: " + error.message);
+      return;
+    }
+    if (editingBannerImageUrl) {
+      const path = extractBannerStoragePath(editingBannerImageUrl);
+      if (path) await supabaseClient.storage.from("banner-images").remove([path]);
+    }
+    await loadBannersAdmin();
+    showBannersList();
   });
 
   // 오늘의뉴스 관리 — 메인 화면 "오늘의뉴스" 카드 목록(news_links 테이블)을 관리자가 직접
@@ -3044,6 +3240,7 @@
     switchTab("fairvalue"); // 첫 번째 대분류(주식)의 첫 메뉴를 기본으로 보여줌
 
     await loadMenusAdmin();
+    await loadBannersAdmin();
     await loadNewsLinksAdmin();
     await loadOrders();
     await loadInquiries();
