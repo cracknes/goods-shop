@@ -31,7 +31,6 @@
         <button data-tab="settlementcost">월별 주식결제대금</button>
         <button data-tab="fairvalue">주가 분석</button>
         <button data-tab="stocknews">주식 뉴스</button>
-        <button data-tab="newsfavorites">즐겨찾기</button>
         <button data-tab="exportstats">주요 품목별 수출</button>
         <button data-tab="dividendrank">배당순위</button>
         <button data-tab="topmovers">코스피 등락률</button>
@@ -313,25 +312,32 @@
       </div>
 
       <div class="card" id="stocknews-panel" hidden>
-        <p class="muted">회사를 검색해서 네이버증권 종목 뉴스를 바로 볼 수 있어요. ⭐를 누르면 즐겨찾기 탭에 저장돼요.</p>
-        <label class="form-section-label" for="stocknews-search" style="margin-top:0;">회사명 검색</label>
-        <input id="stocknews-search" type="text" placeholder="예: 삼성전자">
-        <div id="stocknews-search-results"></div>
-        <div id="stocknews-result-view" hidden style="margin-top:16px;">
-          <h3 id="stocknews-corp-name" style="margin-bottom:8px;"></h3>
-          <div id="stocknews-news"></div>
+        <div class="tab-bar">
+          <button type="button" data-stocknewstab="search" class="active">뉴스 검색</button>
+          <button type="button" data-stocknewstab="favorites">즐겨찾기</button>
         </div>
-        <p id="stocknews-status" class="muted"></p>
-      </div>
 
-      <div class="card" id="newsfavorites-panel" hidden>
-        <p class="muted">⭐로 저장해둔 관련 기사예요. 기본은 전체를 기업별로 묶어서 보여주고, 아래에서 기업을 고르면 그 기업 것만 볼 수 있어요.</p>
-        <label class="form-section-label" for="newsfavorites-corp-select" style="margin-top:0;">기업 선택</label>
-        <select id="newsfavorites-corp-select">
-          <option value="">전체</option>
-        </select>
-        <div id="newsfavorites-list" style="margin-top:12px;"></div>
-        <p id="newsfavorites-status" class="muted"></p>
+        <div id="stocknews-search-view">
+          <p class="muted">회사를 검색해서 네이버증권 종목 뉴스를 바로 볼 수 있어요. ⭐를 누르면 즐겨찾기 탭에 저장돼요.</p>
+          <label class="form-section-label" for="stocknews-search" style="margin-top:0;">회사명 검색</label>
+          <input id="stocknews-search" type="text" placeholder="예: 삼성전자">
+          <div id="stocknews-search-results"></div>
+          <div id="stocknews-result-view" hidden style="margin-top:16px;">
+            <h3 id="stocknews-corp-name" style="margin-bottom:8px;"></h3>
+            <div id="stocknews-news"></div>
+          </div>
+          <p id="stocknews-status" class="muted"></p>
+        </div>
+
+        <div id="stocknews-favorites-view" hidden>
+          <p class="muted">⭐로 저장해둔 관련 기사예요. 기본은 전체를 기업별로 묶어서 보여주고, 아래에서 기업을 고르면 그 기업 것만 볼 수 있어요.</p>
+          <label class="form-section-label" for="newsfavorites-corp-select" style="margin-top:0;">기업 선택</label>
+          <select id="newsfavorites-corp-select">
+            <option value="">전체</option>
+          </select>
+          <div id="newsfavorites-list" style="margin-top:12px;"></div>
+          <p id="newsfavorites-status" class="muted"></p>
+        </div>
       </div>
 
       <div class="card" id="sector-panel" hidden>
@@ -737,8 +743,6 @@
     document.getElementById("push-panel").hidden = tab !== "push";
     document.getElementById("fairvalue-panel").hidden = tab !== "fairvalue";
     document.getElementById("stocknews-panel").hidden = tab !== "stocknews";
-    document.getElementById("newsfavorites-panel").hidden = tab !== "newsfavorites";
-    if (tab === "newsfavorites") loadNewsFavorites();
     document.getElementById("sector-panel").hidden = tab !== "sector";
     document.getElementById("exportstats-panel").hidden = tab !== "exportstats";
     document.getElementById("dividendrank-panel").hidden = tab !== "dividendrank";
@@ -1785,6 +1789,15 @@
       document.getElementById("fairvalue-search-view").hidden = btn.dataset.fvtab !== "search";
       document.getElementById("fairvalue-history-view").hidden = btn.dataset.fvtab !== "history";
       if (btn.dataset.fvtab === "history") loadFairValueHistory();
+    });
+  });
+
+  document.querySelectorAll("#stocknews-panel [data-stocknewstab]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#stocknews-panel [data-stocknewstab]").forEach(b => b.classList.toggle("active", b === btn));
+      document.getElementById("stocknews-search-view").hidden = btn.dataset.stocknewstab !== "search";
+      document.getElementById("stocknews-favorites-view").hidden = btn.dataset.stocknewstab !== "favorites";
+      if (btn.dataset.stocknewstab === "favorites") loadNewsFavorites();
     });
   });
 
