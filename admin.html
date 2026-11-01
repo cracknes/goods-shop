@@ -30,6 +30,7 @@
         <button data-tab="sector">주도 섹터 분석</button>
         <button data-tab="settlementcost">월별 주식결제대금</button>
         <button data-tab="fairvalue">주가 분석</button>
+        <button data-tab="newsfavorites">주식 뉴스</button>
         <button data-tab="exportstats">주요 품목별 수출</button>
         <button data-tab="dividendrank">배당순위</button>
         <button data-tab="topmovers">코스피 등락률</button>
@@ -308,6 +309,16 @@
             <div id="fvhistory-detail-content"></div>
           </div>
         </div>
+      </div>
+
+      <div class="card" id="newsfavorites-panel" hidden>
+        <p class="muted">주가 분석에서 ⭐로 저장해둔 관련 기사예요. 기본은 전체를 기업별로 묶어서 보여주고, 아래에서 기업을 고르면 그 기업 것만 볼 수 있어요.</p>
+        <label class="form-section-label" for="newsfavorites-corp-select" style="margin-top:0;">기업 선택</label>
+        <select id="newsfavorites-corp-select">
+          <option value="">전체</option>
+        </select>
+        <div id="newsfavorites-list" style="margin-top:12px;"></div>
+        <p id="newsfavorites-status" class="muted"></p>
       </div>
 
       <div class="card" id="sector-panel" hidden>
@@ -712,6 +723,8 @@
     document.getElementById("newslinks-panel").hidden = tab !== "newslinks";
     document.getElementById("push-panel").hidden = tab !== "push";
     document.getElementById("fairvalue-panel").hidden = tab !== "fairvalue";
+    document.getElementById("newsfavorites-panel").hidden = tab !== "newsfavorites";
+    if (tab === "newsfavorites") loadNewsFavorites();
     document.getElementById("sector-panel").hidden = tab !== "sector";
     document.getElementById("exportstats-panel").hidden = tab !== "exportstats";
     document.getElementById("dividendrank-panel").hidden = tab !== "dividendrank";
@@ -1904,9 +1917,33 @@
   });
 
   document.getElementById("fairvalue-news").addEventListener("click", (e) => {
+    const starBtn = e.target.closest(".news-star-btn");
+    if (starBtn) {
+      e.stopPropagation();
+      toggleNewsFavorite(starBtn);
+      return;
+    }
     const row = e.target.closest(".fairvalue-news-row");
     if (row?.dataset.url) location.href = row.dataset.url;
   });
+
+  // 관련 기사 ⭐ — 눌러서 stock_news_favorites에 저장/삭제. 누른 즉시 별 모양/색을 바꿔서 반영.
+  async function toggleNewsFavorite(btn) {
+    const { url, title, office, datetime, stockcode, corpname } = btn.dataset;
+    if (btn.classList.contains("active")) {
+      await supabaseClient.from("stock_news_favorites").delete().eq("stock_code", stockcode).eq("url", url);
+      btn.classList.remove("active");
+      btn.textContent = "☆";
+    } else {
+      const { error } = await supabaseClient.from("stock_news_favorites").insert({
+        stock_code: stockcode, corp_name: corpname, title, office_name: office, datetime, url,
+      });
+      if (!error) {
+        btn.classList.add("active");
+        btn.textContent = "★";
+      }
+    }
+  }
 
   async function searchDartCorp(q) {
     const resultsEl = document.getElementById("fairvalue-search-results");
@@ -2065,15 +2102,29 @@
       : "";
 
     // 관련 기사 — 네이버증권 종목 뉴스 탭을 그대로 가져온 것(비공식 조회라 안 보일 수도 있음).
-    // DART 계산과 무관한 참고용이라 저장은 안 하고 조회할 때마다 그때그때 새로 가져옴.
+    // DART 계산 자체는 저장 안 하고 매번 새로 가져오지만, ⭐로 즐겨찾기해둔 기사는
+    // stock_news_favorites에 있으니 그 url만 확인해서 별 색/모양을 맞춰줌.
     const news = data.relatedNews ?? [];
+    const { data: favRows } = await supabaseClient
+      .from("stock_news_favorites")
+      .select("url")
+      .eq("stock_code", data.stockCode);
+    const favoritedUrls = new Set((favRows ?? []).map(r => r.url));
+
     document.getElementById("fairvalue-news").innerHTML = news.length
       ? news.map(n => {
           const dt = n.datetime; // "202610181812"
           const dateLabel = dt.length === 12 ? `${dt.slice(4, 6)}/${dt.slice(6, 8)} ${dt.slice(8, 10)}:${dt.slice(10, 12)}` : "";
-          return `<div class="fairvalue-news-row" data-url="${escapeHtml(n.url)}" style="cursor:pointer; padding:6px 0; border-bottom:1px solid var(--border);">` +
-            `<div>${escapeHtml(n.title)}</div>` +
-            `<div class="inquiry-meta">${escapeHtml(n.officeName)} · ${dateLabel}</div>` +
+          const isFav = favoritedUrls.has(n.url);
+          return `<div class="fairvalue-news-row" data-url="${escapeHtml(n.url)}" style="cursor:pointer; padding:6px 0; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; justify-content:space-between;">` +
+            `<div style="flex:1; min-width:0;">` +
+              `<div>${escapeHtml(n.title)}</div>` +
+              `<div class="inquiry-meta">${escapeHtml(n.officeName)} · ${dateLabel}</div>` +
+            `</div>` +
+            `<button type="button" class="star-btn news-star-btn${isFav ? " active" : ""}" ` +
+              `data-url="${escapeHtml(n.url)}" data-title="${escapeHtml(n.title)}" data-office="${escapeHtml(n.officeName)}" ` +
+              `data-datetime="${escapeHtml(n.datetime)}" data-stockcode="${escapeHtml(data.stockCode)}" data-corpname="${escapeHtml(data.corpName)}" ` +
+              `aria-label="즐겨찾기">${isFav ? "★" : "☆"}</button>` +
           `</div>`;
         }).join("")
       : "관련 기사를 찾을 수 없습니다.";
@@ -2451,6 +2502,95 @@
     statusEl.textContent = `${data.length}건 (최근 200건까지 표시)`;
     renderExportStatsHistoryList();
   }
+
+  // 주식 뉴스 — 주가 분석 결과에서 ⭐로 저장해둔 관련 기사 목록. 특정 기업으로 좁히지 않고
+  // 전체를 다 보여주되, 기업별로 묶어서(최근에 저장한 기업이 위로 오게) 구분해줌.
+  let newsFavoritesRows = [];
+
+  async function loadNewsFavorites() {
+    const statusEl = document.getElementById("newsfavorites-status");
+    statusEl.textContent = "불러오는 중...";
+
+    const { data, error } = await supabaseClient
+      .from("stock_news_favorites")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    if (error) {
+      statusEl.textContent = "조회 실패: " + error.message;
+      return;
+    }
+    newsFavoritesRows = data ?? [];
+    renderNewsFavoritesCorpOptions();
+    renderNewsFavoritesList();
+    statusEl.textContent = newsFavoritesRows.length ? `${newsFavoritesRows.length}건` : "저장된 관련 기사가 없습니다.";
+  }
+
+  // rows가 이미 최신순 정렬이라, Map에 넣는 순서 그대로가 "최근에 저장한 기업이 먼저" 순서가 됨.
+  function groupFavoritesByCorp(rows) {
+    const map = new Map();
+    for (const r of rows) {
+      if (!map.has(r.corp_name)) map.set(r.corp_name, []);
+      map.get(r.corp_name).push(r);
+    }
+    return [...map.entries()];
+  }
+
+  function renderNewsFavoritesCorpOptions() {
+    const select = document.getElementById("newsfavorites-corp-select");
+    const prevValue = select.value;
+    const corpNames = groupFavoritesByCorp(newsFavoritesRows).map(([corpName]) => corpName);
+    select.innerHTML = `<option value="">전체</option>` +
+      corpNames.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+    if (corpNames.includes(prevValue)) select.value = prevValue; // 삭제 후 다시 그릴 때 고르고 있던 기업 유지
+  }
+
+  function renderNewsFavoritesRow(r) {
+    const dt = r.datetime;
+    const dateLabel = dt && dt.length === 12 ? `${dt.slice(4, 6)}/${dt.slice(6, 8)} ${dt.slice(8, 10)}:${dt.slice(10, 12)}` : "";
+    return `<div class="fairvalue-news-row" data-url="${escapeHtml(r.url)}" style="cursor:pointer; padding:8px 0; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; justify-content:space-between;">` +
+      `<div style="flex:1; min-width:0;">` +
+        `<div>${escapeHtml(r.title)}</div>` +
+        `<div class="inquiry-meta">${escapeHtml(r.office_name)} · ${dateLabel}</div>` +
+      `</div>` +
+      `<button type="button" class="star-btn active news-favorite-remove-btn" data-id="${r.id}" aria-label="즐겨찾기 해제">★</button>` +
+    `</div>`;
+  }
+
+  function renderNewsFavoritesList() {
+    const selectedCorp = document.getElementById("newsfavorites-corp-select").value;
+    const listEl = document.getElementById("newsfavorites-list");
+
+    if (selectedCorp) {
+      const rows = newsFavoritesRows.filter(r => r.corp_name === selectedCorp);
+      listEl.innerHTML = rows.map(renderNewsFavoritesRow).join("");
+      return;
+    }
+
+    const groups = groupFavoritesByCorp(newsFavoritesRows);
+    listEl.innerHTML = groups.map(([corpName, rows]) => `
+      <div style="margin-bottom:20px;">
+        <h3 style="margin:0 0 6px; font-size:14px;">${escapeHtml(corpName)} <span class="muted" style="font-weight:400;">(${rows.length})</span></h3>
+        ${rows.map(renderNewsFavoritesRow).join("")}
+      </div>
+    `).join("");
+  }
+
+  document.getElementById("newsfavorites-corp-select").addEventListener("change", renderNewsFavoritesList);
+
+  document.getElementById("newsfavorites-list").addEventListener("click", async (e) => {
+    const removeBtn = e.target.closest(".news-favorite-remove-btn");
+    if (removeBtn) {
+      e.stopPropagation();
+      await supabaseClient.from("stock_news_favorites").delete().eq("id", removeBtn.dataset.id);
+      newsFavoritesRows = newsFavoritesRows.filter(r => r.id !== removeBtn.dataset.id);
+      renderNewsFavoritesList();
+      return;
+    }
+    const row = e.target.closest(".fairvalue-news-row");
+    if (row?.dataset.url) location.href = row.dataset.url;
+  });
 
   // 배당순위 — 적정주가/주도섹터분석과 같은 조회/이력 탭 + 목록/상세 구조를 그대로 따름
   function renderDividendRankCards(result) {

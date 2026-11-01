@@ -609,6 +609,18 @@ textarea { resize: vertical; }
 .icon-delete-btn:hover:not(:disabled) { background: var(--border); color: var(--text); }
 .icon-delete-btn:disabled { opacity: 0.3; cursor: default; }
 
+.star-btn {
+  border: none;
+  background: none;
+  color: var(--border);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 2px;
+}
+.star-btn.active { color: #f5a623; }
+
 /* PWA "홈 화면에 추가" 안내 배너 (pwa.js가 필요할 때만 만들어서 붙임) */
 .pwa-install-banner {
   position: fixed;
