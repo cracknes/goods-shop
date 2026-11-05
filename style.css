@@ -720,6 +720,12 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
   /* 위 공용 모바일 규칙이 하위 메뉴 버튼까지 늘려버려서 가로 스크롤 줄이 깨지므로,
      하위 메뉴 버튼은 원래 크기 그대로 유지되도록 다시 되돌림 */
   .category-group-items button { flex: 0 0 auto; text-align: left; }
+  /* 대분류(메뉴/주식/상품/사용자) 버튼도 같은 이유로 되돌려야 했는데 빠져있던 진짜 버그 —
+     flex:1 1 auto로 그대로 두면 이 4개 버튼이 매번 "그때 사용 가능한 폭"만큼 늘어나 나눠
+     가지는데, 그 폭이 아래 하위 메뉴 줄(특히 버튼이 많은 "주식")의 영향을 받아 미세하게
+     달라지면서 대분류 버튼 간격이 어떤 메뉴를 선택했는지에 따라 달라져 보였음. 대분류도
+     하위 메뉴와 마찬가지로 고정 크기여야 하므로 여기서도 그대로 되돌림. */
+  .category-maingroup button { flex: 0 0 auto; text-align: center; }
   .shop-content { width: 100%; }
   .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .product-card .body { padding: 12px 10px; }
