@@ -183,7 +183,6 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
   display: flex;
   flex-wrap: nowrap;
   gap: 4px;
-  padding-right: 20px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -198,6 +197,12 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
 }
 .category-group-items::-webkit-scrollbar { display: none; }
 .category-group-items button { flex: 0 0 auto; }
+/* 마지막 버튼 뒤에 여백을 주려고 컨테이너에 padding-right를 줬었는데, 안드로이드 Chrome 등
+   일부 브라우저는 가로 스크롤 컨테이너의 "끝쪽 padding"을 스크롤 가능 영역에 포함 안 시키는
+   경우가 있어서(실기기로 확인됨 — 끝까지 스크롤해도 마지막 버튼이 화면 끝에 그대로 붙어 있었음)
+   전혀 효과가 없었음. 컨테이너 padding 대신 마지막 자식의 margin으로 주면 모든 브라우저에서
+   스크롤 가능 영역에 확실히 포함됨. */
+.category-group-items button:last-child { margin-right: 20px; }
 /* display:flex를 직접 지정해두면 브라우저 기본 [hidden]{display:none} 규칙을 덮어써버려서
    (출처가 다른 스타일 간 우선순위상 author 규칙이 항상 이김) hidden 속성을 줘도 계속 보이는
    버그가 있었음 — 명시적으로 다시 덮어씀. */
