@@ -26,50 +26,34 @@
         <button type="button" class="category-group-toggle" data-group="product">상품</button>
         <button type="button" class="category-group-toggle" data-group="user">사용자</button>
       </div>
-      <div class="category-subrow">
-        <button type="button" class="subrow-arrow subrow-arrow-left" data-dir="-1" aria-label="이전">&lsaquo;</button>
-        <div class="category-group-items" data-subgroup="stock">
-          <button data-tab="sector">주도 섹터 분석</button>
-          <button data-tab="settlementcost">월별 주식결제대금</button>
-          <button data-tab="fairvalue">주가 분석</button>
-          <button data-tab="stocknews">주식 뉴스</button>
-          <button data-tab="disclosures">Dart 전자공시</button>
-          <button data-tab="exportstats">주요 품목별 수출</button>
-          <button data-tab="dividendrank">배당순위</button>
-          <button data-tab="topmovers">코스피 등락률</button>
-          <button data-tab="slbrank">주식대차 종목순위</button>
-          <button data-tab="slbdealing">종목별 대차거래현황</button>
-        </div>
-        <button type="button" class="subrow-arrow subrow-arrow-right" data-dir="1" aria-label="다음">&rsaquo;</button>
+      <div class="category-group-items" data-subgroup="stock">
+        <button data-tab="sector">주도 섹터 분석</button>
+        <button data-tab="settlementcost">월별 주식결제대금</button>
+        <button data-tab="fairvalue">주가 분석</button>
+        <button data-tab="stocknews">주식 뉴스</button>
+        <button data-tab="disclosures">Dart 전자공시</button>
+        <button data-tab="exportstats">주요 품목별 수출</button>
+        <button data-tab="dividendrank">배당순위</button>
+        <button data-tab="topmovers">코스피 등락률</button>
+        <button data-tab="slbrank">주식대차 종목순위</button>
+        <button data-tab="slbdealing">종목별 대차거래현황</button>
       </div>
-      <div class="category-subrow">
-        <button type="button" class="subrow-arrow subrow-arrow-left" data-dir="-1" aria-label="이전">&lsaquo;</button>
-        <div class="category-group-items" data-subgroup="product">
-          <button data-tab="productstats">상품통계</button>
-          <button data-tab="addproduct">상품관리</button>
-        </div>
-        <button type="button" class="subrow-arrow subrow-arrow-right" data-dir="1" aria-label="다음">&rsaquo;</button>
+      <div class="category-group-items" data-subgroup="product">
+        <button data-tab="productstats">상품통계</button>
+        <button data-tab="addproduct">상품관리</button>
       </div>
-      <div class="category-subrow">
-        <button type="button" class="subrow-arrow subrow-arrow-left" data-dir="-1" aria-label="이전">&lsaquo;</button>
-        <div class="category-group-items" data-subgroup="menu">
-          <button data-tab="banners">메인 배너 관리</button>
-          <button data-tab="newslinks">오늘의뉴스 관리</button>
-          <button data-tab="menus">메뉴관리</button>
-          <button data-tab="errorlogs">오류 로그</button>
-        </div>
-        <button type="button" class="subrow-arrow subrow-arrow-right" data-dir="1" aria-label="다음">&rsaquo;</button>
+      <div class="category-group-items" data-subgroup="menu">
+        <button data-tab="banners">메인 배너 관리</button>
+        <button data-tab="newslinks">오늘의뉴스 관리</button>
+        <button data-tab="menus">메뉴관리</button>
+        <button data-tab="errorlogs">오류 로그</button>
       </div>
-      <div class="category-subrow">
-        <button type="button" class="subrow-arrow subrow-arrow-left" data-dir="-1" aria-label="이전">&lsaquo;</button>
-        <div class="category-group-items" data-subgroup="user">
-          <button data-tab="orders">결제내역</button>
-          <button data-tab="inquiries">문의내역</button>
-          <button data-tab="logins">로그인이력</button>
-          <button data-tab="push">PUSH관리</button>
-          <button data-tab="users">사용자 관리</button>
-        </div>
-        <button type="button" class="subrow-arrow subrow-arrow-right" data-dir="1" aria-label="다음">&rsaquo;</button>
+      <div class="category-group-items" data-subgroup="user">
+        <button data-tab="orders">결제내역</button>
+        <button data-tab="inquiries">문의내역</button>
+        <button data-tab="logins">로그인이력</button>
+        <button data-tab="push">PUSH관리</button>
+        <button data-tab="users">사용자 관리</button>
       </div>
     </div>
     <div class="shop-content">
@@ -758,15 +742,6 @@
 <script src="pwa.js"></script>
 <script>
   const ADMIN_EMAIL = "admin@admin.com";
-
-  // 하위 메뉴 줄 양 끝 화살표 — 마우스만 있는 데스크톱에서는 가로 스크롤을 스와이프로 넘길 방법이
-  // 없어서, 눌러서 한 칸씩(버튼 2~3개 폭만큼) 넘겨주는 보조 수단으로 추가함.
-  document.querySelectorAll(".subrow-arrow").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const row = btn.parentElement.querySelector(".category-group-items");
-      row?.scrollBy({ left: Number(btn.dataset.dir) * 160, behavior: "smooth" });
-    });
-  });
 
   // 대분류(주식/상품/메뉴/사용자) 4개는 항상 고정된 한 줄로 보여주고, 그 아래 하위 메뉴
   // 한 줄만 선택된 대분류에 맞게 바뀜(대분류 자리가 하위 메뉴 때문에 밀리지 않게 함).

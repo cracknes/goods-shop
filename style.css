@@ -188,35 +188,6 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
    버그가 있었음 — 명시적으로 다시 덮어씀. */
 .category-group-items[hidden] { display: none; }
 
-/* 데스크톱(마우스만 있고 터치/스와이프가 없는 환경)에서는 하위 메뉴를 가로로 넘겨볼 방법이
-   없어서("스와이프할 수 없는 상황"), 양 끝에 작은 버튼을 달아 눌러서 넘길 수 있게 함.
-   화살표를 스크롤 영역 위에 position:absolute로 겹쳐뒀더니, 스크롤 중간에 있는 글자가
-   화살표 밑을 그대로 지나가며 겹쳐 보이는 문제가 있었음(피드백으로 확인) — 겹칠 일이 아예
-   없도록 화살표가 스크롤 영역과 같은 줄에서 각자 자기 자리를 차지하는 일반 배치로 바꿈
-   (화살표 영역은 스크롤에 포함되지 않는 별도 공간이라 글자가 그 밑을 지나갈 수 없음).
-   메뉴마다 버튼 개수가 달라도 가운데(.category-group-items)가 flex:1로 남는 공간을 전부
-   차지해서, 화살표는 항상 양 끝 같은 자리에 옴. */
-.category-subrow { display: flex; align-items: center; gap: 2px; }
-.category-subrow:has(.category-group-items[hidden]) { display: none; }
-.category-subrow .category-group-items { flex: 1 1 0; min-width: 0; }
-.subrow-arrow {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(127, 127, 127, 0.15);
-  color: var(--text-soft);
-  opacity: 0.65;
-  font-size: 12px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.subrow-arrow:hover { opacity: 1; }
-
 /* 페이지 내 탭 전환 (예: 문의하기 - 문의 접수하기 / 내 문의내역) */
 .tab-bar { display: flex; gap: 8px; margin-bottom: 16px; }
 .tab-bar button {
