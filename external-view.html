@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<!-- 일부러 기기 폭이 아니라 고정된 넓은 가상 화면(1280px)으로 선언함 — DART 전자공시 같은
+     구형 페이지는 반응형이 아니고 자체적으로 확대/축소도 막아놔서(maximum-scale=1.0),
+     우리 쪽 래퍼 페이지에서 넓은 뷰포트를 선언해 모바일 브라우저가 자동으로 전체를 축소해서
+     보여주게 함(이후 사용자가 직접 확대하는 건 자유로움 — 래퍼 페이지엔 그런 제한이 없으므로). -->
+<meta name="viewport" content="width=1280">
+<title>외부 페이지 보기</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #fff; }
+  iframe { display: block; width: 1280px; height: 100vh; border: none; }
+  #denied { font-family: sans-serif; padding: 24px; }
+</style>
+</head>
+<body>
+<div id="denied" hidden>허용되지 않은 주소입니다.</div>
+<script>
+  // 이 페이지는 로그인 없이 누구나 열 수 있는 정적 파일이라(GitHub Pages),
+  // 아무 주소나 iframe으로 띄우는 통로가 되지 않도록 허용된 도메인만 받음.
+  const ALLOWED_HOSTS = ["dart.fss.or.kr"];
+  const params = new URLSearchParams(location.search);
+  const target = params.get("url");
+  let valid = false;
+  try {
+    const u = new URL(target);
+    valid = u.protocol === "https:" && ALLOWED_HOSTS.includes(u.hostname);
+  } catch (_) {}
+
+  if (valid) {
+    const iframe = document.createElement("iframe");
+    iframe.src = target;
+    document.body.appendChild(iframe);
+  } else {
+    document.getElementById("denied").hidden = false;
+  }
+</script>
+</body>
+</html>
