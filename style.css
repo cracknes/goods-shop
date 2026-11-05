@@ -169,7 +169,13 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
 .category-maingroup { display: flex; flex-wrap: wrap; gap: 8px; }
 /* 하위 메뉴와 구분되도록 대분류 글씨를 더 크고 진하게 함 */
 .category-group-toggle { font-size: 16px; font-weight: 700; }
-.category-group-toggle.active { background: var(--accent); color: #fff; }
+/* 선택자 우선순위 문제로 실제 버그가 있었음: 공용 규칙 .category-list button.active가
+   (클래스 2개+요소 1개로) .category-group-toggle.active(클래스 2개)보다 우선순위가 높아서,
+   활성화된 버튼만 font-weight가 600으로 미묘하게 바뀌어 그 버튼 폭이 달라지고, 그 뒤에 오는
+   버튼들 위치가 어떤 메뉴를 눌렀는지에 따라 들쭉날쭉 밀리는 문제가 있었음(스크린샷으로 비교해
+   확인함 — "주식"이 활성화됐을 때와 "메뉴"가 활성화됐을 때 대분류 줄 간격이 서로 달랐음).
+   항상 700으로 고정해서 해결. */
+.category-group-toggle.active { background: var(--accent); color: #fff; font-weight: 700; }
 /* 하위 메뉴는 줄바꿈하지 않고 한 줄로 두고 가로 스크롤(스와이프)로 넘기게 함 — 직접 만든
    스와이프 동작 감지는 휴대폰마다 인식이 들쭉날쭉해서(실제로 잘 안 먹히는 걸 확인함), 브라우저가
    원래 잘 처리하는 가로 스크롤을 그대로 쓰는 쪽으로 바꿈. */
