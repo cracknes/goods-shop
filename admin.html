@@ -750,7 +750,12 @@
       btn.classList.toggle("active", btn.dataset.group === group);
     });
     document.querySelectorAll(".category-group-items[data-subgroup]").forEach(el => {
-      el.hidden = el.dataset.subgroup !== group;
+      const isTarget = el.dataset.subgroup === group;
+      el.hidden = !isTarget;
+      // 가로 스크롤 위치가 브라우저에 의해(스크롤 복원 등) 중간/끝 쪽에 남아있는 채로 열리는
+      // 경우가 있어서(실제 스크린샷으로 확인함 — "배당순위"부터 보이며 시작), 이 줄을 보여줄
+      // 때마다 항상 맨 앞(첫 번째 메뉴)부터 보이도록 강제로 리셋함.
+      if (isTarget) el.scrollLeft = 0;
     });
   }
 
