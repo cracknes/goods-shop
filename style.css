@@ -170,8 +170,12 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
 /* 대분류(주식/상품/메뉴/사용자)는 항상 고정된 한 줄 — 하위 메뉴가 바뀌어도 이 줄의 위치/간격은
    그대로 유지됨. 하위 메뉴는 그 아래 한 줄에서 선택된 대분류에 맞는 것만 통째로 바뀜. 버튼 모양은
    메인페이지 카테고리 버튼(.category-list button)과 동일함. */
-/* 대분류 4개는 일정한 간격으로 가운데 정렬(왼쪽으로 치우쳐 보이지 않게) */
-.category-maingroup { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+/* 대분류 4개는 똑같은 폭으로 4등분해서 줄 전체를 채움(왼쪽으로 치우쳐 보이지 않게).
+   flex-basis를 0으로 둬서 글자 길이와 상관없이 항상 같은 폭 — 내용에 따라 폭이 달라져
+   간격이 흔들리던 예전 문제(아래 모바일 규칙 주석 참고)도 생기지 않음.
+   PC처럼 화면이 넓을 땐 버튼이 지나치게 길어지지 않게 최대 폭을 두고 가운데에 둠. */
+.category-maingroup { display: flex; gap: 8px; width: 100%; max-width: 480px; margin: 0 auto; }
+.category-maingroup button { flex: 1 1 0; text-align: center; white-space: nowrap; }
 /* 하위 메뉴와 구분되도록 대분류 글씨를 더 크고 진하게 함 */
 .category-group-toggle { font-size: 16px; font-weight: 700; }
 /* 선택자 우선순위 문제로 실제 버그가 있었음: 공용 규칙 .category-list button.active가
@@ -735,8 +739,9 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
      flex:1 1 auto로 그대로 두면 이 4개 버튼이 매번 "그때 사용 가능한 폭"만큼 늘어나 나눠
      가지는데, 그 폭이 아래 하위 메뉴 줄(특히 버튼이 많은 "주식")의 영향을 받아 미세하게
      달라지면서 대분류 버튼 간격이 어떤 메뉴를 선택했는지에 따라 달라져 보였음. 대분류도
-     하위 메뉴와 마찬가지로 고정 크기여야 하므로 여기서도 그대로 되돌림. */
-  .category-maingroup button { flex: 0 0 auto; text-align: center; }
+     하위 메뉴와 마찬가지로 고정 크기여야 하므로 여기서도 그대로 되돌림.
+     → 지금은 flex:1 1 0(글자 길이와 무관한 똑같은 4등분 폭)으로 둬서 같은 문제 없이 줄을 채움. */
+  .category-maingroup button { flex: 1 1 0; text-align: center; white-space: nowrap; }
   .shop-content { width: 100%; }
   .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .product-card .body { padding: 12px 10px; }
