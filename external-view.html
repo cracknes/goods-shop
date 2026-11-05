@@ -6,9 +6,11 @@
      반응형이 아니고 자체적으로 확대/축소도 막아놔서(maximum-scale=1.0), 우리 쪽 래퍼 페이지에서
      실제 본문 폭에 맞는 뷰포트를 선언해 모바일 브라우저가 자동으로 전체를 축소해서 보여주게 함
      (이후 사용자가 직접 확대하는 건 자유로움 — 래퍼 페이지엔 그런 제한이 없으므로).
-     700px: DART 공시 본문(#divReportBody)이 실제로 630px 고정폭이라(view-report-invest.css에서
-     직접 확인함) 그보다 살짝 여유를 둔 값 — 처음엔 1280으로 뒀다가 너무 작게 축소돼서 조정함. -->
-<meta name="viewport" content="width=700">
+     635px: DART 공시 본문(#divReportBody)이 실제로 630px 고정폭이라(view-report-invest.css에서
+     직접 확인함) 딱 그 폭 + 최소한의 여유만 둔 값 — 처음엔 1280으로 뒀다가 너무 작게 축소돼서
+     700으로 줄였는데, 그래도 본문(630px)보다 넓어서 오른쪽에 빈 공백이 보였음(실제 본문 폭에
+     최대한 가깝게 맞춰야 공백이 없음). -->
+<meta name="viewport" content="width=635">
 <title>외부 페이지 보기</title>
 <style>
   html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #fff; overflow-x: hidden; }

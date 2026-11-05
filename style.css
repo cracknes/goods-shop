@@ -739,13 +739,16 @@ th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--bor
 
   /* 종목별 대차거래현황처럼 오른쪽 블록에 숫자 여러 개가 길게 들어가는 행은, 양쪽 배치(가로)를
      유지하면 글자가 화면 밖으로 밀려 오른쪽 끝이 잘려 보임 — 모바일에서는 세로로 쌓아서
-     오른쪽 블록이 화면 폭 전체를 쓰며 자연스럽게 줄바꿈되게 함. */
+     오른쪽 블록이 화면 폭 전체를 쓰며 자연스럽게 줄바꿈되게 함.
+     (처음 추가했을 때 실제로는 효과가 없었음 — 오른쪽 블록 div에 style="text-align:right"
+     인라인 스타일이 박혀있어서, 외부 스타일시트 규칙은 우선순위상 인라인 스타일을 절대
+     못 이김. !important로 강제 덮어씀.) */
   .sector-stock-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 2px;
   }
-  .sector-stock-row > div:last-child { text-align: left; width: 100%; }
+  .sector-stock-row > div:last-child { text-align: left !important; width: 100%; }
 }
 
 /* 월별 주식결제대금처럼 숫자를 월별로 비교해서 보는 표는, 모바일에서 세로 카드 목록으로 바뀌면
