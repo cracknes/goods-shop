@@ -31,6 +31,7 @@
         <button data-tab="settlementcost">월별 주식결제대금</button>
         <button data-tab="fairvalue">주가 분석</button>
         <button data-tab="stocknews">주식 뉴스</button>
+        <button data-tab="disclosures">Dart 전자공시</button>
         <button data-tab="exportstats">주요 품목별 수출</button>
         <button data-tab="dividendrank">배당순위</button>
         <button data-tab="topmovers">코스피 등락률</button>
@@ -337,6 +338,47 @@
           </select>
           <div id="newsfavorites-list" style="margin-top:12px;"></div>
           <p id="newsfavorites-status" class="muted"></p>
+        </div>
+      </div>
+
+      <div class="card" id="disclosures-panel" hidden>
+        <div class="tab-bar">
+          <button type="button" data-disclosurestab="search" class="active">공시 검색</button>
+          <button type="button" data-disclosurestab="favorites">즐겨찾기</button>
+          <button type="button" data-disclosurestab="watchlist">관심 기업</button>
+        </div>
+
+        <div id="disclosures-search-view">
+          <p class="muted">회사를 검색해서 DART 전자공시 목록(최근 1년, 최대 20건)을 바로 볼 수 있어요. ⭐를 누르면 즐겨찾기 탭에 저장돼요.</p>
+          <label class="form-section-label" for="disclosures-search" style="margin-top:0;">회사명 검색</label>
+          <input id="disclosures-search" type="text" placeholder="예: 삼성전자">
+          <div id="disclosures-search-results"></div>
+          <div id="disclosures-result-view" hidden style="margin-top:16px;">
+            <h3 id="disclosures-corp-name" style="margin-bottom:8px;"></h3>
+            <div id="disclosures-list"></div>
+          </div>
+          <p id="disclosures-status" class="muted"></p>
+        </div>
+
+        <div id="disclosures-favorites-view" hidden>
+          <p class="muted">⭐로 저장해둔 공시예요. 기본은 전체를 기업별로 묶어서 보여주고, 아래에서 기업을 고르면 그 기업 것만 볼 수 있어요.</p>
+          <label class="form-section-label" for="disclosurefavorites-corp-select" style="margin-top:0;">기업 선택</label>
+          <select id="disclosurefavorites-corp-select">
+            <option value="">전체</option>
+          </select>
+          <div id="disclosurefavorites-list" style="margin-top:12px;"></div>
+          <p id="disclosurefavorites-status" class="muted"></p>
+        </div>
+
+        <div id="disclosures-watchlist-view" hidden>
+          <p class="muted">여기에 등록해둔 회사는 새 공시가 올라올 때마다(최대 1시간 이내) 관리자 계정으로 푸시 알림이 와요.</p>
+          <label class="form-section-label" for="disclosurewatch-search" style="margin-top:0;">회사 추가</label>
+          <input id="disclosurewatch-search" type="text" placeholder="예: 삼성전자">
+          <div id="disclosurewatch-search-results"></div>
+          <p id="disclosurewatch-status" class="muted"></p>
+          <h3 style="margin:20px 0 8px; font-size:15px;">등록된 관심 기업</h3>
+          <div id="disclosurewatch-list"></div>
+          <p id="disclosurewatch-list-empty" class="muted" hidden>등록된 관심 기업이 없습니다.</p>
         </div>
       </div>
 
@@ -743,6 +785,7 @@
     document.getElementById("push-panel").hidden = tab !== "push";
     document.getElementById("fairvalue-panel").hidden = tab !== "fairvalue";
     document.getElementById("stocknews-panel").hidden = tab !== "stocknews";
+    document.getElementById("disclosures-panel").hidden = tab !== "disclosures";
     document.getElementById("sector-panel").hidden = tab !== "sector";
     document.getElementById("exportstats-panel").hidden = tab !== "exportstats";
     document.getElementById("dividendrank-panel").hidden = tab !== "dividendrank";
@@ -1801,6 +1844,17 @@
     });
   });
 
+  document.querySelectorAll("#disclosures-panel [data-disclosurestab]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#disclosures-panel [data-disclosurestab]").forEach(b => b.classList.toggle("active", b === btn));
+      document.getElementById("disclosures-search-view").hidden = btn.dataset.disclosurestab !== "search";
+      document.getElementById("disclosures-favorites-view").hidden = btn.dataset.disclosurestab !== "favorites";
+      document.getElementById("disclosures-watchlist-view").hidden = btn.dataset.disclosurestab !== "watchlist";
+      if (btn.dataset.disclosurestab === "favorites") loadDisclosureFavorites();
+      if (btn.dataset.disclosurestab === "watchlist") loadDisclosureWatchlist();
+    });
+  });
+
   document.getElementById("fvhistory-search-btn").addEventListener("click", loadFairValueHistory);
   document.getElementById("fvhistory-back-btn").addEventListener("click", showFairValueHistoryList);
 
@@ -2075,6 +2129,311 @@
       }
     }
   }
+
+  // Dart 전자공시 — 주식 뉴스와 같은 구조(검색/즐겨찾기/관심 기업 3탭).
+  function formatDartDate(d) {
+    return d && d.length === 8 ? `${d.slice(0, 4)}.${d.slice(4, 6)}.${d.slice(6, 8)}` : "";
+  }
+
+  async function renderDisclosuresList(containerId, disclosures, stockCode, corpName) {
+    const { data: favRows } = await supabaseClient
+      .from("stock_disclosure_favorites")
+      .select("rcept_no")
+      .eq("stock_code", stockCode);
+    const favoritedNos = new Set((favRows ?? []).map(r => r.rcept_no));
+
+    document.getElementById(containerId).innerHTML = disclosures.length
+      ? disclosures.map(d => {
+          const isFav = favoritedNos.has(d.rceptNo);
+          return `<div class="fairvalue-news-row" data-url="${escapeHtml(d.url)}" style="cursor:pointer; padding:6px 0; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; justify-content:space-between;">` +
+            `<div style="flex:1; min-width:0;">` +
+              `<div>${escapeHtml(d.reportName)}</div>` +
+              `<div class="inquiry-meta">${escapeHtml(d.filerName)} · ${formatDartDate(d.rceptDate)}</div>` +
+            `</div>` +
+            `<button type="button" class="star-btn disclosure-star-btn${isFav ? " active" : ""}" ` +
+              `data-url="${escapeHtml(d.url)}" data-report="${escapeHtml(d.reportName)}" data-filer="${escapeHtml(d.filerName)}" ` +
+              `data-date="${escapeHtml(d.rceptDate)}" data-rceptno="${escapeHtml(d.rceptNo)}" data-stockcode="${escapeHtml(stockCode)}" data-corpname="${escapeHtml(corpName)}" ` +
+              `aria-label="즐겨찾기">${isFav ? "★" : "☆"}</button>` +
+          `</div>`;
+        }).join("")
+      : "공시 내역을 찾을 수 없습니다.";
+  }
+
+  document.getElementById("disclosures-list").addEventListener("click", (e) => {
+    const starBtn = e.target.closest(".disclosure-star-btn");
+    if (starBtn) {
+      e.stopPropagation();
+      toggleDisclosureFavorite(starBtn);
+      return;
+    }
+    const row = e.target.closest(".fairvalue-news-row");
+    if (row?.dataset.url) location.href = row.dataset.url;
+  });
+
+  async function toggleDisclosureFavorite(btn) {
+    const { url, report, filer, date, rceptno, stockcode, corpname } = btn.dataset;
+    if (btn.classList.contains("active")) {
+      await supabaseClient.from("stock_disclosure_favorites").delete().eq("stock_code", stockcode).eq("rcept_no", rceptno);
+      btn.classList.remove("active");
+      btn.textContent = "☆";
+    } else {
+      const { error } = await supabaseClient.from("stock_disclosure_favorites").insert({
+        stock_code: stockcode, corp_name: corpname, report_name: report, filer_name: filer, rcept_date: date, rcept_no: rceptno, url,
+      });
+      if (!error) {
+        btn.classList.add("active");
+        btn.textContent = "★";
+      }
+    }
+  }
+
+  async function searchDisclosuresCorp(q) {
+    const resultsEl = document.getElementById("disclosures-search-results");
+    const { data, error } = await supabaseClient
+      .from("dart_corp_codes")
+      .select("corp_code, corp_name, stock_code")
+      .ilike("corp_name", `%${q}%`)
+      .order("corp_name")
+      .limit(10);
+
+    if (error || !data || !data.length) {
+      resultsEl.innerHTML = `<p class="muted">검색 결과가 없습니다.</p>`;
+      return;
+    }
+
+    resultsEl.innerHTML = data.map(c => `
+      <div class="inquiry-row" data-corp="${c.corp_code}" style="cursor:pointer;">
+        <div>${escapeHtml(c.corp_name)} <span class="muted">(${escapeHtml(c.stock_code)})</span></div>
+      </div>
+    `).join("");
+
+    resultsEl.querySelectorAll("[data-corp]").forEach(row => {
+      row.addEventListener("click", () => loadDisclosures(row.dataset.corp));
+    });
+  }
+
+  let disclosuresSearchDebounce = null;
+  document.getElementById("disclosures-search").addEventListener("input", (e) => {
+    clearTimeout(disclosuresSearchDebounce);
+    const q = e.target.value.trim();
+    document.getElementById("disclosures-result-view").hidden = true;
+    if (!q) {
+      document.getElementById("disclosures-search-results").innerHTML = "";
+      return;
+    }
+    disclosuresSearchDebounce = setTimeout(() => searchDisclosuresCorp(q), 300);
+  });
+
+  async function loadDisclosures(corpCode) {
+    const statusEl = document.getElementById("disclosures-status");
+    document.getElementById("disclosures-search-results").innerHTML = "";
+    document.getElementById("disclosures-result-view").hidden = true;
+    statusEl.textContent = "조회 중입니다...";
+
+    const { data, error } = await supabaseClient.functions.invoke("dart-disclosures", { body: { corpCode } });
+
+    if (error) {
+      let detail = error.message;
+      try {
+        const body = await error.context.json();
+        if (body?.error) detail = body.error + (body.detail ? ` (${body.detail})` : "");
+      } catch (_) {}
+      statusEl.textContent = "조회 실패: " + detail;
+      return;
+    }
+    if (data.error) {
+      statusEl.textContent = data.error;
+      return;
+    }
+
+    statusEl.textContent = "";
+    document.getElementById("disclosures-corp-name").textContent = `${data.corpName} (${data.stockCode})`;
+    await renderDisclosuresList("disclosures-list", data.disclosures ?? [], data.stockCode, data.corpName);
+    document.getElementById("disclosures-result-view").hidden = false;
+  }
+
+  // 즐겨찾기 탭 — stock_news_favorites 즐겨찾기 탭과 같은 패턴(전체를 기업별로 묶고, 콤보박스로 좁혀봄)
+  let disclosureFavoritesRows = [];
+
+  async function loadDisclosureFavorites() {
+    const statusEl = document.getElementById("disclosurefavorites-status");
+    statusEl.textContent = "불러오는 중...";
+
+    const { data, error } = await supabaseClient
+      .from("stock_disclosure_favorites")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    if (error) {
+      statusEl.textContent = "조회 실패: " + error.message;
+      return;
+    }
+    disclosureFavoritesRows = data ?? [];
+    renderDisclosureFavoritesCorpOptions();
+    renderDisclosureFavoritesList();
+    statusEl.textContent = disclosureFavoritesRows.length ? "" : "저장된 공시가 없습니다.";
+  }
+
+  function groupDisclosureFavoritesByCorp(rows) {
+    const map = new Map();
+    for (const r of rows) {
+      if (!map.has(r.corp_name)) map.set(r.corp_name, []);
+      map.get(r.corp_name).push(r);
+    }
+    return [...map.entries()];
+  }
+
+  function renderDisclosureFavoritesCorpOptions() {
+    const select = document.getElementById("disclosurefavorites-corp-select");
+    const prevValue = select.value;
+    const corpNames = groupDisclosureFavoritesByCorp(disclosureFavoritesRows).map(([corpName]) => corpName);
+    select.innerHTML = `<option value="">전체</option>` +
+      corpNames.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+    if (corpNames.includes(prevValue)) select.value = prevValue;
+  }
+
+  function renderDisclosureFavoritesRow(r) {
+    return `<div class="fairvalue-news-row" data-url="${escapeHtml(r.url)}" style="cursor:pointer; padding:8px 0; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; justify-content:space-between;">` +
+      `<div style="flex:1; min-width:0;">` +
+        `<div>${escapeHtml(r.report_name)}</div>` +
+        `<div class="inquiry-meta">${escapeHtml(r.filer_name)} · ${formatDartDate(r.rcept_date)}</div>` +
+      `</div>` +
+      `<button type="button" class="star-btn active disclosure-favorite-remove-btn" data-id="${r.id}" aria-label="즐겨찾기 해제">★</button>` +
+    `</div>`;
+  }
+
+  function renderDisclosureFavoritesList() {
+    const selectedCorp = document.getElementById("disclosurefavorites-corp-select").value;
+    const listEl = document.getElementById("disclosurefavorites-list");
+
+    if (selectedCorp) {
+      listEl.innerHTML = disclosureFavoritesRows.filter(r => r.corp_name === selectedCorp).map(renderDisclosureFavoritesRow).join("");
+      return;
+    }
+
+    const groups = groupDisclosureFavoritesByCorp(disclosureFavoritesRows);
+    listEl.innerHTML = groups.map(([corpName, rows]) => `
+      <div style="margin-bottom:20px;">
+        <h3 style="margin:0 0 6px; font-size:14px;">${escapeHtml(corpName)} <span class="muted" style="font-weight:400;">(${rows.length})</span></h3>
+        ${rows.map(renderDisclosureFavoritesRow).join("")}
+      </div>
+    `).join("");
+  }
+
+  document.getElementById("disclosurefavorites-corp-select").addEventListener("change", renderDisclosureFavoritesList);
+
+  document.getElementById("disclosurefavorites-list").addEventListener("click", async (e) => {
+    const removeBtn = e.target.closest(".disclosure-favorite-remove-btn");
+    if (removeBtn) {
+      e.stopPropagation();
+      await supabaseClient.from("stock_disclosure_favorites").delete().eq("id", removeBtn.dataset.id);
+      disclosureFavoritesRows = disclosureFavoritesRows.filter(r => r.id !== removeBtn.dataset.id);
+      renderDisclosureFavoritesCorpOptions();
+      renderDisclosureFavoritesList();
+      return;
+    }
+    const row = e.target.closest(".fairvalue-news-row");
+    if (row?.dataset.url) location.href = row.dataset.url;
+  });
+
+  // 관심 기업 탭 — 등록하면 stock_disclosure_watchlist에 저장(마지막으로 본 공시 번호를
+  // "지금 시점의 최신 공시"로 미리 채워둬서, 처음 등록할 때 과거 공시들로 알림이 쏟아지지 않게 함).
+  // 실제 새 공시 감지/푸시는 check-disclosure-watchlist(1시간마다 cron)가 담당.
+  let disclosureWatchlistRows = [];
+
+  async function searchDisclosureWatchCorp(q) {
+    const resultsEl = document.getElementById("disclosurewatch-search-results");
+    const { data, error } = await supabaseClient
+      .from("dart_corp_codes")
+      .select("corp_code, corp_name, stock_code")
+      .ilike("corp_name", `%${q}%`)
+      .order("corp_name")
+      .limit(10);
+
+    if (error || !data || !data.length) {
+      resultsEl.innerHTML = `<p class="muted">검색 결과가 없습니다.</p>`;
+      return;
+    }
+
+    resultsEl.innerHTML = data.map(c => `
+      <div class="inquiry-row" data-corp="${c.corp_code}" data-stock="${c.stock_code}" data-name="${escapeHtml(c.corp_name)}" style="cursor:pointer;">
+        <div>${escapeHtml(c.corp_name)} <span class="muted">(${escapeHtml(c.stock_code)})</span></div>
+      </div>
+    `).join("");
+
+    resultsEl.querySelectorAll("[data-corp]").forEach(row => {
+      row.addEventListener("click", () => addToDisclosureWatchlist(row.dataset.corp, row.dataset.stock, row.dataset.name));
+    });
+  }
+
+  let disclosurewatchSearchDebounce = null;
+  document.getElementById("disclosurewatch-search").addEventListener("input", (e) => {
+    clearTimeout(disclosurewatchSearchDebounce);
+    const q = e.target.value.trim();
+    if (!q) {
+      document.getElementById("disclosurewatch-search-results").innerHTML = "";
+      return;
+    }
+    disclosurewatchSearchDebounce = setTimeout(() => searchDisclosureWatchCorp(q), 300);
+  });
+
+  async function addToDisclosureWatchlist(corpCode, stockCode, corpName) {
+    const statusEl = document.getElementById("disclosurewatch-status");
+    if (!stockCode) {
+      statusEl.textContent = "비상장 회사는 등록할 수 없습니다.";
+      return;
+    }
+    statusEl.textContent = "등록 중입니다...";
+    document.getElementById("disclosurewatch-search-results").innerHTML = "";
+    document.getElementById("disclosurewatch-search").value = "";
+
+    // 지금 시점의 가장 최신 공시를 기준선으로 저장 — 등록 이후에 올라오는 것부터만 알림이 가게 함.
+    const { data, error } = await supabaseClient.functions.invoke("dart-disclosures", { body: { corpCode } });
+    const latestRceptNo = (!error && !data?.error && data.disclosures?.length) ? data.disclosures[0].rceptNo : null;
+
+    const { error: insertError } = await supabaseClient.from("stock_disclosure_watchlist").insert({
+      stock_code: stockCode, corp_code: corpCode, corp_name: corpName, last_seen_rcept_no: latestRceptNo,
+    });
+
+    if (insertError) {
+      statusEl.textContent = insertError.code === "23505" ? "이미 등록된 회사입니다." : "등록 실패: " + insertError.message;
+      return;
+    }
+    statusEl.textContent = "";
+    await loadDisclosureWatchlist();
+  }
+
+  async function loadDisclosureWatchlist() {
+    const { data, error } = await supabaseClient
+      .from("stock_disclosure_watchlist")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) {
+      document.getElementById("disclosurewatch-status").textContent = "조회 실패: " + error.message;
+      return;
+    }
+    disclosureWatchlistRows = data ?? [];
+    renderDisclosureWatchlist();
+  }
+
+  function renderDisclosureWatchlist() {
+    document.getElementById("disclosurewatch-list-empty").hidden = disclosureWatchlistRows.length > 0;
+    document.getElementById("disclosurewatch-list").innerHTML = disclosureWatchlistRows.map(r => `
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+        <span>${escapeHtml(r.corp_name)} <span class="muted">(${escapeHtml(r.stock_code)})</span></span>
+        <button type="button" class="icon-delete-btn" data-id="${r.id}" aria-label="관심 기업 삭제">🗑</button>
+      </div>
+    `).join("");
+  }
+
+  document.getElementById("disclosurewatch-list").addEventListener("click", async (e) => {
+    const btn = e.target.closest(".icon-delete-btn");
+    if (!btn) return;
+    await supabaseClient.from("stock_disclosure_watchlist").delete().eq("id", btn.dataset.id);
+    disclosureWatchlistRows = disclosureWatchlistRows.filter(r => r.id !== btn.dataset.id);
+    renderDisclosureWatchlist();
+  });
 
   async function searchDartCorp(q) {
     const resultsEl = document.getElementById("fairvalue-search-results");
