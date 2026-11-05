@@ -186,6 +186,14 @@ nav .brand { font-weight: 700; color: var(--accent); flex-shrink: 0; }
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  /* "주식"처럼 버튼이 유난히 많은(10개) 줄만 전체 레이아웃을 건드리는 문제의 진짜 원인.
+     .category-list가 flex-direction:column이라 이 요소는 "세로축의 가로 폭"(cross axis) 쪽으로
+     배치되는데, 그 방향엔 overflow:auto가 자동으로 최소폭을 0으로 깎아주는 flex 규칙이 적용 안
+     돼서, 기본값(min-width:auto = 내용 전체 폭)이 그대로 남아있었음 — 버튼 10개를 다 합친 폭이
+     부모(.category-list→.shop-layout→본문)를 그만큼 넓게 밀어버려서, 화면보다 넓어진 레이아웃
+     안에서 대분류 줄(.category-maingroup)까지 같이 흔들려 보였던 것. min-width:0으로 이 강제
+     확장을 막아서, 내용이 아무리 길어도 이 줄 안에서만 스크롤되고 바깥엔 전혀 영향 없게 함. */
+  min-width: 0;
 }
 .category-group-items::-webkit-scrollbar { display: none; }
 .category-group-items button { flex: 0 0 auto; }

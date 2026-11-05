@@ -4066,7 +4066,7 @@
     document.querySelectorAll(".category-list button[data-tab]").forEach(btn => {
       btn.addEventListener("click", () => switchTab(btn.dataset.tab));
     });
-    switchTab("fairvalue"); // 첫 번째 대분류(주식)의 첫 메뉴를 기본으로 보여줌
+    switchTab("sector"); // 첫 번째 대분류(주식)의 첫 메뉴를 기본으로 보여줌(목록 순서상 실제 첫 항목)
 
     await loadMenusAdmin();
     await loadBannersAdmin();
