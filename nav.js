@@ -103,7 +103,7 @@ async function renderNav() {
     <a class="brand" href="index.html">JiHoo's House</a>
     <div class="nav-links">
       ${isAdmin ? `<a href="admin.html">관리자</a>` : ""}
-      ${user ? `<button id="logout-btn">로그아웃(${escapeHtml(user.email)})</button>` : `<a href="login.html">로그인</a>`}
+      ${user ? `<button id="logout-btn">로그아웃</button>` : `<a href="login.html">로그인</a>`}
     </div>
   `;
 
