@@ -3644,11 +3644,14 @@
     resultEl.innerHTML = `
       <div class="sector-card">
         ${data.days.map(d => `
+          <!-- 이 화면에만 적용: "라벨+숫자" 묶음마다 줄바꿈 금지(nowrap)를 걸어서, 좁은 폰에서
+               "상환"과 숫자가 따로 떨어지거나 오른쪽이 밀려 잘리지 않고 묶음 단위로만 줄바꿈되게 함.
+               (공용 .sector-stock-row CSS를 바꾸면 다른 주식 화면 정렬이 다 깨지므로 여기서만 처리) -->
           <div class="sector-stock-row">
-            <span>${d.stdDt.slice(0, 4)}.${d.stdDt.slice(4, 6)}.${d.stdDt.slice(6, 8)}</span>
+            <span style="white-space:nowrap;">${d.stdDt.slice(0, 4)}.${d.stdDt.slice(4, 6)}.${d.stdDt.slice(6, 8)}</span>
             <div style="text-align:right;">
               <span style="font-size:14px; font-weight:400;">잔고수량 ${d.slbTrRemQty.toLocaleString()}</span>
-              <div class="sector-stock-detail">체결 ${d.matcQty.toLocaleString()} · 상환 ${d.redQty.toLocaleString()}</div>
+              <div class="sector-stock-detail"><span style="white-space:nowrap;">체결 ${d.matcQty.toLocaleString()}</span> · <span style="white-space:nowrap;">상환 ${d.redQty.toLocaleString()}</span></div>
             </div>
           </div>
         `).join("")}
