@@ -97,13 +97,19 @@ async function renderNav() {
 
   const isAdmin = user?.email === "admin@admin.com" || roleRow?.role === "admin";
 
+  // 로그아웃 버튼 옆에 보여줄 사용자명 — 최고관리자 계정은 "Master", 그 외에는 내 정보에 저장한
+  // 이름(소셜 로그인은 full_name), 이름이 없으면 이메일의 @ 앞부분만 보여줌(이메일 전체는 길어서 안 씀)
+  const displayName = !user ? ""
+    : user.email === "admin@admin.com" ? "Master"
+    : user.user_metadata?.name || user.user_metadata?.full_name || (user.email ?? "").split("@")[0];
+
   // 문의하기/결제내역/내 정보는 하단 탭바의 "마이" 메뉴(mypage.html)에 모아뒀으므로
   // 헤더에는 따로 안 둠(중복).
   nav.innerHTML = `
     <a class="brand" href="index.html">JiHoo's House</a>
     <div class="nav-links">
       ${isAdmin ? `<a href="admin.html">관리자</a>` : ""}
-      ${user ? `<button id="logout-btn">로그아웃</button>` : `<a href="login.html">로그인</a>`}
+      ${user ? `<button id="logout-btn">로그아웃${displayName ? `(${escapeHtml(displayName)})` : ""}</button>` : `<a href="login.html">로그인</a>`}
     </div>
   `;
 
