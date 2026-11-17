@@ -82,36 +82,24 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
 }
 
-function isSameVapidKey(keyBuffer) {
-  if (!keyBuffer) return true; // 브라우저가 키 정보를 안 알려주면 비교 불가 — 기존 구독 그대로 씀
-  const current = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-  const existing = new Uint8Array(keyBuffer);
-  return existing.length === current.length && existing.every((b, i) => b === current[i]);
-}
-
 // 알림을 아직 허용 안 했으면 동의를 구하고 구독까지 하고, 이미 구독돼 있으면 기존 구독(기기 단위)을 재사용함.
 // 브라우저 알림 권한/구독은 기기·출처 단위라 계정이 바뀌어도 다시 물어볼 필요는 없지만,
 // DB에는 "이 계정도 이 기기에서 받기로 했다"는 행을 계정별로 따로 저장해서 아이디별로 구분함.
 async function subscribeToPush() {
   const reg = await navigator.serviceWorker.ready;
-  let sub = await reg.pushManager.getSubscription();
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") return null;
 
-  // 기존 구독이 지금과 다른 VAPID 키로 만들어진 것이면(키를 바꾼 적이 있는 경우) 서버가 보내는
-  // 알림을 푸시 서버가 거절함 — 그 구독은 해지하고 지금 키로 새로 구독함.
-  if (sub && !isSameVapidKey(sub.options?.applicationServerKey)) {
-    await sub.unsubscribe();
-    sub = null;
-  }
+  // 사용자가 "알림 받기"를 직접 누른 것이므로 기존 구독을 재사용하지 않고 항상 새로 만듦 —
+  // 브라우저가 들고 있는 기존 구독이 푸시 서버 쪽에선 이미 만료(410)된 경우가 있는데(실제로 발생),
+  // 그걸 재사용하면 다시 저장해도 계속 실패함. 해지 후 새로 구독하면 살아있는 새 주소를 받음.
+  const oldSub = await reg.pushManager.getSubscription();
+  if (oldSub) await oldSub.unsubscribe();
 
-  if (!sub) {
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") return null;
-
-    sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    });
-  }
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+  });
 
   try {
     const { data: { user } } = await supabaseClient.auth.getUser();
@@ -139,17 +127,13 @@ async function touchPushLastLogin(user) {
     if (!reg) return;
     const sub = await reg.pushManager.getSubscription();
     if (!sub) return;
-    // update 대신 upsert — 브라우저가 구독 주소(endpoint)를 스스로 바꾸는 경우가 있는데, 예전엔
-    // 기존 행만 갱신해서 새 주소가 DB에 안 들어가고 옛 주소(이미 죽은 구독)로만 발송돼 전부 실패했음.
-    // 이제 페이지를 열 때마다 이 기기의 "현재" 구독을 저장해서 스스로 복구됨.
-    const subJson = sub.toJSON();
-    await supabaseClient.from("push_subscriptions").upsert({
-      user_id: user.id,
-      email: user.email,
-      endpoint: subJson.endpoint,
-      p256dh: subJson.keys.p256dh,
-      auth: subJson.keys.auth,
-      last_login_at: new Date().toISOString(),
-    }, { onConflict: "endpoint,user_id" });
+    // 일부러 insert(upsert) 하지 않고 기존 행만 갱신함 — 서버가 만료(410)로 지운 구독을 여기서
+    // 다시 넣어버리면 죽은 구독이 계속 되살아남. 행이 없으면 메인화면 "알림 받기" 카드가 다시 떠서
+    // 사용자가 새로 구독하게 됨(index.html 참고).
+    await supabaseClient
+      .from("push_subscriptions")
+      .update({ last_login_at: new Date().toISOString() })
+      .eq("endpoint", sub.endpoint)
+      .eq("user_id", user.id);
   } catch (_) { /* 실패해도 다음 발송 때 이전 로그인 시각으로 처리될 뿐, 기능에는 지장 없음 */ }
 }

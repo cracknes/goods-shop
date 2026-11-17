@@ -1157,10 +1157,14 @@
     try {
       dismissed = localStorage.getItem(DISMISSED_KEY) === "1";
     } catch (_) { /* 프라이빗 모드 등에서 localStorage가 막혀있으면 그냥 매번 안 띄움 */ }
-    if (dismissed) return;
 
     const reg = await navigator.serviceWorker.ready;
     const existingSub = await reg.pushManager.getSubscription();
+
+    // "이미 결정했음"이어도, 이 기기에 구독이 있는데 서버(DB)에서 이 계정 행이 사라졌다면 다시 띄움 —
+    // 서버가 만료(410 "push subscription has unsubscribed or expired")된 구독을 지운 경우라서,
+    // 사용자가 "알림 받기"를 다시 눌러 새 구독을 만들어야 알림이 다시 옴.
+    if (dismissed && !(existingSub && user)) return;
 
     if (existingSub) {
       if (!user) return; // 비로그인 상태는 기존처럼 기기 단위 구독 여부만 봄
