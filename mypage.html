@@ -41,7 +41,7 @@
          한 번 결정하면 다시 안 뜨는 1회성이라, 끊긴 뒤 복구할 고정된 자리가 필요해서 만듦. -->
     <button type="button" class="mypage-card" id="push-resubscribe-btn" style="font-family:inherit; cursor:pointer;">
       <span class="mypage-card-icon">🔔</span>
-      <span class="mypage-card-label">알림 다시 설정</span>
+      <span class="mypage-card-label">알림 설정</span>
       <span class="mypage-card-desc" id="push-resubscribe-status">알림이 안 올 때 눌러주세요</span>
     </button>
   </div>
@@ -72,7 +72,12 @@
     try {
       // subscribeToPush는 기존 구독을 해지하고 항상 새로 구독한 뒤 서버에 저장함(pwa.js)
       const sub = await subscribeToPush();
-      statusEl.textContent = sub ? "알림을 다시 설정했어요 ✅" : "알림 권한이 허용되지 않았어요";
+      statusEl.textContent = sub ? "알림을 설정했어요 ✅" : "알림 권한이 허용되지 않았어요";
+      // 여기서 설정했으면 메인화면 "알림 받기" 카드는 다시 띄우지 않음(중복으로 또 누르지 않게)
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (sub && user) {
+        try { localStorage.setItem("pushSubscribeCardDismissed_" + user.id, "1"); } catch (_) {}
+      }
     } catch (err) {
       statusEl.textContent = "설정 실패: " + err.message;
     }

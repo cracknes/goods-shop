@@ -1157,16 +1157,12 @@
     try {
       dismissed = localStorage.getItem(DISMISSED_KEY) === "1";
     } catch (_) { /* 프라이빗 모드 등에서 localStorage가 막혀있으면 그냥 매번 안 띄움 */ }
+    // 한 번 결정했으면 다시 안 띄움. 알림이 끊겼을 때(구독 만료 등)의 복구는 마이 → "알림 설정"
+    // 버튼이 담당함(여기서도 다시 띄우면 마이 버튼과 중복돼서 두 번 누르게 된다는 피드백으로 제거).
+    if (dismissed) return;
 
     const reg = await navigator.serviceWorker.ready;
     const existingSub = await reg.pushManager.getSubscription();
-
-    // "이미 결정했음"이어도, 예전에 알림을 허용했던(권한 granted) 로그인 사용자인데 이 기기의 구독이
-    // 서버(DB)에 없으면 다시 띄움 — 서버가 만료(410 "push subscription has unsubscribed or expired")된
-    // 구독을 지운 경우라서, "알림 받기"를 다시 눌러 새 구독을 만들어야 알림이 다시 옴.
-    // (브라우저가 만료된 구독을 아예 버려서 existingSub가 없는 경우도 있어서 권한 상태로 판단함.
-    //  알림을 거부했던 사용자는 권한이 granted가 아니므로 다시 귀찮게 띄우지 않음.)
-    if (dismissed && !(user && Notification.permission === "granted")) return;
 
     if (existingSub) {
       if (!user) return; // 비로그인 상태는 기존처럼 기기 단위 구독 여부만 봄
