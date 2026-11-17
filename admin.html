@@ -1755,7 +1755,8 @@
       return;
     }
 
-    statusEl.textContent = `발송 완료 (구독 ${data.subscriptionCount}건 중 성공 ${data.successCount}건, 실패 ${data.failureCount}건)`;
+    statusEl.textContent = `발송 완료 (구독 ${data.subscriptionCount}건 중 성공 ${data.successCount}건, 실패 ${data.failureCount}건)`
+      + (data.failureReasons?.length ? ` — 실패 이유: ${[...new Set(data.failureReasons)].join(" / ")}` : "");
     document.getElementById("push-title").value = "";
     document.getElementById("push-body").value = "";
     await loadPushHistory();
