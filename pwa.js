@@ -104,6 +104,16 @@ async function subscribeToPush() {
   try {
     const { data: { user } } = await supabaseClient.auth.getUser();
     const subJson = sub.toJSON();
+    // 방금 해지한 예전 구독의 DB 행은 새 구독 주소로 바꿔치기함 — 안 그러면 다시 설정할 때마다
+    // 죽은 행이 하나씩 쌓여서, 한 계정에 보내도 "성공 1, 실패 N(410)"이 나왔음(실제로 발생).
+    // (클라이언트는 DB 행 삭제 권한이 없고 자기 행 수정 권한만 있어서 update로 처리)
+    if (user && oldSub) {
+      await supabaseClient
+        .from("push_subscriptions")
+        .update({ endpoint: subJson.endpoint, p256dh: subJson.keys.p256dh, auth: subJson.keys.auth })
+        .eq("endpoint", oldSub.endpoint)
+        .eq("user_id", user.id);
+    }
     await supabaseClient.from("push_subscriptions").upsert({
       user_id: user ? user.id : null,
       email: user ? user.email : null,
