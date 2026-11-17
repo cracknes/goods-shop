@@ -37,6 +37,13 @@
       <span class="mypage-card-label">오늘의 뉴스 관리</span>
       <span class="mypage-card-desc">내 바로가기 카드 설정</span>
     </a>
+    <!-- 알림이 끊겼을 때(구독 만료 등) 언제든 다시 구독할 수 있는 버튼. 메인화면 "알림 받기" 카드는
+         한 번 결정하면 다시 안 뜨는 1회성이라, 끊긴 뒤 복구할 고정된 자리가 필요해서 만듦. -->
+    <button type="button" class="mypage-card" id="push-resubscribe-btn" style="font-family:inherit; cursor:pointer;">
+      <span class="mypage-card-icon">🔔</span>
+      <span class="mypage-card-label">알림 다시 설정</span>
+      <span class="mypage-card-desc" id="push-resubscribe-status">알림이 안 올 때 눌러주세요</span>
+    </button>
   </div>
 </div>
 
@@ -50,6 +57,26 @@
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) location.href = "login.html";
   })();
+
+  document.getElementById("push-resubscribe-btn").addEventListener("click", async () => {
+    const statusEl = document.getElementById("push-resubscribe-status");
+    if (!isPushSupported()) {
+      statusEl.textContent = "이 브라우저는 알림을 지원하지 않아요";
+      return;
+    }
+    if (Notification.permission === "denied") {
+      statusEl.textContent = "알림이 차단돼 있어요. 휴대폰/브라우저 설정에서 이 사이트 알림을 허용해주세요";
+      return;
+    }
+    statusEl.textContent = "설정 중…";
+    try {
+      // subscribeToPush는 기존 구독을 해지하고 항상 새로 구독한 뒤 서버에 저장함(pwa.js)
+      const sub = await subscribeToPush();
+      statusEl.textContent = sub ? "알림을 다시 설정했어요 ✅" : "알림 권한이 허용되지 않았어요";
+    } catch (err) {
+      statusEl.textContent = "설정 실패: " + err.message;
+    }
+  });
 </script>
 </body>
 </html>
