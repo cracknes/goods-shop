@@ -1161,10 +1161,12 @@
     const reg = await navigator.serviceWorker.ready;
     const existingSub = await reg.pushManager.getSubscription();
 
-    // "이미 결정했음"이어도, 이 기기에 구독이 있는데 서버(DB)에서 이 계정 행이 사라졌다면 다시 띄움 —
-    // 서버가 만료(410 "push subscription has unsubscribed or expired")된 구독을 지운 경우라서,
-    // 사용자가 "알림 받기"를 다시 눌러 새 구독을 만들어야 알림이 다시 옴.
-    if (dismissed && !(existingSub && user)) return;
+    // "이미 결정했음"이어도, 예전에 알림을 허용했던(권한 granted) 로그인 사용자인데 이 기기의 구독이
+    // 서버(DB)에 없으면 다시 띄움 — 서버가 만료(410 "push subscription has unsubscribed or expired")된
+    // 구독을 지운 경우라서, "알림 받기"를 다시 눌러 새 구독을 만들어야 알림이 다시 옴.
+    // (브라우저가 만료된 구독을 아예 버려서 existingSub가 없는 경우도 있어서 권한 상태로 판단함.
+    //  알림을 거부했던 사용자는 권한이 granted가 아니므로 다시 귀찮게 띄우지 않음.)
+    if (dismissed && !(user && Notification.permission === "granted")) return;
 
     if (existingSub) {
       if (!user) return; // 비로그인 상태는 기존처럼 기기 단위 구독 여부만 봄
