@@ -743,6 +743,20 @@
 <script>
   const ADMIN_EMAIL = "admin@admin.com";
 
+  // 주식 메뉴 회사 검색 공용 조건. dart_corp_codes의 회사명은 DART 정식 등록명이라 흔히 부르는
+  // 줄임말과 다를 수 있음(예: 현대차 005380의 등록명은 "현대자동차" — "현대차"로 검색하면
+  // 현대차증권만 나오고 정작 현대차는 안 나왔음). 그래서 ① 회사명 ② 종목코드(6자리) ③ 아래 줄임말
+  // 목록의 정식 이름까지 함께 찾음. 다른 줄임말도 안 나오면 여기에 추가하면 됨.
+  const CORP_NAME_ALIASES = { "현대차": "현대자동차" };
+  function corpSearchFilter(q) {
+    // PostgREST or() 문법을 깨뜨리는 문자(쉼표, 괄호)는 검색어에서 제거
+    const s = q.replace(/[,()]/g, "").trim();
+    const conds = [`corp_name.ilike.%${s}%`];
+    if (/^\d{6}$/.test(s)) conds.push(`stock_code.eq.${s}`);
+    if (CORP_NAME_ALIASES[s]) conds.push(`corp_name.ilike.%${CORP_NAME_ALIASES[s]}%`);
+    return conds.join(",");
+  }
+
   // 대분류(주식/상품/메뉴/사용자) 4개는 항상 고정된 한 줄로 보여주고, 그 아래 하위 메뉴
   // 한 줄만 선택된 대분류에 맞게 바뀜(대분류 자리가 하위 메뉴 때문에 밀리지 않게 함).
   let currentSubgroup = null;
@@ -2062,7 +2076,7 @@
     const { data, error } = await supabaseClient
       .from("dart_corp_codes")
       .select("corp_code, corp_name, stock_code")
-      .ilike("corp_name", `%${q}%`)
+      .or(corpSearchFilter(q))
       .order("corp_name")
       .limit(10);
 
@@ -2202,7 +2216,7 @@
     const { data, error } = await supabaseClient
       .from("dart_corp_codes")
       .select("corp_code, corp_name, stock_code")
-      .ilike("corp_name", `%${q}%`)
+      .or(corpSearchFilter(q))
       .order("corp_name")
       .limit(10);
 
@@ -2357,7 +2371,7 @@
     const { data, error } = await supabaseClient
       .from("dart_corp_codes")
       .select("corp_code, corp_name, stock_code")
-      .ilike("corp_name", `%${q}%`)
+      .or(corpSearchFilter(q))
       .order("corp_name")
       .limit(10);
 
@@ -2450,7 +2464,7 @@
     const { data, error } = await supabaseClient
       .from("dart_corp_codes")
       .select("corp_code, corp_name, stock_code")
-      .ilike("corp_name", `%${q}%`)
+      .or(corpSearchFilter(q))
       .order("corp_name")
       .limit(10);
 
@@ -3592,7 +3606,7 @@
     const { data, error } = await supabaseClient
       .from("dart_corp_codes")
       .select("corp_name, stock_code")
-      .ilike("corp_name", `%${q}%`)
+      .or(corpSearchFilter(q))
       .not("stock_code", "is", null)
       .order("corp_name")
       .limit(10);
