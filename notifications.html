@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1b9e92">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>받은 알림 | 지후네 하우스</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/static/split/WantedSans.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav id="nav"></nav>
+<nav id="bottom-nav" class="bottom-nav"></nav>
+<div class="wrap">
+  <div class="card">
+    <h2 style="margin-top:0;">받은 알림 🔔</h2>
+    <div id="inbox-list"></div>
+    <p id="inbox-message" class="muted" hidden></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<script src="nav.js"></script>
+<script src="bottom-nav.js"></script>
+<script src="pwa.js"></script>
+<script>
+  // 서버(push_inbox)에 계정별로 저장된 받은 알림 목록. 알림을 보내는 서버 함수들(관리자 PUSH,
+  // 문의 답변, Dart 공시)이 실제로 전달된 계정마다 기록함. 최근 100건만 보여줌.
+  async function loadInbox() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      location.href = "login.html";
+      return;
+    }
+
+    const messageEl = document.getElementById("inbox-message");
+    const { data, error } = await supabaseClient
+      .from("push_inbox")
+      .select("id, title, body, url, source, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) {
+      messageEl.hidden = false;
+      messageEl.textContent = "불러오기 실패: " + error.message;
+      return;
+    }
+    if (!data.length) {
+      messageEl.hidden = false;
+      messageEl.textContent = "아직 받은 알림이 없어요.";
+      return;
+    }
+
+    document.getElementById("inbox-list").innerHTML = data.map(n => `
+      <div class="inquiry-row" ${n.url ? `data-url="${escapeHtml(n.url)}" style="cursor:pointer;"` : ""}>
+        <div style="min-width:0;">
+          <div class="muted" style="font-size:12px;">${escapeHtml(n.source ?? "알림")} · ${formatKDateTime(n.created_at)}</div>
+          <div style="font-weight:700; margin-top:2px;">${escapeHtml(n.title)}</div>
+          ${n.body ? `<div style="margin-top:2px; overflow-wrap:anywhere;">${escapeHtml(n.body)}</div>` : ""}
+        </div>
+      </div>
+    `).join("");
+  }
+
+  // DART 공시 링크는 관리자 화면과 같이 확대 가능한 래퍼(external-view.html)로 열어야 모바일에서 볼 만함
+  document.getElementById("inbox-list").addEventListener("click", (e) => {
+    const row = e.target.closest("[data-url]");
+    if (!row) return;
+    const url = row.dataset.url;
+    location.href = url.startsWith("https://dart.fss.or.kr/") ? "external-view.html?url=" + encodeURIComponent(url) : url;
+  });
+
+  loadInbox();
+</script>
+</body>
+</html>
