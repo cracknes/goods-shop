@@ -1610,7 +1610,7 @@
     });
     document.querySelectorAll(".newslink-visible-toggle").forEach(cb => {
       cb.addEventListener("change", async () => {
-        const { error } = await supabaseClient.from("news_links").update({ visible: cb.checked }).eq("id", cb.dataset.id);
+        const { error } = await supabaseClient.from("user_news_links").update({ visible: cb.checked }).eq("id", cb.dataset.id);
         if (error) {
           alert("변경 실패: " + error.message);
           cb.checked = !cb.checked;
@@ -1636,8 +1636,8 @@
     const current = allNewsLinks[index];
     const target = allNewsLinks[targetIndex];
     const [{ error: e1 }, { error: e2 }] = await Promise.all([
-      supabaseClient.from("news_links").update({ sort_order: target.sort_order }).eq("id", current.id),
-      supabaseClient.from("news_links").update({ sort_order: current.sort_order }).eq("id", target.id),
+      supabaseClient.from("user_news_links").update({ sort_order: target.sort_order }).eq("id", current.id),
+      supabaseClient.from("user_news_links").update({ sort_order: current.sort_order }).eq("id", target.id),
     ]);
     if (e1 || e2) {
       alert("순서 변경 실패: " + (e1 || e2).message);
@@ -1647,7 +1647,7 @@
   }
 
   async function loadNewsLinksAdmin() {
-    const { data, error } = await supabaseClient.from("news_links").select("*").order("sort_order");
+    const { data, error } = await supabaseClient.from("user_news_links").select("*").order("sort_order");
     allNewsLinks = error ? [] : data;
     renderNewsLinksList();
   }
@@ -1671,10 +1671,14 @@
     statusEl.textContent = "저장 중...";
     let error;
     if (editingNewsLinkId) {
-      ({ error } = await supabaseClient.from("news_links").update(row).eq("id", editingNewsLinkId));
+      ({ error } = await supabaseClient.from("user_news_links").update(row).eq("id", editingNewsLinkId));
     } else {
+      // 이 탭은 마이 → 오늘의 뉴스 관리와 같은 "내 계정 개인 목록"(user_news_links)을 다룸 — 원래는
+      // 공용 목록(news_links)을 다뤘는데, 계정별 개인화(2026-10-25) 이후 메인은 개인 목록을 보여주게
+      // 바뀌어서 이 탭에서 지우거나 숨겨도 메인에 반영이 안 됐음. 내 행만 추가 가능(RLS)이라 user_id 필수.
+      const { data: { user } } = await supabaseClient.auth.getUser();
       const maxOrder = allNewsLinks.reduce((max, n) => Math.max(max, n.sort_order), 0);
-      ({ error } = await supabaseClient.from("news_links").insert({ ...row, visible: true, sort_order: maxOrder + 1 }));
+      ({ error } = await supabaseClient.from("user_news_links").insert({ ...row, user_id: user.id, visible: true, sort_order: maxOrder + 1 }));
     }
     if (error) {
       statusEl.textContent = "저장 실패: " + error.message;
@@ -1688,7 +1692,7 @@
   document.getElementById("newslinks-delete-btn").addEventListener("click", async () => {
     if (!editingNewsLinkId) return;
     if (!confirm("정말 삭제하시겠어요?")) return;
-    const { error } = await supabaseClient.from("news_links").delete().eq("id", editingNewsLinkId);
+    const { error } = await supabaseClient.from("user_news_links").delete().eq("id", editingNewsLinkId);
     if (error) {
       alert("삭제 실패: " + error.message);
       return;
