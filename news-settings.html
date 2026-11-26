@@ -142,10 +142,10 @@
       });
     });
     document.querySelectorAll(".newslink-up-btn").forEach(btn => {
-      btn.addEventListener("click", () => moveNewsLink(btn.dataset.id, "up"));
+      btn.addEventListener("click", (e) => { e.stopPropagation(); moveNewsLink(btn.dataset.id, "up"); }); // 바깥 "수정 화면 열기" 영역으로 클릭이 번지지 않게
     });
     document.querySelectorAll(".newslink-down-btn").forEach(btn => {
-      btn.addEventListener("click", () => moveNewsLink(btn.dataset.id, "down"));
+      btn.addEventListener("click", (e) => { e.stopPropagation(); moveNewsLink(btn.dataset.id, "down"); }); // 바깥 "수정 화면 열기" 영역으로 클릭이 번지지 않게
     });
   }
 
